@@ -85,7 +85,7 @@ Commands refuse unsafe or non-empty output targets where replacement would be am
 
 The current local baseline includes:
 
-- 121 passing Python tests;
+- 122 passing Python tests;
 - 93.85% branch-aware Python coverage with a 90% enforced floor;
 - strict Ruff, Mypy, and TypeScript checks;
 - official four-runtime matrix and 20-iteration soak passes;

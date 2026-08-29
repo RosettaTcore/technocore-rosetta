@@ -174,3 +174,12 @@ repository becomes public or moves to a plan that enforces branch rules, a versi
 requests. The hook is installed with repository-local Git configuration, has adversarial tests and
 does not restrict feature-branch evolution proposals. It prevents accidents rather than hostile
 bypass: server-side rules remain the authoritative control once available.
+
+## ADR-033: Bounded dependency-update proposals
+
+Dependabot may propose individual Python, Node and GitHub Actions updates on staggered weekly
+schedules. Routine version releases wait at least seven days, while GitHub security updates remain
+eligible immediately. At most two routine pull requests per ecosystem may remain open. No update is
+auto-merged, and every proposal must pass the ordinary CI and human merge path. Docker updates are
+excluded because reviewed OCI digests, source provenance and container acceptance are authority
+changes that require a separate rebuild and review.
