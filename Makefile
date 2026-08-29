@@ -1,7 +1,12 @@
-.PHONY: format lint type typescript test coverage unit integration adversarial secret-scan demo verify evolution-image evolution-verify container-acceptance upstream-acceptance acceptance
+.PHONY: format lint type typescript test coverage unit integration adversarial secret-scan demo verify evolution-image evolution-verify container-acceptance upstream-acceptance acceptance install-hooks
 
 PYTHON ?= python3
 PYTHONPATH := src:.
+
+install-hooks:
+	git config --local core.hooksPath .githooks
+	test "$$(git config --local core.hooksPath)" = ".githooks"
+	test -x .githooks/pre-push
 
 format:
 	$(PYTHON) tools/quality.py format

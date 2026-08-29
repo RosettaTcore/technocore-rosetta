@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+while read -r _local_ref _local_oid remote_ref _remote_oid; do
+    if [ "$remote_ref" = "refs/heads/main" ]; then
+        cat >&2 <<'EOF'
+Direct pushes to main are blocked for Technocore Rosetta.
+Push a feature branch and merge it through a pull request after CI passes.
+EOF
+        exit 1
+    fi
+done
+
+exit 0

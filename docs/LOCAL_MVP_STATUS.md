@@ -1,6 +1,6 @@
 # Local MVP status
 
-Date: 29 August 2026
+Date: 30 August 2026
 
 ## Outcome
 
@@ -36,12 +36,12 @@ dedicated private GitHub repository and identity, separate from the operator's o
 
 ## Verified results
 
-- Pytest: 119/119 pass;
+- Pytest: 121/121 pass;
 - branch-aware Python coverage: 93.85%, enforced floor 90%;
 - Ruff lint/security: pass;
 - Mypy strict: pass for 28 source modules;
 - TypeScript strict check: pass;
-- secret scan: pass over 151 files;
+- secret scan: pass over 153 files;
 - official upstream matrix: 4/4 cells pass;
 - upstream soak: 20/20 isolated reads pass;
 - simultaneous four-runtime isolated reads: pass;
