@@ -177,9 +177,12 @@ bypass: server-side rules remain the authoritative control once available.
 
 ## ADR-033: Bounded dependency-update proposals
 
-Dependabot may propose individual Python, Node and GitHub Actions updates on staggered weekly
-schedules. Routine version releases wait at least seven days, while GitHub security updates remain
-eligible immediately. At most two routine pull requests per ecosystem may remain open. No update is
-auto-merged, and every proposal must pass the ordinary CI and human merge path. Docker updates are
-excluded because reviewed OCI digests, source provenance and container acceptance are authority
-changes that require a separate rebuild and review.
+Dependabot may propose individual Node and GitHub Actions updates on staggered weekly schedules.
+Routine version releases wait at least seven days, while GitHub security updates remain eligible
+immediately. At most two routine pull requests per enabled ecosystem may remain open. Routine pip
+version proposals are disabled because Dependabot changes the broad `pyproject.toml` lower bounds
+without updating Rosetta's hand-maintained `requirements*.lock`; they may resume only after a
+supported deterministic lock generator is adopted. No update is auto-merged, and every proposal
+must pass the ordinary CI and human merge path. Docker updates are excluded because reviewed OCI
+digests, source provenance and container acceptance are authority changes that require a separate
+rebuild and review.
