@@ -28,6 +28,10 @@ def test_dependabot_updates_are_bounded_and_exclude_runtime_images() -> None:
             "timezone": "Europe/Ljubljana",
         }
         assert entry["cooldown"]["default-days"] >= 7
-        assert 0 < entry["open-pull-requests-limit"] <= 2
+        if ecosystem == "pip":
+            assert entry["open-pull-requests-limit"] == 0
+            assert "versioning-strategy" not in entry
+        else:
+            assert 0 < entry["open-pull-requests-limit"] <= 2
         assert "groups" not in entry
         assert "target-branch" not in entry
