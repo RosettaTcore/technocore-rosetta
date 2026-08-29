@@ -1,13 +1,14 @@
 # Local MVP status
 
-Date: 26 August 2026
+Date: 29 August 2026
 
 ## Outcome
 
 Phases 0–3 plus the controlled evolution proposal lane are implemented. The authoritative local
 acceptance path runs the official
 Technocore `v0.7.0` image rather than Rosetta's behavioral fixture. No public Technocore endpoint,
-cloud account, production DID, publisher, GitHub remote or external write was used.
+cloud runtime, production DID, publisher or live Technocore write was used. Source control uses a
+dedicated private GitHub repository and identity, separate from the operator's other projects.
 
 ## Implemented
 
@@ -35,12 +36,12 @@ cloud account, production DID, publisher, GitHub remote or external write was us
 
 ## Verified results
 
-- Pytest: 117/117 pass;
+- Pytest: 119/119 pass;
 - branch-aware Python coverage: 93.85%, enforced floor 90%;
 - Ruff lint/security: pass;
 - Mypy strict: pass for 28 source modules;
 - TypeScript strict check: pass;
-- secret scan: pass over 149 files;
+- secret scan: pass over 151 files;
 - official upstream matrix: 4/4 cells pass;
 - upstream soak: 20/20 isolated reads pass;
 - simultaneous four-runtime isolated reads: pass;
@@ -72,4 +73,5 @@ cloud account, production DID, publisher, GitHub remote or external write was us
 - separately approved read-only staging, then separately approved public signed writes and static
   publication.
 
-The repository remains uncommitted and has no remote.
+The repository is version-controlled in its dedicated private remote. CI and deployment files do
+not authorize a deployment, production identity, public service intake or external publication.

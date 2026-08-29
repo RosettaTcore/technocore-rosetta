@@ -156,3 +156,12 @@ and the immutable evolution evaluator. Do not add exclusions merely to improve t
 small gap between baseline and floor permits deliberate refactors and new architecture while still
 requiring future candidates to test deterministic success, failure, restart and recovery paths.
 Changing the evaluator or its threshold remains a protected, human-reviewed authority change.
+
+## ADR-031: Read-only, SHA-pinned continuous integration
+
+GitHub CI receives only read access to repository contents, persists no checkout credential and
+uses no repository secrets. Every external action is pinned to a reviewed full commit SHA. Pull
+requests run the deterministic host-side acceptance gate and the minimum supported Python runtime;
+they never use `pull_request_target`, deploy, publish, sign with a production identity or run the
+privileged OCI acceptance lane. Adversarial tests enforce these workflow authority constraints so
+a future self-evolution proposal cannot silently broaden CI permissions.
