@@ -33,7 +33,7 @@ rosetta-signer = "rosetta_signer.service:main"
 where = ["src"]
 
 [tool.pytest.ini_options]
-addopts = "-q --basetemp=local/pytest"
+addopts = "-q --basetemp=.pytest-tmp"
 testpaths = ["tests"]
 markers = ["container: requires a running OCI container engine"]
 
