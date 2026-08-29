@@ -165,3 +165,12 @@ requests run the deterministic host-side acceptance gate and the minimum support
 they never use `pull_request_target`, deploy, publish, sign with a production identity or run the
 privileged OCI acceptance lane. Adversarial tests enforce these workflow authority constraints so
 a future self-evolution proposal cannot silently broaden CI permissions.
+
+## ADR-032: Local main-push guard while private rules are unenforced
+
+The free private repository exposes ruleset configuration but does not enforce it. Until the
+repository becomes public or moves to a plan that enforces branch rules, a versioned local
+`pre-push` hook rejects direct updates to `main` and directs work through feature branches and pull
+requests. The hook is installed with repository-local Git configuration, has adversarial tests and
+does not restrict feature-branch evolution proposals. It prevents accidents rather than hostile
+bypass: server-side rules remain the authoritative control once available.

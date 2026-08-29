@@ -45,6 +45,16 @@ See [`docs/SECURITY.md`](docs/SECURITY.md), [`docs/ARCHITECTURE.md`](docs/ARCHIT
 
 ## Local verification
 
+Enable the repository-owned safety hooks once after cloning:
+
+```sh
+make install-hooks
+```
+
+The pre-push hook blocks accidental direct updates to `main`. Normal work is pushed to a feature
+branch and merged through a pull request after CI passes. Git hooks are a local accident-prevention
+control, not a substitute for server-side branch protection.
+
 Create the development environment and run the complete host-side acceptance gate:
 
 ```sh
@@ -75,7 +85,7 @@ Commands refuse unsafe or non-empty output targets where replacement would be am
 
 The current local baseline includes:
 
-- 119 passing Python tests;
+- 121 passing Python tests;
 - 93.85% branch-aware Python coverage with a 90% enforced floor;
 - strict Ruff, Mypy, and TypeScript checks;
 - official four-runtime matrix and 20-iteration soak passes;
