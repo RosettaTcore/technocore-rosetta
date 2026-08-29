@@ -1,0 +1,50 @@
+name: technocore-rosetta
+
+x-rosetta-image: &rosetta-image
+  build:
+    context: ..
+    dockerfile: deploy/Dockerfile
+    args:
+      PYTHON_BASE_IMAGE: ${ROSETTA_PYTHON_BASE_IMAGE:?set an immutable python image@sha256 digest}
+  read_only: true
+  user: "65532:65532"
+  cap_drop: ["ALL"]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 64
+  mem_limit: 256m
+  cpus: 0.5
+  restart: "no"
+
+services:
+  signer:
+    <<: *rosetta-image
+    command:
+      - rosetta_signer.service
+      - --socket
+      - /run/rosetta-signer/signer.sock
+      - --state
+      - /var/lib/rosetta-signer/nonce.sqlite3
+      - --synthetic-key-id
+      - synthetic-local-compose-only
+    network_mode: none
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+      - /run/rosetta-signer:rw,noexec,nosuid,size=1m,uid=65532,gid=65532
+    volumes:
+      - signer-state:/var/lib/rosetta-signer
+    profiles: ["local-synthetic"]
+
+  local-demo:
+    <<: *rosetta-image
+    command: ["rosetta.cli", "demo", "--output", "/var/lib/rosetta/artifacts/demo"]
+    network_mode: none
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    volumes:
+      - local-artifacts:/var/lib/rosetta/artifacts
+    profiles: ["local-synthetic"]
+
+volumes:
+  signer-state: {}
+  local-artifacts: {}
+

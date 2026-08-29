@@ -1,0 +1,115 @@
+mode: dry_run
+
+technocore:
+  base_url: "http://technocore-local:8080"
+  pinned_release: "v0.7.0"
+  allowed_origins:
+    - "http://technocore-local:8080"
+  long_poll_seconds: 10
+  request_timeout_seconds: 20
+
+rosetta:
+  mission: "Continuously prove end-to-end Technocore interoperability across reviewed adapters and publish reproducible evidence of changes."
+  scenario_allowlist:
+    - signed-mailbox-roundtrip-v1
+  max_runs_per_day: 4
+  run_on_release_change: true
+  run_on_adapter_change: true
+  max_parallel_runners: 2
+  regression_minimization_seconds: 300
+  public_summary_max_chars: 1200
+
+adapters:
+  registry_file: "config/adapters.lock.yaml"
+  require_commit_pin: true
+  require_image_digest: true
+  allow_public_message_selected_adapter: false
+  required_mvp_adapters:
+    - raw-fetch
+    - official-mcp
+    - python-http
+    - typescript-http
+
+runners:
+  backend: "container"
+  network_policy: "local_technocore_only"
+  read_only_root: true
+  run_as_non_root: true
+  memory_mb: 256
+  cpu_quota: 0.5
+  timeout_seconds: 120
+  allow_host_mounts: false
+  allow_docker_socket: false
+  allow_secrets: false
+
+identity:
+  signer_socket: "/run/rosetta-signer/signer.sock"
+  public_did: "did:key:TEST_ONLY"
+  allow_artifact_attestation: true
+
+discovery:
+  enabled: false
+  service_id: "technocore-rosetta"
+  service_room_template: "d-rosetta-{did_fingerprint}"
+  request_mailbox_template: "mb-rosetta-{did_fingerprint}"
+  service_card_valid_hours: 168
+  public_request_schema: "rosetta.request.v1"
+  allowed_discovery_rooms:
+    - lobby
+    - meta
+  allow_natural_language_outreach: false
+  allow_unsolicited_room_posts: false
+  respond_to_signed_discovery_query: true
+  max_discovery_replies_per_did_per_day: 1
+  liveness_beacon_after_silent_days: 5
+  publish_did_note_if_capacity_allows: true
+
+service:
+  enabled: false
+  target_profiles:
+    - current
+  require_signed_request: true
+  require_public_signed_reply_mailbox: true
+  reject_private_reply_mailbox: true
+  max_requests_per_did_per_day: 2
+  max_external_jobs_per_day: 8
+  max_queue_depth: 16
+  max_request_expiry_hours: 24
+  price_kind: "free"
+
+model:
+  provider: "disabled"
+  model: "optional-summary-only"
+  max_calls_per_day: 4
+  monthly_budget_eur: 10
+  allowed_task: "summarize_structured_results"
+
+publisher:
+  enabled: false
+  kind: "static_repository"
+  allowed_repository: "UNCONFIGURED"
+  require_signed_bundle: true
+  max_publishes_per_day: 2
+  public_base_url: "UNCONFIGURED"
+  publish_service_documents: false
+
+policy:
+  allow_arbitrary_http: false
+  allow_arbitrary_code: false
+  allow_public_code_submission: false
+  allow_financial_content: false
+  allowed_report_url_prefixes: []
+  human_approval_actions:
+    - github_issue
+    - github_pull_request
+    - social_post
+    - email
+    - wallet
+    - claim
+
+operations:
+  kill_switch_file: "/var/lib/rosetta/state/KILL_SWITCH"
+  fail_read_only_after_errors: 3
+  evidence_hash_chain: true
+  healthcheck_interval_seconds: 60
+  monthly_total_budget_eur: 40

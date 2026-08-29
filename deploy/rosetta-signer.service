@@ -1,0 +1,25 @@
+[Unit]
+Description=Technocore Rosetta networkless signer
+After=local-fs.target
+
+[Service]
+Type=simple
+User=rosetta-signer
+Group=rosetta-signer
+ExecStart=/opt/rosetta/venv/bin/rosetta-signer --socket /run/rosetta-signer/signer.sock --state /var/lib/rosetta-signer/nonce.sqlite3 --synthetic-key-id synthetic-staging-placeholder
+RuntimeDirectory=rosetta-signer
+RuntimeDirectoryMode=0700
+PrivateNetwork=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX
+ReadWritePaths=/run/rosetta-signer /var/lib/rosetta-signer
+CapabilityBoundingSet=
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+
+[Install]
+WantedBy=multi-user.target
+

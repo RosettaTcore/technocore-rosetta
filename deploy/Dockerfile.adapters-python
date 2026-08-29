@@ -1,0 +1,15 @@
+ARG PYTHON_BASE_IMAGE=python@sha256:c24c34b502635f1f7c4e99dc09a2cbd85d480b7dcfd077198c6b5af138906390
+FROM ${PYTHON_BASE_IMAGE}
+
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+RUN addgroup --system --gid 65532 rosetta && \
+    adduser --system --uid 65532 --ingroup rosetta --home /nonexistent --no-create-home rosetta
+WORKDIR /opt/rosetta
+COPY requirements.lock ./
+RUN python -m pip install --no-cache-dir --requirement requirements.lock
+COPY adapters/python_http ./adapters/python_http
+COPY adapters/official_mcp ./adapters/official_mcp
+COPY vendor/technocore-chat-v0.7.0/mcp/src ./vendor/technocore-chat-v0.7.0/mcp/src
+COPY tools/upstream_fault_proxy.py ./tools/upstream_fault_proxy.py
+USER 65532:65532
+ENTRYPOINT ["python"]

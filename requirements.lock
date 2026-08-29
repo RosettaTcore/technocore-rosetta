@@ -1,0 +1,6 @@
+# Runtime lock for the local MVP. Regenerate only after reviewed upgrades.
+cryptography==42.0.2
+httpx==0.24.0
+pydantic==1.10.2
+PyYAML==6.0.1
+

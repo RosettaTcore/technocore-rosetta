@@ -1,0 +1,12 @@
+ARG NODE_BASE_IMAGE=node@sha256:d272d96f3ad3a4e5bb2b6c36ea7427b4e83d1b23fb24b9df8b71d01aa59951b1
+FROM ${NODE_BASE_IMAGE}
+
+RUN groupadd --gid 65532 rosetta && \
+    useradd --uid 65532 --gid 65532 --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin rosetta
+
+WORKDIR /opt/adapters
+COPY adapters/raw_fetch ./raw_fetch
+COPY adapters/typescript_http ./typescript_http
+
+USER 65532:65532
+ENTRYPOINT ["node"]

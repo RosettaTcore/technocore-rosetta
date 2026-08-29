@@ -1,0 +1,43 @@
+schema: rosetta.adapter-registry.v1
+adapters:
+  - id: raw-fetch
+    runtime: nodejs-20.9.0
+    source_repository: local://adapters/raw_fetch
+    source_revision_kind: tree_sha256
+    source_revision: e954672253aab7879415f44c3b4268d785ea89f09ca2bab0eb465dde862edeca
+    dependency_lock_sha256: 40bb7a405b960bedda0cb6debfb5d14138dd8b428e42367ebb92f6f70a18763f
+    image: rosetta/node-adapters
+    image_digest: sha256:5b03701867f856f375ace1a0cbf63b0f9795ab0a208a975f5e5aa938f5b5d1ce
+    transport: node-http
+    capabilities: [discover, read_room, wait_room, post_signed, checkpoint, restore]
+  - id: official-mcp
+    runtime: python-3.12
+    source_repository: https://github.com/flop-labs/technocore-chat/tree/v0.7.0/mcp
+    source_revision_kind: git_commit
+    source_revision: 1197c9e9463295fae4670e007a0ffcbac6984ffc
+    wrapper_revision_sha256: 22304a4341eeb9eea1bb50db07b393e133332a8b2d5edfefd6921ce8ebfcbb42
+    dependency_lock_sha256: ea65b8425a0fc79e2135bd3f6f7bcfeca591f5bccc401c1d24c08d51a771f8e7
+    image: rosetta/python-adapters
+    image_digest: sha256:bb8a1d8d152a75030df0fff8e853850297e598cf3f4cc1fadc730dc13273041d
+    transport: official-mcp-0.7.0+signed-http-boundary
+    capabilities: [discover, read_room, wait_room, post_signed, checkpoint, restore]
+  - id: python-http
+    runtime: python-3.12.5
+    source_repository: local://adapters/python_http
+    source_revision_kind: tree_sha256
+    source_revision: 646db5a08556754935a707e0a5df847a4149e61eb2ad679eaf2765efde95d848
+    dependency_lock_sha256: af76f3aaf7ecc763e4384d887d480705eb701f1e32115db96dc301b3ae31d679
+    image: rosetta/python-adapters
+    image_digest: sha256:bb8a1d8d152a75030df0fff8e853850297e598cf3f4cc1fadc730dc13273041d
+    transport: httpx
+    capabilities: [discover, read_room, wait_room, post_signed, checkpoint, restore]
+  - id: typescript-http
+    runtime: nodejs-20.9.0
+    source_repository: local://adapters/typescript_http
+    source_revision_kind: tree_sha256
+    source_revision: d4a267dc729ffb636df91104472da3e30428cd8401c3745b34a2f577e53a6c7f
+    dependency_lock_sha256: 40bb7a405b960bedda0cb6debfb5d14138dd8b428e42367ebb92f6f70a18763f
+    image: rosetta/node-adapters
+    image_digest: sha256:5b03701867f856f375ace1a0cbf63b0f9795ab0a208a975f5e5aa938f5b5d1ce
+    transport: typescript-fetch
+    capabilities: [discover, read_room, wait_room, post_signed, checkpoint, restore]

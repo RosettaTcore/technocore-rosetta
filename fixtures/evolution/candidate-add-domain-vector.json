@@ -1,0 +1,17 @@
+{
+  "schema": "rosetta.evolution-candidate.v1",
+  "trigger": "coverage_gap",
+  "objective": "Add an independent deterministic regression vector for the evolution signing domain",
+  "parent_bundle_root": "sha256:c76200e6087a56537743e9b7b301baf3f6c41d074beeaae6033177e212a6be7b",
+  "parent_registry_sha256": "sha256:ec5d84bf951b356e5bcb993d8f84aaa9faeff76049c7865b59c5339ce64577f2",
+  "parent_source_sha256": "sha256:e3436ddaac3149a5663d2213bc12121aaa266856b522f61a8a230e704a7d03a0",
+  "proposed_at": "2026-08-26T00:00:00Z",
+  "mutations": [
+    {
+      "path": "tests/generated/test_evolution_domain_vector.py",
+      "operation": "create",
+      "expected_sha256": null,
+      "content_base64": "ZnJvbSByb3NldHRhX3NpZ25lci5kaWQgaW1wb3J0IGV2b2x1dGlvbl9wcm9wb3NhbF9wYXlsb2FkCgoKZGVmIHRlc3RfZXZvbHV0aW9uX3Byb3Bvc2FsX2RvbWFpbl92ZWN0b3IoKSAtPiBOb25lOgogICAgZGlnZXN0ID0gInNoYTI1NjoiICsgIjciICogNjQKICAgIGFzc2VydCBldm9sdXRpb25fcHJvcG9zYWxfcGF5bG9hZChkaWdlc3QpID09ICgKICAgICAgICBiInJvc2V0dGEuZXZvbHV0aW9uLXByb3Bvc2FsLnYxXHgwMCIgKyBkaWdlc3QuZW5jb2RlKCJhc2NpaSIpCiAgICApCg=="
+    }
+  ]
+}

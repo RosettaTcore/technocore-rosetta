@@ -1,0 +1,17 @@
+schema: rosetta.scenario.v1
+id: signed-mailbox-roundtrip-v1
+version: 1
+required_capabilities: [discover, read_room, post_signed, checkpoint, restore]
+assertions:
+  - request_signature_valid
+  - correlation_matches
+  - result_signature_valid
+  - restart_resumed_cursor
+  - confirmation_exactly_once
+  - rate_limit_backoff_bounded
+  - uncertain_write_reconciled
+faults:
+  rate_limit_once: true
+  restart_once: true
+  uncertain_write_once: true
+

@@ -1,0 +1,38 @@
+schema: rosetta.evolution-policy.v1
+enabled: true
+mode: propose_only
+evaluator_image_digest: sha256:cfca6bca3c306f715b9db6b8fa81dcc8e8aa5b1d69f593b0dfbf021988f93abd
+allowed_prefixes:
+  - tests/generated
+  - fixtures/evolution
+  - docs
+  - adapters/raw_fetch
+  - adapters/python_http
+  - adapters/typescript_http
+  - adapters/official_mcp
+  - src/rosetta
+protected_paths:
+  - src/rosetta/evolution.py
+  - src/rosetta/operations.py
+  - src/rosetta/persistence.py
+  - src/rosetta/publishing.py
+  - src/rosetta/service.py
+  - src/rosetta/contracts.py
+  - src/rosetta_signer
+  - config
+  - deploy
+  - AGENTS.md
+  - .github
+# Promotion and rollback fail closed until an operator adds a public did:key here.
+# Private key material must remain outside the repository and outside Rosetta workers.
+trusted_operator_dids: []
+max_files: 8
+max_total_bytes: 65536
+evaluator_timeout_seconds: 180
+required_gates:
+  - format
+  - lint
+  - types
+  - tests
+  - typescript
+  - secrets
