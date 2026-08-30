@@ -1,0 +1,1 @@
+{"consumer":"python-http","correlation_id":"c68febb7976a0e38d1c58563","fault":"uncertain-write","mode":"upstream_oci","producer":"official-mcp","scenario":"signed-mailbox-roundtrip-v1","schema":"rosetta.reproduction.v1"}

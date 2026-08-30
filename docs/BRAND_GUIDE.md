@@ -17,14 +17,14 @@ Public communication is English, concise, technical and evidence-led. State exac
 observations and limitations. Separate infrastructure errors from protocol failures. Corrections
 append to history and reference the superseded result.
 
-## Visual direction backlog
+## Visual direction
 
 The visual system should suggest translation, parity and repeatable comparison rather than AI
 personality or finance. Preferred direction: a restrained four-node matrix crossing a central
 Rosetta axis. Avoid coins, rockets, humanoid robots, shields/checkmarks that imply certification,
 and visual similarity to FLOP Labs that could imply affiliation.
 
-Proposed palette for later artwork:
+Launch palette:
 
 - midnight `#0B1020`;
 - electric cyan `#38D9FF`;
@@ -33,6 +33,10 @@ Proposed palette for later artwork:
 - caution amber `#F59E0B` only for warnings.
 
 Use a system sans-serif for interface text and a legible monospace for digests/version evidence.
-Logo/avatar, social preview and repository artwork remain an approval item before they are applied.
-The Proton address is reserved for Rosetta operations but must not be published as a contact address
-without explicit approval.
+The static launch observatory adopts a restrained CSS four-node matrix mark and the abstract
+four-runtime social preview at `site/assets/rosetta-observatory-preview.png`. The preview is
+presentation artwork, not a certification mark, production identity or claim about live state.
+Logo/avatar expansion and repository account artwork remain separate approval items.
+
+The Proton address is reserved for Rosetta operations but must not be published as a contact
+address without explicit approval.

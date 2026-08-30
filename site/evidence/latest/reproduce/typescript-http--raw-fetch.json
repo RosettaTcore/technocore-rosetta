@@ -1,0 +1,1 @@
+{"consumer":"raw-fetch","correlation_id":"66ed4acc173714bf7705af6c","fault":"none","mode":"upstream_oci","producer":"typescript-http","scenario":"signed-mailbox-roundtrip-v1","schema":"rosetta.reproduction.v1"}
