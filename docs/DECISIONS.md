@@ -205,3 +205,15 @@ digest across restarts. An unchanged poll updates only bounded health/state data
 creates one content-addressed local observation record. A change may later trigger the existing
 offline matrix and controlled evolution proposal lane, but it cannot alter code, configuration,
 deployment, identity or public behavior by itself. The model remains outside every verdict path.
+
+## ADR-036: Promote v0.10.0 only after immutable provenance and differential acceptance
+
+The first public read-only observation correctly failed closed when technocore.chat advertised
+v0.10.0 while staging was pinned to v0.7.0. Do not weaken that release gate. Promote v0.10.0 only
+after binding tag `v0.10.0` to verified commit
+`9c7df0e3616cf28d17e7c8ebeb0c05de6adf117c`, the exact archived-source and `uv.lock` hashes,
+and OCI index `sha256:077d4cb94c8b516a590a404620ec304284525b91cad912a34229627ca98e606b`
+with its amd64 and arm64 manifests. Preserve v0.7.0 as historical evidence rather than rewriting
+it. The v0.10.0 OpenSSL-to-libsodium verifier change must accept the same official deterministic
+vector, and the new 422 duplicate-filter refusal is explicitly non-retryable. A green four-runtime
+matrix, fault scenarios, soak and signed evidence bundle are required before staging activation.

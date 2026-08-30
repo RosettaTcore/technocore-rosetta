@@ -1,0 +1,8 @@
+{
+  "schema": "rosetta.upstream-signing-vector.v1",
+  "source": "technocore-chat v0.10.0 tests/_client.py::_keypair(seed=1)",
+  "source_commit": "9c7df0e3616cf28d17e7c8ebeb0c05de6adf117c",
+  "did": "did:key:z6Mkon3Necd6NkkyfoGoHxid2znGc59LU3K7mubaRcFbLfLX",
+  "message_utf8": "lobby|1|signed hello",
+  "signature_base64url_unpadded": "AEPjU7QmhoovIpBpyQ8qJMQvObYZ7PuxGZNWSfvkS4mrinjJbtUOIb-fCsmyiizPuDfuaEj3LAD4C7QllDLGAQ"
+}

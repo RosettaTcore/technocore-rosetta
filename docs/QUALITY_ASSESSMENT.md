@@ -1,6 +1,6 @@
 # Quality and effectiveness assessment
 
-Date: 26 August 2026
+Date: 30 August 2026
 
 ## Bottom line
 
@@ -11,16 +11,16 @@ production service and has not demonstrated longitudinal value on real release c
 
 | Dimension | Score | Evidence and caveat |
 |---|---:|---|
-| Protocol correctness | 9.0/10 | Official v0.7.0 target, source and signer vector; four real paths. The service does not retain signatures, so evidence correctly preserves the signed request. |
+| Protocol correctness | 9.3/10 | Official v0.10.0 target plus retained v0.7.0 history, exact source/OCI provenance and signer parity across the OpenSSL-to-libsodium change; four real paths. |
 | Security boundaries | 9.1/10 | Non-root/read-only containers, internal-only network, no secrets/mounts/socket, networkless signer, closed registry and shared kill switch. Evolution cannot rewrite its authority and needs a trusted external signature. Production key ceremonies are intentionally absent. |
-| Interoperability signal | 8.7/10 | Four cross-runtime cells plus differential reads and real MCP. One protocol release and one primary scenario limit breadth. |
+| Interoperability signal | 9.0/10 | Four cross-runtime cells, differential reads and real MCP now pass on a second protocol baseline. One primary scenario still limits breadth. |
 | Reliability | 8.6/10 | Restart, cursor, 429, uncertain writes, idempotency, crash-persistent controls, atomic evolution preflight/recovery, simultaneous four-runtime reads and a 20-iteration soak pass. This is not a long-duration load test. |
-| Reproducibility/auditability | 9.3/10 | Exact source/archive/lock/OCI identities, canonical artifacts, checksums, signed roots and evolution lineage binding the complete base/policy/evaluator. Local image IDs must be rebuilt and re-recorded on another host. |
-| Test quality | 9.3/10 | 122 tests, adversarial/property coverage, signature/package mutation, CI, local-push and dependency-update authority constraints, approval and rollback boundaries, 93.85% branch-aware coverage with a 90% ratchet, and 27 OCI checks. No full mutation-testing engine or high-volume stress campaign yet. |
+| Reproducibility/auditability | 9.5/10 | Exact v0.10.0 tag/commit, archive, lock, cross-platform OCI identities, vendored runtime subset, canonical artifacts, signed roots and evolution lineage. Local image IDs must still be rebuilt and recorded per architecture. |
+| Test quality | 9.4/10 | 171 tests, adversarial/property coverage, immutable-upstream checks, signature/backend parity, CI and authority constraints, 94.57% branch-aware coverage with a 90% ratchet, and 27 OCI checks. No full mutation-testing engine or high-volume stress campaign yet. |
 | Operations | 8.5/10 | Atomic quotas/budgets, persistent quarantine, bounded concurrency, backup rehearsal, safe defaults and cryptographically gated reversible promotion. No deployed alerting or operator rotation exists locally. |
-| Production readiness | 6.0/10 | Deployment artifacts exist, but hosting, production identity, monitoring, public discovery and external publication remain intentionally unprovisioned. |
+| Production readiness | 6.5/10 | A dedicated hardened host exists and the read-only stack is locally accepted; the upgraded observer still needs deployment and its 72-hour soak. Production identity, writes and publication remain intentionally absent. |
 
-Overall local-MVP quality: **9.0/10**. Current public-production readiness: **6.0/10**.
+Overall local-MVP quality: **9.2/10**. Current public-production readiness: **6.5/10**.
 
 ## Expected effectiveness
 

@@ -11,7 +11,7 @@ flowchart LR
     AR --> RS["Ephemeral runner supervisor"]
     RS --> A1["Runner A"]
     RS --> A2["Runner B"]
-    A1 --> LT["Pinned official Technocore v0.7.0"]
+    A1 --> LT["Pinned official Technocore v0.10.0"]
     A2 --> LT
     RS --> AS["Deterministic assertions"]
     AS --> EV["Redacted evidence + matrix"]
@@ -162,7 +162,8 @@ The MVP requires no model. If summary generation is later enabled, the model rec
 
 Local MVP:
 
-- pinned official Technocore v0.7.0 on an internal-only network;
+- pinned official Technocore v0.10.0 on an internal-only network for authoritative acceptance;
+- retained deterministic v0.7.0 behavioral fixture for historical replay;
 - orchestrator;
 - isolated signer with synthetic key;
 - runner supervisor and ephemeral adapters;

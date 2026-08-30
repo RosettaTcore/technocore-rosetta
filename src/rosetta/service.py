@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urlparse
 
 from pydantic import ValidationError
@@ -49,6 +49,7 @@ async def build_service_card(
     registry: AdapterRegistry,
     signer: Signer,
     base_url: str,
+    protocol_baseline: Literal["v0.7.0", "v0.10.0"],
     now: datetime,
     output_dir: Path,
 ) -> tuple[ServiceCard, dict[str, Any]]:
@@ -62,6 +63,7 @@ async def build_service_card(
             "did": did,
             "service_room": service_room,
             "request_mailbox": request_mailbox,
+            "protocol_baseline": protocol_baseline,
             "scenarios": ["signed-mailbox-roundtrip-v1"],
             "adapter_profiles": registry.ids,
             "request_schema_url": request_url,

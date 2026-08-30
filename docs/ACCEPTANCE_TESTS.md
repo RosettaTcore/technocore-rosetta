@@ -100,6 +100,8 @@
 ## Local integration and deployment readiness
 
 - [x] Pinned official Technocore v0.7.0 runs from an immutable OCI index digest.
+- [x] Pinned official Technocore v0.10.0 runs from an immutable OCI index digest with exact source,
+  lockfile, amd64 and arm64 provenance.
 - [x] Full four-cell demo runs without public network access.
 - [ ] No test contacts public Technocore unless explicitly marked and approved.
 - [ ] Backup/restore rehearsal succeeds with synthetic data.

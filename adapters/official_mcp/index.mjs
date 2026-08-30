@@ -7,4 +7,4 @@ if (message.operation !== "capabilities") {
 }
 process.stdout.write(`${JSON.stringify({ schema: "rosetta.adapter-result.v1", id: "official-mcp",
   operation: "capabilities", ok: true, runtime: "container-python-3.12",
-  transport: "official-mcp-0.7.0+signed-http-boundary" })}\n`);
+  transport: "official-mcp-0.10.0+signed-http-boundary" })}\n`);

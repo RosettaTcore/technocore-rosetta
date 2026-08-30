@@ -178,6 +178,7 @@ async def demo(
             registry,
             rosetta_signer,
             "https://reports.invalid",
+            "v0.7.0",
             DETERMINISTIC_TIME,
             output / "service",
         )
