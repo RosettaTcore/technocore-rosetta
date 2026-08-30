@@ -12,9 +12,9 @@ from typing import Any
 from pydantic import ValidationError
 
 from rosetta.contracts import SignRequest
-from rosetta_signer.did import SyntheticIdentity
+from rosetta_signer.did import SeedFileIdentity, SyntheticIdentity
 from rosetta_signer.nonce_store import NonceStore
-from rosetta_signer.protocol import SignerProtocol
+from rosetta_signer.protocol import SignerProtocol, SigningIdentity
 
 
 class UnixSignerService:
@@ -47,14 +47,20 @@ class UnixSignerService:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Rosetta networkless synthetic signer")
+    parser = argparse.ArgumentParser(description="Rosetta networkless signer")
     parser.add_argument("--socket", type=Path, required=True)
     parser.add_argument("--state", type=Path, required=True)
-    parser.add_argument("--synthetic-key-id", required=True)
+    identity = parser.add_mutually_exclusive_group(required=True)
+    identity.add_argument("--synthetic-key-id")
+    identity.add_argument("--seed-file", type=Path)
     args = parser.parse_args()
-    identity = SyntheticIdentity(args.synthetic_key_id)
+    signing_identity: SigningIdentity
+    if args.seed_file is not None:
+        signing_identity = SeedFileIdentity(args.seed_file)
+    else:
+        signing_identity = SyntheticIdentity(args.synthetic_key_id)
     store = NonceStore(args.state)
-    asyncio.run(UnixSignerService(SignerProtocol(identity, store), args.socket).run())
+    asyncio.run(UnixSignerService(SignerProtocol(signing_identity, store), args.socket).run())
 
 
 if __name__ == "__main__":

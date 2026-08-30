@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+from typing import Protocol
 
 from rosetta.contracts import SignRequest, SignResponse
 from rosetta_signer.canonical import signed_room_payload
 from rosetta_signer.did import (
-    SyntheticIdentity,
     artifact_payload,
     evolution_proposal_payload,
     service_document_payload,
@@ -15,8 +15,14 @@ from rosetta_signer.did import (
 from rosetta_signer.nonce_store import NonceStore
 
 
+class SigningIdentity(Protocol):
+    did: str
+
+    def sign(self, payload: bytes) -> str: ...
+
+
 class SignerProtocol:
-    def __init__(self, identity: SyntheticIdentity, store: NonceStore) -> None:
+    def __init__(self, identity: SigningIdentity, store: NonceStore) -> None:
         self._identity = identity
         self._store = store
 

@@ -1,11 +1,11 @@
 # Implementation backlog
 
-## Build execution status — 26 August 2026
+## Build execution status — 30 August 2026
 
 Phases 0–3 are implemented and pass both the deterministic historical fixture suite and the
-official upstream v0.10.0 OCI matrix. See `docs/LOCAL_MVP_STATUS.md`, `docs/QUALITY_ASSESSMENT.md` and
-`artifacts/upstream-acceptance-authoritative-v2/` for exact evidence. No Phase 4 or later external action was
-attempted.
+official upstream v0.10.0 OCI matrix. A separately approved no-ingress, read-only Phase 4 observer
+is running with zero public writes; its 72-hour gate remains open. See `docs/LOCAL_MVP_STATUS.md`
+and `docs/QUALITY_ASSESSMENT.md` for the measured baseline.
 
 Tasks are ordered. Codex may refine subtasks but must not skip gates.
 
@@ -93,16 +93,16 @@ candidate can modify or authorize its own authority boundary.
 
 ## Phase 4 — cloud read-only staging (explicit approval)
 
-- [ ] Re-run novelty landscape check and record nearest competitors.
+- [x] Re-run novelty landscape check and record nearest competitors.
 - [ ] Define the launch branding system: verify name/handle availability, create logo/avatar and
   repository artwork, document colors/type/voice, and apply it consistently to service cards,
   static reports and public discovery documents.
 - [x] Provision dedicated EU VPS/project.
-- [ ] Deploy the read-only observer and egress proxy; keep scheduler, runners and signer absent.
-- [ ] Verify runner and signer isolation.
+- [x] Deploy the read-only observer and egress proxy; keep scheduler, runners and signer absent.
+- [x] Verify runner and signer isolation.
 - [ ] Configure encrypted backups, alerts, budgets and kill switch.
 - [ ] Poll official release/manifest sources read-only for 72 hours.
-- [ ] Run public protocol probes only if they are read-only and within published limits.
+- [x] Run public protocol probes only if they are read-only and within published limits.
 
 Exit gate: security review plus explicit approvals for production DID, public test writes and report publication.
 

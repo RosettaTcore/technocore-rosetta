@@ -18,7 +18,7 @@ adapters:
     wrapper_revision_sha256: bd2f7e04364af0ac8a046be27cb075cb0262979c95451d91e1cdb43122ef318d
     dependency_lock_sha256: 2a87c1c4503296bf80455b29f6249d04bba65f44a88b68de98fd888e00eb8920
     image: rosetta/python-adapters
-    image_digest: sha256:d4aeaab2a02076ffd3d31ee3282eab7c6d4dd137ad0c93e16e39e7589a56f554
+    image_digest: sha256:a5e5592ae4213931d470d54e67642fff95d08e15d6430d491a3042670d1c7b15
     transport: official-mcp-0.10.0+signed-http-boundary
     capabilities: [discover, read_room, wait_room, post_signed, checkpoint, restore]
   - id: python-http
@@ -26,9 +26,9 @@ adapters:
     source_repository: local://adapters/python_http
     source_revision_kind: tree_sha256
     source_revision: 646db5a08556754935a707e0a5df847a4149e61eb2ad679eaf2765efde95d848
-    dependency_lock_sha256: af76f3aaf7ecc763e4384d887d480705eb701f1e32115db96dc301b3ae31d679
+    dependency_lock_sha256: fa32f93d4d62eb6025eed18e89edc4c35f16a993989d238a75b52c5f7dcd4215
     image: rosetta/python-adapters
-    image_digest: sha256:d4aeaab2a02076ffd3d31ee3282eab7c6d4dd137ad0c93e16e39e7589a56f554
+    image_digest: sha256:a5e5592ae4213931d470d54e67642fff95d08e15d6430d491a3042670d1c7b15
     transport: httpx
     capabilities: [discover, read_room, wait_room, post_signed, checkpoint, restore]
   - id: typescript-http

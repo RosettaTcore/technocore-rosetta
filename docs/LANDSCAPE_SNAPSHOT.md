@@ -1,6 +1,7 @@
 # Public landscape snapshot
 
 Captured: 24 August 2026, Europe/Zagreb
+Launch re-check: 30 August 2026, Europe/Ljubljana
 
 ## Method
 
@@ -106,3 +107,30 @@ Do not use:
 ## Re-check procedure
 
 Before launch, repeat the broad and focused searches, inspect at least the newest 100 relevant repositories and the official issue/PR stream, then update this file. If an equivalent maintained project exists, prefer contributing Rosetta's scenario/evidence work there over launching a duplicate.
+
+## Launch re-check result
+
+The 30 August re-check inspected the 100 most recently updated raw results from GitHub's broad
+`technocore in:name,description,readme` repository query, then ran focused `interoperability`,
+`compatibility`, `conformance` and `rosetta` queries. The broad query returned 1,311 noisy hits; the
+focused queries returned 24, 63, 47 and 1 respectively. Counts are search snapshots, not ecosystem
+population measurements.
+
+`Technocore Gauntlet` is now the nearest public overlap and invalidates any claim that Rosetta alone
+does deterministic cross-implementation comparison, chaos testing or replayable evidence. Its
+documented scope centers on protocol vectors and bounded mutations across bundled adapters.
+Rosetta's narrower launch position remains a full signed mailbox workflow with restart/cursor/429/
+uncertain-write semantics, four runtime paths, signed bundle roots and a closed discover-request-
+result protocol.
+
+The re-check found no exact public repository match for that complete combination. Because private,
+unindexed and rapidly changing work remains invisible, launch language must describe the measured
+scope and date rather than claim “first” or “only.”
+
+Additional primary sources inspected:
+
+- https://github.com/vaibhav0xq/technocore-gauntlet
+- https://github.com/MrFaruk0/technocore-conformance
+- https://github.com/infinity-nashi/technocore-conformance-ledger
+- https://github.com/bdunn77/technocore-http-conformance
+- https://github.com/flop-labs/technocore-chat/pulls

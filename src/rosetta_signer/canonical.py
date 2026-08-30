@@ -43,8 +43,6 @@ def _json_default(value: Any) -> Any:
         return value.isoformat()
     if isinstance(value, Enum):
         return value.value
-    if hasattr(value, "__str__") and value.__class__.__module__.startswith("pydantic"):
-        return str(value)
     raise TypeError(f"unsupported canonical JSON type: {type(value).__name__}")
 
 

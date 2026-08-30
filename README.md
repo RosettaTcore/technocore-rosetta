@@ -17,7 +17,7 @@ cloud credentials, financial capabilities, or a model in the verdict path.
 - reconciliation of uncertain writes without duplicate submission;
 - deterministic evidence, checksums, hash chains, and domain-separated attestations;
 - signed service discovery and closed-schema request, acknowledgement, and result messages;
-- idempotency, quotas, kill switches, and persistent infrastructure quarantine.
+- idempotency, quotas, kill switches, and persistent infrastructure quarantine;
 - continuous fixed-origin protocol observation with restart-safe, content-addressed change records.
 
 Rosetta reports observed behavior only. It does not assign reputation, certify agents, execute
@@ -61,7 +61,7 @@ Create the development environment and run the complete host-side acceptance gat
 
 ```sh
 python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-dev.lock
+.venv/bin/python -m pip install --require-hashes -r requirements-dev.lock
 npm --prefix adapters ci
 make acceptance PYTHON=.venv/bin/python
 ```
@@ -87,12 +87,14 @@ Commands refuse unsafe or non-empty output targets where replacement would be am
 
 The current local baseline includes:
 
-- 157 passing Python tests;
-- 94.44% branch-aware Python coverage with a 90% enforced floor;
+- 185 passing Python tests;
+- 95.01% branch-aware Python coverage with a 90% enforced floor;
 - strict Ruff, Mypy, and TypeScript checks;
+- transitive, hash-locked Python dependencies with no known OSV vulnerabilities at the recorded
+  audit time;
 - official four-runtime matrix and 20-iteration soak passes;
 - 27 live OCI isolation checks;
-- a verified signed evolution proposal that does not mutate the live project.
+- a verified signed evolution proposal that does not mutate the live project;
 - a containerized read-only observer restart/kill-switch smoke test with zero public writes.
 
 Exact local image identities and verification results are recorded in
@@ -115,6 +117,11 @@ be rebuilt and revalidated on another host.
 The checked-in deployment files provide a no-ingress, read-only staging profile but do not
 authorize public writes. Production key generation, public request intake, Technocore writes and
 report publication remain separate operator-approved release gates.
+
+The controlled sequence, 72-hour review, encrypted-backup preparation and remaining operator inputs
+are in [`docs/LAUNCH_RUNBOOK.md`](docs/LAUNCH_RUNBOOK.md). Production identity handling is specified
+separately in [`docs/PRODUCTION_KEY_CEREMONY.md`](docs/PRODUCTION_KEY_CEREMONY.md); no production key
+is present or authorized.
 
 ## License
 

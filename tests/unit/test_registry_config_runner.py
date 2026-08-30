@@ -22,6 +22,9 @@ def test_registry_is_immutable_and_complete() -> None:
     assert registry.digest.startswith("sha256:")
     with pytest.raises(ValueError):
         registry.require("public-message-selected")
+    assert registry.contains_exact(registry.contract.adapters[0])
+    changed = registry.contract.adapters[0].copy(update={"runtime": "changed"})
+    assert not registry.contains_exact(changed)
 
 
 def test_mutable_manifest_is_rejected() -> None:
@@ -66,6 +69,11 @@ def test_runner_spec_is_non_root_read_only_and_has_no_authority() -> None:
     assert str(spec["image"]).startswith("sha256:")
     with pytest.raises(ValueError):
         RunnerPolicy().validate(["run", "--privileged"])
+    valid = RunnerPolicy().docker_arguments(registry.contract.adapters[0])
+    with pytest.raises(ValueError, match="forbidden"):
+        RunnerPolicy().validate([*valid, "--network=host"])
+    with pytest.raises(ValueError, match="operational gate"):
+        RunnerSupervisor(registry)
 
 
 @pytest.mark.parametrize(

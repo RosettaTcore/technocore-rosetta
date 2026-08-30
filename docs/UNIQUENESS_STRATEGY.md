@@ -85,6 +85,13 @@ Before the first public announcement and every major roadmap expansion:
 4. if an equivalent project exists, contribute an adapter or evidence format there instead of launching a clone;
 5. publish a narrow differentiation claim, never “the first” without stronger proof.
 
+The 30 August 2026 launch re-check passed only with narrowed positioning. Technocore Gauntlet now
+substantially overlaps static conformance, cross-implementation comparison, bounded chaos and
+replayable evidence. Rosetta must lead with end-to-end mailbox state-machine behavior, signed
+bundle roots and the closed autonomous service loop. If Gauntlet or another maintained project
+adds the same full workflow, collaboration or an adapter/evidence contribution is preferred over
+duplicative promotion.
+
 ## Expansion path
 
 Only after the core matrix produces value:

@@ -57,3 +57,31 @@ def test_systemd_supervises_the_whole_compose_boundary() -> None:
     assert "Restart=on-failure" in unit
     assert "EnvironmentFile=/etc/rosetta/staging.env" in unit
     assert "deploy/compose.staging.yaml" in unit
+
+
+def test_staging_health_and_backup_timers_are_local_and_fail_closed() -> None:
+    health = (ROOT / "deploy/rosetta-healthcheck.service").read_text()
+    backup = (ROOT / "deploy/rosetta-backup.service").read_text()
+    assert "tools/staging_status.py" in health
+    assert "--expected-release v0.10.0" in health
+    assert "ReadOnlyPaths=/var/lib/rosetta/state /var/lib/rosetta/evidence" in health
+    assert "User=65532" in health
+    assert "CapabilityBoundingSet=" in health
+    assert "tools/export_encrypted_backup.sh" in backup
+    assert "/etc/rosetta/backup-recipient.txt" in backup
+    assert "ReadWritePaths=/var/backups/rosetta/encrypted" in backup
+    assert "User=65532" in backup
+    assert "CapabilityBoundingSet=" in backup
+    assert "http" not in backup.lower()
+
+
+def test_production_signer_uses_encrypted_credential_and_no_network() -> None:
+    unit = (ROOT / "deploy/rosetta-signer.production.service").read_text()
+    assert "LoadCredentialEncrypted=rosetta.seed:" in unit
+    assert "--seed-file %d/rosetta.seed" in unit
+    assert "PrivateNetwork=yes" in unit
+    assert "RestrictAddressFamilies=AF_UNIX" in unit
+    assert "CapabilityBoundingSet=" in unit
+    assert "ProtectKernelTunables=yes" in unit
+    assert "Environment=" not in unit
+    assert "synthetic" not in unit.lower()

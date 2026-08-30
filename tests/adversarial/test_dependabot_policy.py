@@ -29,9 +29,27 @@ def test_dependabot_updates_are_bounded_and_exclude_runtime_images() -> None:
         }
         assert entry["cooldown"]["default-days"] >= 7
         if ecosystem == "pip":
-            assert entry["open-pull-requests-limit"] == 0
+            assert 0 < entry["open-pull-requests-limit"] <= 2
             assert "versioning-strategy" not in entry
         else:
             assert 0 < entry["open-pull-requests-limit"] <= 2
         assert "groups" not in entry
         assert "target-branch" not in entry
+
+
+def test_python_installations_enforce_hashes_and_lock_regeneration() -> None:
+    workflow = (PROJECT_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runtime_dockerfile = (PROJECT_ROOT / "deploy/Dockerfile").read_text(encoding="utf-8")
+    adapter_dockerfile = (PROJECT_ROOT / "deploy/Dockerfile.adapters-python").read_text(
+        encoding="utf-8"
+    )
+    evaluator_dockerfile = (PROJECT_ROOT / "deploy/Dockerfile.evolution-evaluator").read_text(
+        encoding="utf-8"
+    )
+    assert workflow.count("--require-hashes --requirement requirements-dev.lock") == 2
+    assert workflow.count("make lock-check UV=uv") == 2
+    assert "--require-hashes --requirement requirements.lock" in runtime_dockerfile
+    assert "--require-hashes --requirement requirements.lock" in adapter_dockerfile
+    assert "--require-hashes --requirement requirements-dev.lock" in evaluator_dockerfile
+    assert (PROJECT_ROOT / "requirements.in").is_file()
+    assert (PROJECT_ROOT / "requirements-dev.in").is_file()

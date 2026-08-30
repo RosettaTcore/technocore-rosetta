@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import os
+import stat
+from pathlib import Path
 from typing import Final
 
 from cryptography.exceptions import InvalidSignature
@@ -78,6 +81,36 @@ class SyntheticIdentity:
             b"rosetta.synthetic.identity.v1\x00" + fixture_id.encode()
         ).digest()
         self._private = Ed25519PrivateKey.from_private_bytes(private_bytes)
+        public = self._private.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+        self.did = did_from_public_key(public)
+
+    def sign(self, payload: bytes) -> str:
+        return base64url(self._private.sign(payload))
+
+
+class SeedFileIdentity:
+    """Production-capable identity loaded only from a strict raw secret file."""
+
+    def __init__(self, path: Path) -> None:
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        descriptor = os.open(path, flags)
+        seed = bytearray()
+        try:
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode):
+                raise ValueError("seed file must be regular")
+            if metadata.st_uid != os.geteuid():
+                raise ValueError("seed file must be owned by signer user")
+            if stat.S_IMODE(metadata.st_mode) & 0o077:
+                raise ValueError("seed file permissions are too broad")
+            seed.extend(os.read(descriptor, 33))
+            if len(seed) != 32:
+                raise ValueError("seed file must contain exactly 32 raw bytes")
+            self._private = Ed25519PrivateKey.from_private_bytes(bytes(seed))
+        finally:
+            os.close(descriptor)
+            for index in range(len(seed)):
+                seed[index] = 0
         public = self._private.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
         self.did = did_from_public_key(public)
 

@@ -9,6 +9,8 @@ acceptance path runs the official Technocore `v0.10.0` image while preserving th
 fixture and evidence for historical replay. No public Technocore write,
 production DID, publisher or public service intake was used. Source control uses a
 dedicated private GitHub repository and identity, separate from the operator's other projects.
+The no-ingress read-only observer is running on its dedicated staging host; its 72-hour gate is not
+yet complete.
 
 ## Implemented
 
@@ -34,18 +36,24 @@ dedicated private GitHub repository and identity, separate from the operator's o
   policy, evaluator and exact mutation bytes;
 - pinned networkless evolution evaluator with six fixed gates, signed proposal lineage, empty-by-
   default operator trust, cryptographic promotion/rollback approval and crash-recoverable backups;
-- deployment/container templates, secret scan, backup rehearsal and operator documentation;
+- deployment/container templates, secret scan, backup rehearsal, fail-closed staging status check,
+  encrypted-backup/health timer templates and operator documentation;
+- strict production seed-file loading and a networkless systemd signer template without generating
+  or storing a production seed;
+- universal Python 3.10+ transitive hash locks and a reproducible lock-drift gate;
 - long-running read-only observer with fixed-path egress, restart deduplication, atomic health/
   evidence state, host kill switch and one-server staging artifacts.
 
 ## Verified results
 
-- Pytest: 171/171 pass;
-- branch-aware Python coverage: 94.57%, enforced floor 90%;
+- Pytest: 185/185 pass;
+- branch-aware Python coverage: 95.01%, enforced floor 90%;
 - Ruff lint/security: pass;
 - Mypy strict: pass for 31 source modules;
 - TypeScript strict check: pass;
-- secret scan: pass over 181 files;
+- secret scan: pass over 198 files;
+- fresh install from the development hash lock: pass; `pip check`: pass;
+- recorded runtime dependency OSV batch query: no known vulnerabilities;
 - official upstream matrix: 4/4 cells pass;
 - upstream soak: 20/20 isolated reads pass;
 - simultaneous four-runtime isolated reads: pass;
@@ -53,13 +61,15 @@ dedicated private GitHub repository and identity, separate from the operator's o
 - uncertain write reconciled with no retry: pass;
 - signed upstream bundle verification: pass;
 - upstream v0.10.0 bundle root:
-  `sha256:ce6116deb8653acc6dea47b99aa412f44eaa4039a867d7b00847c15bcd0af7ac`;
+  `sha256:0b3435df9b0f6eb8b1ac2eaab22120a0b14730764fceaa9d1a701860f43c1b9f`;
 - live OCI isolation: 27/27 checks pass;
-- rebuilt v0.10.0 worker image:
-  `sha256:632187133be6207b45d784b10ecb3a137713c41c9084badd8ab50e453158fe2f`;
+- launch-readiness runtime image:
+  `sha256:e45c4429997ea36a9bbeb2b0bd152ad50e8b9edc872bc29a30d79a3e8082fd6e`;
+- launch-readiness Python adapter image:
+  `sha256:a5e5592ae4213931d470d54e67642fff95d08e15d6430d491a3042670d1c7b15`;
 - local discovery/service/idempotency demo: pass with zero public writes;
 - local service bundle root:
-  `sha256:1347f14c215b65045a7b6f499aa5a4804ab1fa84d401b42dfe1445a189f725bd`;
+  `sha256:df2b05c5ab3d1c12c266287b51f92fcd00f1936e6dadbaabab9d27a5dafd9c16`;
 - real evolution evaluator: all six gates pass with no network, read-only source, non-root UID,
   dropped capabilities and bounded resources;
 - evolution proposal verification: pass; state `awaiting_human_approval`, live project unchanged,
@@ -70,19 +80,19 @@ dedicated private GitHub repository and identity, separate from the operator's o
   or direct worker egress;
 - observer container smoke: initial change evidence pass, restart deduplication pass, kill switch
   pass and `public_writes: 0` throughout;
-- first public read-only one-shot failed closed on the expected v0.7.0/v0.10.0 release mismatch,
-  emitted no public write and was stopped; v0.10.0 is now fully provenance-bound and locally
-  accepted before a second deployment attempt.
+- deployed observer check on 30 August 2026: service active/enabled, zero restarts, healthy
+  `dry_run` state and `public_writes: 0`; the deployed commit remains `4d2a374...` until this
+  launch-readiness change is reviewed and merged.
 
 ## Remaining production-only work
 
-- independent operator security review and a longer multi-hour/day soak;
+- completion and human review of the running 72-hour staging soak;
 - production key-generation/recovery ceremony and secret-store provisioning;
 - operator approval-key ceremony and addition of its public DID to protected evolution policy;
-- staging deployment/72-hour observation, alert delivery and encrypted off-device backup;
-- fresh landscape/uniqueness check immediately before launch;
-- separately approved read-only staging, then separately approved public signed writes and static
-  publication.
+- external alert delivery and an independently controlled encrypted off-device backup destination;
+- branding artwork and public contact-surface approval;
+- static publication destination, bounded public intake and exact first signed payload approvals;
+- production deployment of the reviewed, signed release after all applicable gates pass.
 
 The repository is version-controlled in its dedicated private remote. CI and deployment files do
 not authorize a deployment, production identity, public service intake or external publication.

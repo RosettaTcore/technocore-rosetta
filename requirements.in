@@ -1,0 +1,5 @@
+# Reviewed runtime inputs. Compile with tools/lock_requirements.sh; do not edit requirements.lock.
+cryptography==50.0.1
+httpx==0.28.1
+pydantic==1.10.26
+PyYAML==6.0.3

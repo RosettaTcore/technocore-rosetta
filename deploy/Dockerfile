@@ -15,7 +15,7 @@ RUN addgroup --system --gid 65532 rosetta && \
 
 WORKDIR /opt/rosetta
 COPY requirements.lock pyproject.toml ./
-RUN python -m pip install --no-cache-dir --requirement requirements.lock
+RUN python -m pip install --no-cache-dir --require-hashes --requirement requirements.lock
 COPY src ./src
 COPY config ./config
 COPY adapters ./adapters

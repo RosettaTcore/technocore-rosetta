@@ -1,4 +1,4 @@
-.PHONY: format lint type typescript test coverage unit integration adversarial secret-scan demo verify evolution-image evolution-verify container-acceptance upstream-acceptance acceptance install-hooks
+.PHONY: format lint type typescript test coverage unit integration adversarial secret-scan demo verify evolution-image evolution-verify container-acceptance upstream-acceptance acceptance install-hooks lock lock-check
 
 PYTHON ?= python3
 PYTHONPATH := src:.
@@ -7,6 +7,12 @@ install-hooks:
 	git config --local core.hooksPath .githooks
 	test "$$(git config --local core.hooksPath)" = ".githooks"
 	test -x .githooks/pre-push
+
+lock:
+	UV=$(UV) tools/lock_requirements.sh
+
+lock-check:
+	UV=$(UV) tools/check_requirements_lock.sh
 
 format:
 	$(PYTHON) tools/quality.py format
@@ -33,7 +39,10 @@ test:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m pytest
 
 coverage:
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m pytest --cov --cov-report=term-missing --cov-report=json:artifacts/coverage.json
+	$(PYTHON) -m coverage erase
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m coverage run -m pytest
+	$(PYTHON) -m coverage json -o artifacts/coverage.json
+	$(PYTHON) -m coverage report
 
 secret-scan:
 	$(PYTHON) tools/secret_scan.py
