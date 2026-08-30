@@ -217,3 +217,34 @@ with its amd64 and arm64 manifests. Preserve v0.7.0 as historical evidence rathe
 it. The v0.10.0 OpenSSL-to-libsodium verifier change must accept the same official deterministic
 vector, and the new 422 duplicate-filter refusal is explicitly non-retryable. A green four-runtime
 matrix, fault scenarios, soak and signed evidence bundle are required before staging activation.
+
+## ADR-037: Universal transitive hash locks are deployment inputs
+
+The former `requirements*.lock` files pinned only direct packages and allowed pip to choose mutable
+transitive versions during each build. Use pinned `uv` to compile universal Python 3.10+ lock files
+from reviewed `requirements*.in`, include distribution hashes and require hashes in CI and every
+Python container build. CI regenerates the locks with existing pins and rejects drift. Dependency
+updates remain bounded pull requests and must pass the full acceptance gate; the lock tool itself is
+installed from the hash-locked development set.
+
+The launch audit also found published advisories affecting the previous `cryptography`, `h11` and
+`pydantic` versions. Runtime inputs were upgraded before pilot packaging rather than preserving
+known-vulnerable bytes for superficial reproducibility.
+
+## ADR-038: Production signing keys enter only through a strict credential file
+
+Keep synthetic label-derived identities for deterministic local evidence. A production signer may
+instead load exactly 32 raw bytes from a regular, owner-only, signer-owned file opened without
+following symlinks. The file path is not secret; seed bytes never enter arguments, environment,
+logs, worker state or the repository. The production systemd unit uses an encrypted systemd
+credential and retains the existing private network and AF_UNIX-only boundary. Key creation,
+backup, provisioning and first use remain explicit operator ceremonies.
+
+## ADR-039: Local health failure and encrypted backup are necessary but not sufficient alerts
+
+Run a fail-closed offline staging validator on a systemd timer. It checks health freshness, dry-run
+mode, zero writes, pinned release, content-addressed evidence, SQLite integrity/counts, kill switch
+and disk budget. Create consistent backups with SQLite's backup API and stream the snapshot directly
+through Age encryption; the server stores no Age secret key. A systemd failure is durable local
+evidence, not an external notification. Pilot launch still requires an independently controlled
+alert destination and off-device copy.

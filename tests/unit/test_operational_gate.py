@@ -6,6 +6,7 @@ import pytest
 
 from rosetta.cli import _registry
 from rosetta.contracts import SignRequest, SignResponse
+from rosetta.observability import Metrics
 from rosetta.operations import OperationalGate
 from rosetta.persistence import StateStore
 from rosetta.publishing import StaticPublisher
@@ -102,3 +103,19 @@ def test_parallel_slots_are_bounded(tmp_path: Path) -> None:
         store.close()
 
     asyncio.run(exercise())
+
+
+def test_monthly_budget_and_invalid_metric_name_fail_closed(tmp_path: Path) -> None:
+    store = StateStore(tmp_path / "state.sqlite3")
+    gate = OperationalGate(
+        store,
+        tmp_path / "KILL_SWITCH",
+        max_runs_per_day=4,
+        monthly_budget_cents=1,
+    )
+    with pytest.raises(RuntimeError, match="monthly_budget_exceeded"):
+        gate.reserve_run(NOW, 2)
+    metrics = Metrics()
+    with pytest.raises(ValueError, match="closed identifiers"):
+        metrics.increment("unsafe.metric")
+    store.close()

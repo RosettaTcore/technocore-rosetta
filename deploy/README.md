@@ -21,3 +21,10 @@ using the non-root/read-only/no-mount policy recorded in each evidence run.
 observer and a separate fixed-origin/fixed-path egress proxy, publishes no ports, mounts no secret
 and contains no signer. `rosetta-observer.service` supervises both on the single pilot host. Follow
 `docs/DEPLOYMENT.md`; do not enable public writes by editing this profile.
+
+`rosetta-healthcheck.service`/`.timer` validate the read-only state without network access.
+`rosetta-backup.service`/`.timer` create Age-encrypted snapshots using only a public recipient on the
+server. `rosetta-signer.production.service` is a disabled template that loads a machine-encrypted
+systemd credential into the networkless signer. None of these units authorize production key
+creation, public signing or publication; follow `docs/LAUNCH_RUNBOOK.md` and the separate key
+ceremony.

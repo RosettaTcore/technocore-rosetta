@@ -1,6 +1,8 @@
 import asyncio
 import json
+import os
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
@@ -9,6 +11,7 @@ from rosetta.contracts import SignRequest
 from rosetta.signer_client import ProcessSignerClient, SignerClient
 from rosetta_signer.canonical import signed_room_payload
 from rosetta_signer.did import (
+    SeedFileIdentity,
     SyntheticIdentity,
     artifact_payload,
     b58decode,
@@ -195,3 +198,50 @@ def test_did_encoding_and_digest_validation_edges() -> None:
     with pytest.raises(ValueError, match="hexadecimal"):
         artifact_payload("sha256:" + "G" * 64)
     assert not verify_signature(EXPECTED_DID, b"payload", "short")
+
+
+def test_seed_file_identity_requires_exact_private_regular_file(tmp_path: Path) -> None:
+    seed_path = tmp_path / "seed"
+    seed_path.write_bytes(bytes(range(32)))
+    seed_path.chmod(0o600)
+    identity = SeedFileIdentity(seed_path)
+    signature = identity.sign(b"bounded payload")
+    assert verify_signature(identity.did, b"bounded payload", signature)
+
+    seed_path.chmod(0o644)
+    with pytest.raises(ValueError, match="permissions"):
+        SeedFileIdentity(seed_path)
+    seed_path.chmod(0o600)
+    seed_path.write_bytes(b"short")
+    with pytest.raises(ValueError, match="exactly 32"):
+        SeedFileIdentity(seed_path)
+
+
+def test_seed_file_identity_rejects_symlink(tmp_path: Path) -> None:
+    seed_path = tmp_path / "seed"
+    seed_path.write_bytes(bytes(range(32)))
+    seed_path.chmod(0o600)
+    link = tmp_path / "seed-link"
+    link.symlink_to(seed_path)
+    with pytest.raises(OSError):
+        SeedFileIdentity(link)
+
+
+def test_seed_file_identity_rejects_non_regular_and_wrong_owner(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with pytest.raises(ValueError, match="regular"):
+        SeedFileIdentity(tmp_path)
+
+    seed_path = tmp_path / "seed"
+    seed_path.write_bytes(bytes(range(32)))
+    seed_path.chmod(0o600)
+    actual_fstat = os.fstat
+
+    def wrong_owner(descriptor: int) -> SimpleNamespace:
+        metadata = actual_fstat(descriptor)
+        return SimpleNamespace(st_mode=metadata.st_mode, st_uid=os.geteuid() + 1)
+
+    monkeypatch.setattr(os, "fstat", wrong_owner)
+    with pytest.raises(ValueError, match="owned"):
+        SeedFileIdentity(seed_path)

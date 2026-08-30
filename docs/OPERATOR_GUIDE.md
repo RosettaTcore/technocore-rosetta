@@ -18,16 +18,22 @@ From the repository root:
 
 ```sh
 python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-dev.lock
+.venv/bin/python -m pip install --require-hashes -r requirements-dev.lock
 .venv/bin/ruff format --check src tests tools
 .venv/bin/ruff check src tests tools
 .venv/bin/mypy src
 PYTHONPATH=src:. .venv/bin/python -m pytest
-PYTHONPATH=src:. .venv/bin/python -m pytest \
-  --cov=rosetta --cov=rosetta_signer --cov-fail-under=90 --cov-report=term-missing \
-  --cov-report=json:artifacts/coverage.json
+.venv/bin/python -m coverage erase
+PYTHONPATH=src:. .venv/bin/python -m coverage run -m pytest
+.venv/bin/python -m coverage json -o artifacts/coverage.json
+.venv/bin/python -m coverage report
 .venv/bin/python tools/secret_scan.py
 ```
+
+`requirements.lock` and `requirements-dev.lock` contain the complete transitive resolution and
+distribution hashes. Change only `requirements*.in`, run `make lock UV=.venv/bin/uv`, then run
+`make lock-check UV=.venv/bin/uv`. CI and all Python container builds reject missing or mismatched
+hashes.
 
 ## Controlled evolution
 

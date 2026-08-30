@@ -10,10 +10,9 @@ updates:
       timezone: Europe/Ljubljana
     cooldown:
       default-days: 7
-    # The hand-maintained requirements*.lock files are not updated by Dependabot. Keep routine pip
-    # proposals off until the project adopts a supported deterministic lock generator. Dependabot
-    # security updates use a separate internal limit and remain enabled in repository settings.
-    open-pull-requests-limit: 0
+    # Python dependency proposals must update requirements*.in, regenerate both hash-locked files
+    # with tools/lock_requirements.sh and pass the deterministic lock check.
+    open-pull-requests-limit: 2
     commit-message:
       prefix: deps
 

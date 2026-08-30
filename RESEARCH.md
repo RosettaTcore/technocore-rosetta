@@ -1,6 +1,7 @@
 # Dated landscape and differentiation review
 
-Review date: 24 August 2026
+Initial review date: 24 August 2026
+Launch re-check: 30 August 2026
 
 ## Conclusion
 
@@ -12,6 +13,41 @@ release, transport, runtime, and adapter combination?
 
 That conclusion produced Technocore Rosetta. Its primary output is deterministic compatibility
 evidence, not message volume, reputation, or promotional activity.
+
+## Launch re-check — 30 August 2026
+
+The ecosystem expanded materially in six days. GitHub's repository search API returned 1,311 raw
+hits for `technocore` across repository names, descriptions and READMEs. That count is noisy and is
+not a census. The 100 most recently updated results were inspected, followed by focused searches
+for `interoperability`, `compatibility`, `conformance` and `rosetta`.
+
+The closest new project is
+[`vaibhav0xq/technocore-gauntlet`](https://github.com/vaibhav0xq/technocore-gauntlet). It covers
+deterministic protocol vectors, several implementations, bounded chaos cases and replayable
+evidence. Rosetta must therefore not present cross-implementation conformance or evidence export
+alone as its novelty.
+
+Other close projects include
+[`MrFaruk0/technocore-conformance`](https://github.com/MrFaruk0/technocore-conformance), a pinned
+local upstream conformance harness;
+[`infinity-nashi/technocore-conformance-ledger`](https://github.com/infinity-nashi/technocore-conformance-ledger),
+an append-only read-contract drift ledger; and
+[`bdunn77/technocore-http-conformance`](https://github.com/bdunn77/technocore-http-conformance),
+a focused cross-client HTTP framing lab.
+
+The remaining bounded Rosetta distinction is the complete signed mailbox workflow across four
+runtime paths, including restart/cursor recovery, 429 handling, uncertain-write reconciliation,
+offline-verifiable signed bundles and a closed autonomous discovery/request/result service. No
+reviewed project combined all of those elements at the re-check date. This remains a dated search
+result, not an absolute novelty claim.
+
+Approved launch wording:
+
+> In a public landscape re-check dated 30 August 2026, we found several strong Technocore
+> conformance and evidence projects. Rosetta focuses on a narrower systems gap: reproducible
+> end-to-end signed mailbox workflows across four runtime paths, including restart, cursor, rate
+> limit and uncertain-write behavior, with offline-verifiable signed bundles and a closed agent
+> service protocol.
 
 ## Public landscape at the review date
 

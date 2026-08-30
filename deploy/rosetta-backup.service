@@ -1,0 +1,27 @@
+[Unit]
+Description=Create an encrypted Technocore Rosetta staging backup
+After=rosetta-observer.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/rosetta/current
+ExecStart=/opt/rosetta/current/tools/export_encrypted_backup.sh /var/lib/rosetta/state /var/lib/rosetta/evidence /etc/rosetta/backup-recipient.txt /var/backups/rosetta/encrypted
+User=65532
+Group=65532
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+ReadOnlyPaths=/var/lib/rosetta/state /var/lib/rosetta/evidence /etc/rosetta/backup-recipient.txt /opt/rosetta/current
+ReadWritePaths=/var/backups/rosetta/encrypted

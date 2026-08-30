@@ -1,0 +1,25 @@
+[Unit]
+Description=Validate Technocore Rosetta read-only staging state
+After=rosetta-observer.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/rosetta/current
+ExecStart=/usr/bin/python3 tools/staging_status.py --state-dir /var/lib/rosetta/state --evidence-dir /var/lib/rosetta/evidence --expected-release v0.10.0 --max-age-seconds 660 --min-observations 1 --max-evidence-bytes 104857600
+User=65532
+Group=65532
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+ReadOnlyPaths=/var/lib/rosetta/state /var/lib/rosetta/evidence /opt/rosetta/current

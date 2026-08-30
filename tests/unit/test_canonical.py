@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 from enum import Enum
 
 import pytest
+from pydantic import AnyHttpUrl, parse_obj_as
 
 from rosetta_signer.canonical import canonical_json, signed_room_payload, sweep_text
 
@@ -59,3 +60,8 @@ def test_canonical_json_supported_types_and_nested_validation() -> None:
         canonical_json({"nested": [float("inf")]})
     with pytest.raises(TypeError, match="unsupported"):
         canonical_json({"object": object()})
+
+
+def test_canonical_json_serializes_validated_pydantic_url_as_text() -> None:
+    url = parse_obj_as(AnyHttpUrl, "https://example.invalid/service-card.json")
+    assert canonical_json({"url": url}) == b'{"url":"https://example.invalid/service-card.json"}'

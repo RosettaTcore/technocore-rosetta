@@ -16,7 +16,7 @@ RUN addgroup --system --gid 65532 evaluator && \
 
 WORKDIR /opt/evaluator
 COPY requirements.lock requirements-dev.lock pyproject.toml ./
-RUN python -m pip install --no-cache-dir --requirement requirements-dev.lock
+RUN python -m pip install --no-cache-dir --require-hashes --requirement requirements-dev.lock
 COPY --from=node-tools /usr/local/bin/node /usr/local/bin/node
 COPY --from=node-tools /opt/node-tools/node_modules ./node_modules
 COPY tools/evolution_container_gate.py ./evolution_container_gate.py

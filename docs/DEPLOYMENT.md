@@ -76,6 +76,12 @@ Discovery does not require an inbound application service. Peers read static doc
 - Retain immutable published bundle roots locally.
 - Never rely on Technocore as recovery storage.
 
+`rosetta-backup.service` uses SQLite's live backup API and streams a temporary snapshot directly
+through Age encryption. The server receives only an Age public recipient and must never hold the
+matching secret key. `rosetta-healthcheck.service` validates health/evidence/SQLite state locally;
+its timer failure must be connected to an independently controlled external alert destination
+before public service intake. Exact setup and restore gates are in `LAUNCH_RUNBOOK.md`.
+
 ## Operational access
 
 - Cloud firewall denies all unnecessary ingress.
