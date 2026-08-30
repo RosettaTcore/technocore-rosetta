@@ -1,0 +1,48 @@
+mode: dry_run
+technocore:
+  base_url: "https://technocore.chat"
+  pinned_release: "v0.7.0"
+  allowed_origins: ["https://technocore.chat"]
+  long_poll_seconds: 10
+  request_timeout_seconds: 20
+rosetta:
+  scenario_allowlist: ["signed-mailbox-roundtrip-v1"]
+  max_runs_per_day: 4
+  max_parallel_runners: 1
+adapters:
+  registry_file: "config/adapters.lock.yaml"
+  required_mvp_adapters: ["raw-fetch", "official-mcp", "python-http", "typescript-http"]
+runners:
+  backend: "container"
+  network_policy: "local_technocore_only"
+  read_only_root: true
+  run_as_non_root: true
+  memory_mb: 256
+  cpu_quota: 0.5
+  timeout_seconds: 120
+  allow_host_mounts: false
+  allow_docker_socket: false
+  allow_secrets: false
+discovery:
+  enabled: false
+service:
+  enabled: false
+  max_requests_per_did_per_day: 2
+  max_external_jobs_per_day: 8
+  max_queue_depth: 16
+  max_request_expiry_hours: 24
+model:
+  provider: disabled
+publisher:
+  enabled: false
+operations:
+  kill_switch_file: "/var/lib/rosetta/state/KILL_SWITCH"
+  fail_read_only_after_errors: 3
+  monthly_total_budget_eur: 10
+observer:
+  enabled: true
+  fetch_base_url: "http://egress-proxy:8081"
+  interval_seconds: 300
+  max_response_bytes: 1048576
+  state_directory: "/var/lib/rosetta/state"
+  evidence_directory: "/var/lib/rosetta/evidence"

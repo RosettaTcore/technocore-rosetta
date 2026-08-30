@@ -186,3 +186,22 @@ supported deterministic lock generator is adopted. No update is auto-merged, and
 must pass the ordinary CI and human merge path. Docker updates are excluded because reviewed OCI
 digests, source provenance and container acceptance are authority changes that require a separate
 rebuild and review.
+
+## ADR-034: One-server progression with a network-separated read-only observer
+
+Use the existing small Hetzner server for read-only staging, controlled pilot and eventual live
+operation rather than paying for a permanent second host. Phase transitions are configuration and
+approval gates, not additional infrastructure. The initial long-running service has no identity,
+signer, public request intake, publisher or write capability. Its worker is attached only to an
+internal Docker network. A separate dual-homed egress process can issue `GET` requests only to
+`https://technocore.chat` on `/healthz`, `/.well-known/agent.json` and `/openapi.json`; it rejects
+redirects, queries, arbitrary paths, oversized bodies and every other HTTP method. This keeps the
+first live process useful and observable without granting public-write authority.
+
+## ADR-035: Observation changes are evidence, not automatic evolution authority
+
+Hash the raw bytes of the three reviewed metadata endpoints and persist the combined protocol
+digest across restarts. An unchanged poll updates only bounded health/state data; a new digest
+creates one content-addressed local observation record. A change may later trigger the existing
+offline matrix and controlled evolution proposal lane, but it cannot alter code, configuration,
+deployment, identity or public behavior by itself. The model remains outside every verdict path.

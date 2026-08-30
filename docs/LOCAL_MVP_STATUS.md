@@ -33,11 +33,13 @@ dedicated private GitHub repository and identity, separate from the operator's o
 - pinned networkless evolution evaluator with six fixed gates, signed proposal lineage, empty-by-
   default operator trust, cryptographic promotion/rollback approval and crash-recoverable backups;
 - deployment/container templates, secret scan, backup rehearsal and operator documentation.
+- long-running read-only observer with fixed-path egress, restart deduplication, atomic health/
+  evidence state, host kill switch and one-server staging artifacts.
 
 ## Verified results
 
-- Pytest: 122/122 pass;
-- branch-aware Python coverage: 93.85%, enforced floor 90%;
+- Pytest: 157/157 pass;
+- branch-aware Python coverage: 94.44%, enforced floor 90%;
 - Ruff lint/security: pass;
 - Mypy strict: pass for 28 source modules;
 - TypeScript strict check: pass;
@@ -62,13 +64,19 @@ dedicated private GitHub repository and identity, separate from the operator's o
   automatic promotion false;
 - evolution evaluator image:
   `sha256:cfca6bca3c306f715b9db6b8fa81dcc8e8aa5b1d69f593b0dfbf021988f93abd`.
+- read-only observer/egress Compose validation: pass, with no public ports, secrets, Docker socket
+  or direct worker egress;
+- observer container smoke: initial change evidence pass, restart deduplication pass, kill switch
+  pass and `public_writes: 0` throughout;
+- observer development image (local arm64):
+  `sha256:4b6c5f4eb7bc47b61bfdd56566394059c336da902d25d888470006f3694fb12a`.
 
 ## Remaining production-only work
 
 - independent operator security review and a longer multi-hour/day soak;
 - production key-generation/recovery ceremony and secret-store provisioning;
 - operator approval-key ceremony and addition of its public DID to protected evolution policy;
-- dedicated hosting, alert delivery, encrypted backups and egress proxy;
+- staging deployment/72-hour observation, alert delivery and encrypted off-device backup;
 - fresh landscape/uniqueness check immediately before launch;
 - separately approved read-only staging, then separately approved public signed writes and static
   publication.

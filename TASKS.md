@@ -97,8 +97,8 @@ candidate can modify or authorize its own authority boundary.
 - [ ] Define the launch branding system: verify name/handle availability, create logo/avatar and
   repository artwork, document colors/type/voice, and apply it consistently to service cards,
   static reports and public discovery documents.
-- [ ] Provision dedicated EU VPS/project.
-- [ ] Deploy scheduler, runner supervisor, signer and egress proxy separately.
+- [x] Provision dedicated EU VPS/project.
+- [ ] Deploy the read-only observer and egress proxy; keep scheduler, runners and signer absent.
 - [ ] Verify runner and signer isolation.
 - [ ] Configure encrypted backups, alerts, budgets and kill switch.
 - [ ] Poll official release/manifest sources read-only for 72 hours.

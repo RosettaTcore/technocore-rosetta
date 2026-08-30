@@ -4,9 +4,9 @@ Technocore Rosetta is a deterministic interoperability observatory for Technocor
 It executes the same signed mailbox workflow through independent runtime and adapter paths, detects
 behavioral differences, and produces evidence bundles that can be verified offline.
 
-The project is currently a complete local MVP. It uses synthetic identities and pinned local or
-reviewed upstream components. It does not contain a production DID, cloud credentials, financial
-capabilities, or a model in the verdict path.
+The project is a complete local MVP with a reviewed read-only staging observer. It uses synthetic
+identities and pinned local or reviewed upstream components. It does not contain a production DID,
+cloud credentials, financial capabilities, or a model in the verdict path.
 
 ## What it verifies
 
@@ -18,6 +18,7 @@ capabilities, or a model in the verdict path.
 - deterministic evidence, checksums, hash chains, and domain-separated attestations;
 - signed service discovery and closed-schema request, acknowledgement, and result messages;
 - idempotency, quotas, kill switches, and persistent infrastructure quarantine.
+- continuous fixed-origin protocol observation with restart-safe, content-addressed change records.
 
 Rosetta reports observed behavior only. It does not assign reputation, certify agents, execute
 request-supplied code, or accept request-supplied repositories, images, commands, or URLs.
@@ -34,8 +35,9 @@ registry, policy, evaluator, parent evidence, and exact mutation bytes. It must 
 quality gates in a pinned networkless evaluator. Promotion and rollback require a separately held
 operator signature; the checked-in trust list is empty.
 
-See [`docs/SECURITY.md`](docs/SECURITY.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), and
-[`docs/SELF_EVOLUTION.md`](docs/SELF_EVOLUTION.md) for the complete boundaries.
+See [`docs/SECURITY.md`](docs/SECURITY.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
+[`docs/SELF_EVOLUTION.md`](docs/SELF_EVOLUTION.md), and
+[`docs/STAGING_SECURITY_REVIEW.md`](docs/STAGING_SECURITY_REVIEW.md) for the complete boundaries.
 
 ## Requirements
 
@@ -85,12 +87,13 @@ Commands refuse unsafe or non-empty output targets where replacement would be am
 
 The current local baseline includes:
 
-- 122 passing Python tests;
-- 93.85% branch-aware Python coverage with a 90% enforced floor;
+- 157 passing Python tests;
+- 94.44% branch-aware Python coverage with a 90% enforced floor;
 - strict Ruff, Mypy, and TypeScript checks;
 - official four-runtime matrix and 20-iteration soak passes;
 - 27 live OCI isolation checks;
 - a verified signed evolution proposal that does not mutate the live project.
+- a containerized read-only observer restart/kill-switch smoke test with zero public writes.
 
 Exact local image identities and verification results are recorded in
 [`docs/LOCAL_MVP_STATUS.md`](docs/LOCAL_MVP_STATUS.md). Image IDs are architecture-specific and must
@@ -109,9 +112,9 @@ be rebuilt and revalidated on another host.
 
 ## Deployment status
 
-The checked-in deployment files are staging templates, not authorization to deploy. Public
-Technocore writes, production key generation, cloud provisioning, and report publication remain
-separate operator-approved release gates.
+The checked-in deployment files provide a no-ingress, read-only staging profile but do not
+authorize public writes. Production key generation, public request intake, Technocore writes and
+report publication remain separate operator-approved release gates.
 
 ## License
 

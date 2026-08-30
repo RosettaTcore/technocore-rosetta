@@ -36,9 +36,10 @@
 ### After explicit approval: cloud read-only staging
 
 - Fresh novelty landscape check.
-- Dedicated EU VPS with separated scheduler, runners, signer and egress.
+- Dedicated EU VPS with a network-separated read-only observer and fixed-path egress boundary.
 - 72-hour read-only observation of official metadata and public formats.
 - Review cost, timeouts, quarantines and protocol drift.
+- Keep scheduler, runners, signer, identity and publisher absent until the controlled-pilot gate.
 
 ### After second explicit approval: 14-day controlled pilot
 

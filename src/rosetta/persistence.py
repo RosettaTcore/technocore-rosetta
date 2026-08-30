@@ -61,6 +61,13 @@ class StateStore:
                 quarantined INTEGER NOT NULL,
                 updated_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS protocol_observations (
+                protocol_digest TEXT PRIMARY KEY,
+                release TEXT NOT NULL,
+                first_seen_at TEXT NOT NULL,
+                last_seen_at TEXT NOT NULL,
+                observation_count INTEGER NOT NULL
+            );
             """
         )
 
@@ -214,6 +221,44 @@ class StateStore:
             "SELECT quarantined FROM component_health WHERE component=?", (component,)
         ).fetchone()
         return bool(row and row[0])
+
+    def record_protocol_observation(
+        self, protocol_digest: str, release: str, now: datetime
+    ) -> bool:
+        """Persist a protocol view and return True only when the digest is new."""
+        observed_at = now.astimezone(timezone.utc).isoformat()
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            row = self.connection.execute(
+                "SELECT 1 FROM protocol_observations WHERE protocol_digest=?",
+                (protocol_digest,),
+            ).fetchone()
+            if row:
+                self.connection.execute(
+                    "UPDATE protocol_observations SET last_seen_at=?, "
+                    "observation_count=observation_count+1 WHERE protocol_digest=?",
+                    (observed_at, protocol_digest),
+                )
+                self.connection.execute("COMMIT")
+                return False
+            self.connection.execute(
+                "INSERT INTO protocol_observations VALUES (?, ?, ?, ?, 1)",
+                (protocol_digest, release, observed_at, observed_at),
+            )
+            self.connection.execute("COMMIT")
+            return True
+        except Exception:
+            self.connection.execute("ROLLBACK")
+            raise
+
+    def latest_protocol_observation(self) -> tuple[str, str, str, int] | None:
+        row = self.connection.execute(
+            "SELECT protocol_digest, release, last_seen_at, observation_count "
+            "FROM protocol_observations ORDER BY last_seen_at DESC LIMIT 1"
+        ).fetchone()
+        if row is None:
+            return None
+        return str(row[0]), str(row[1]), str(row[2]), int(row[3])
 
     def close(self) -> None:
         self.connection.close()

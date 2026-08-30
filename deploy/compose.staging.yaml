@@ -1,0 +1,74 @@
+name: technocore-rosetta-staging
+
+x-service-policy: &service-policy
+  image: ${ROSETTA_IMAGE:?set the reviewed immutable Rosetta image reference}
+  read_only: true
+  user: "65532:65532"
+  cap_drop: ["ALL"]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 64
+  restart: "no"
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+
+services:
+  egress-proxy:
+    <<: *service-policy
+    command:
+      - rosetta.egress
+      - --origin
+      - https://technocore.chat
+      - --listen
+      - 0.0.0.0
+      - --port
+      - "8081"
+      - --timeout-seconds
+      - "20"
+      - --max-response-bytes
+      - "1048576"
+    mem_limit: 128m
+    cpus: 0.25
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import http.client,sys; c=http.client.HTTPConnection('127.0.0.1',8081,2); c.request('GET','/__readiness__'); sys.exit(0 if c.getresponse().status == 404 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 2s
+    networks:
+      observer-internal:
+        aliases: ["egress-proxy"]
+      egress: {}
+
+  observer:
+    <<: *service-policy
+    command: ["rosetta.observer", "--config", "/etc/rosetta/config.yaml"]
+    depends_on:
+      egress-proxy:
+        condition: service_healthy
+    mem_limit: 256m
+    cpus: 0.5
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import datetime,json,pathlib,sys; h=json.loads(pathlib.Path('/var/lib/rosetta/state/health.json').read_text()); age=(datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(h['checked_at'])).total_seconds(); sys.exit(0 if h.get('status') == 'healthy' and h.get('public_writes') == 0 and age < 660 else 1)"
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - ${ROSETTA_CONFIG:?set the absolute staging configuration path}:/etc/rosetta/config.yaml:ro
+      - ${ROSETTA_STATE_DIR:?set the absolute state directory}:/var/lib/rosetta/state
+      - ${ROSETTA_EVIDENCE_DIR:?set the absolute evidence directory}:/var/lib/rosetta/evidence
+    networks:
+      - observer-internal
+
+networks:
+  observer-internal:
+    internal: true
+  egress: {}
