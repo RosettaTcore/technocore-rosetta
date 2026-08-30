@@ -12,6 +12,15 @@ NOW = datetime(2026, 8, 25, tzinfo=timezone.utc)
 def test_trigger_deduplication_survives_restart(tmp_path: Path) -> None:
     path = tmp_path / "state.sqlite3"
     first = StateStore(path)
+    assert first.latest_protocol_observation() is None
+    assert first.record_protocol_observation("sha256:a", "0.7.0", NOW)
+    assert not first.record_protocol_observation("sha256:a", "0.7.0", NOW)
+    assert first.latest_protocol_observation() == (
+        "sha256:a",
+        "0.7.0",
+        NOW.isoformat(),
+        2,
+    )
     assert first.register_trigger("same", NOW)
     first.close()
     second = StateStore(path)

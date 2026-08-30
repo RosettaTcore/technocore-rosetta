@@ -28,6 +28,8 @@ dev = [
 rosetta = "rosetta.cli:main"
 rosetta-evolution = "rosetta.evolution_cli:main"
 rosetta-signer = "rosetta_signer.service:main"
+rosetta-observer = "rosetta.observer:main"
+rosetta-egress = "rosetta.egress:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

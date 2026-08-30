@@ -98,6 +98,41 @@ def test_config_rejects_nonmapping_and_environment_override(tmp_path: Path) -> N
         load_config(ROOT / "config/config.local.yaml", {"ROSETTA_MODE": "production"})
 
 
+@pytest.mark.parametrize(
+    "section,key,value,error",
+    [
+        ("observer", "interval_seconds", 1, "interval"),
+        ("observer", "max_response_bytes", 100, "response limit"),
+        ("observer", "fetch_base_url", "http://public.invalid", "local egress"),
+        ("observer", "fetch_base_url", "not-a-url", "fixed HTTP"),
+        ("observer", "fetch_base_url", "https://fetch.invalid/path", "origin only"),
+        ("observer", "state_directory", "relative/state", "absolute"),
+        ("technocore", "base_url", "http://technocore-local:8080", "HTTPS"),
+    ],
+)
+def test_enabled_observer_rejects_unsafe_configuration(
+    tmp_path: Path, section: str, key: str, value: object, error: str
+) -> None:
+    data = yaml.safe_load((ROOT / "config/config.staging.example.yaml").read_text())
+    data[section][key] = value
+    if section == "technocore":
+        data["technocore"]["allowed_origins"] = [value]
+    path = tmp_path / "observer.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    with pytest.raises((ValidationError, ValueError), match=error):
+        load_config(path, {})
+
+
+@pytest.mark.parametrize("section", ["discovery", "service"])
+def test_enabled_observer_rejects_write_services(tmp_path: Path, section: str) -> None:
+    data = yaml.safe_load((ROOT / "config/config.staging.example.yaml").read_text())
+    data[section]["enabled"] = True
+    path = tmp_path / "observer.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    with pytest.raises(ValidationError, match="writes.*disabled"):
+        load_config(path, {})
+
+
 def test_duplicate_registry_and_scheduler_matrix_fail_closed(tmp_path: Path) -> None:
     registry = AdapterRegistry.load(ROOT / "config/adapters.lock.yaml")
     duplicate = AdapterRegistryContract(

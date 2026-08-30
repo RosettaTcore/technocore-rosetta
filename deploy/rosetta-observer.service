@@ -1,0 +1,18 @@
+[Unit]
+Description=Technocore Rosetta read-only staging observer
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/rosetta/current
+EnvironmentFile=/etc/rosetta/staging.env
+ExecStart=/usr/bin/docker compose -f deploy/compose.staging.yaml up --abort-on-container-exit --remove-orphans
+ExecStop=/usr/bin/docker compose -f deploy/compose.staging.yaml down --timeout 20
+Restart=on-failure
+RestartSec=15s
+TimeoutStopSec=45s
+
+[Install]
+WantedBy=multi-user.target

@@ -16,3 +16,8 @@ ID must be copied into `config/evolution.policy.yaml`; mutable tags are never ev
 The Compose profile has no public ports. The signer has `network_mode: none`; the local demo is
 also offline. Production adapter runners are created by the supervisor from the reviewed registry,
 using the non-root/read-only/no-mount policy recorded in each evidence run.
+
+`compose.staging.yaml` is the first continuous, read-only profile. It starts a network-isolated
+observer and a separate fixed-origin/fixed-path egress proxy, publishes no ports, mounts no secret
+and contains no signer. `rosetta-observer.service` supervises both on the single pilot host. Follow
+`docs/DEPLOYMENT.md`; do not enable public writes by editing this profile.

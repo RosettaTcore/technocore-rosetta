@@ -142,6 +142,28 @@ discovery service intake and publishing by default, pins the target release and 
 requires strict runner controls. `config.example.yaml` documents later options; do not enable them
 without the matching release gate.
 
+`config/config.staging.example.yaml` is the first long-running host profile. It remains `dry_run`,
+uses no identity or secret, disables discovery/service/publishing/model access and polls every five
+minutes through the fixed-path egress boundary. Validate one local observation against a controlled
+fixture with `rosetta-observer --config CONFIG --once`; do not point tests at a public endpoint.
+
+For the deployed observer, inspect `/var/lib/rosetta/state/health.json` from the host. A healthy
+record always says `public_writes: 0`. Endpoint bodies are neither logged nor persisted: evidence
+contains only byte counts, content types and SHA-256 digests plus the pinned release. The first
+appearance of a combined digest creates one file; identical later polls update SQLite counters and
+health only, so normal operation has bounded evidence growth.
+
+The staging Docker topology is intentionally asymmetric:
+
+```text
+observer -> internal network -> egress-proxy -> https://technocore.chat
+```
+
+The observer has no direct outbound network. The egress boundary rejects queries, redirects,
+oversized bodies, non-allowlisted paths and every method except `GET`. Neither service publishes a
+host port. Full server setup, service supervision, 72-hour acceptance and rollback are documented
+in `docs/DEPLOYMENT.md`.
+
 ## Container validation gate
 
 Run the official upstream acceptance into a new directory:

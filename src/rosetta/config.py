@@ -8,7 +8,7 @@ from typing import Literal
 from urllib.parse import urlparse
 
 import yaml
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 
 class ClosedSettings(BaseModel):
@@ -89,6 +89,48 @@ class OperationsSettings(ClosedSettings):
     monthly_total_budget_eur: int = 40
 
 
+class ObserverSettings(ClosedSettings):
+    enabled: bool = False
+    fetch_base_url: str = "http://egress-proxy:8081"
+    interval_seconds: int = 300
+    max_response_bytes: int = 1_048_576
+    state_directory: str = "/var/lib/rosetta/state"
+    evidence_directory: str = "/var/lib/rosetta/evidence"
+
+    @validator("interval_seconds")
+    def bounded_interval(cls, value: int) -> int:
+        if value < 60 or value > 86_400:
+            raise ValueError("observer interval must be between 60 and 86400 seconds")
+        return value
+
+    @validator("max_response_bytes")
+    def bounded_response(cls, value: int) -> int:
+        if value < 1_024 or value > 4_194_304:
+            raise ValueError("observer response limit must be between 1 KiB and 4 MiB")
+        return value
+
+    @validator("fetch_base_url")
+    def fixed_fetch_origin(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("observer fetch_base_url must be a fixed HTTP(S) origin")
+        if parsed.path not in {"", "/"} or parsed.query or parsed.fragment:
+            raise ValueError("observer fetch_base_url must be an origin only")
+        if parsed.scheme == "http" and parsed.hostname not in {
+            "egress-proxy",
+            "localhost",
+            "127.0.0.1",
+        }:
+            raise ValueError("plain HTTP observer fetches are limited to the local egress boundary")
+        return value.rstrip("/")
+
+    @validator("state_directory", "evidence_directory")
+    def absolute_runtime_path(cls, value: str) -> str:
+        if not Path(value).is_absolute():
+            raise ValueError("observer runtime directories must be absolute")
+        return value
+
+
 class AppConfig(ClosedSettings):
     mode: Literal["dry_run"] = "dry_run"
     technocore: TechnocoreSettings
@@ -100,12 +142,30 @@ class AppConfig(ClosedSettings):
     model: ModelSettings
     publisher: PublisherSettings
     operations: OperationsSettings
+    observer: ObserverSettings = Field(default_factory=ObserverSettings)
 
     @validator("technocore")
     def origin_is_allowlisted(cls, value: TechnocoreSettings) -> TechnocoreSettings:
         if value.base_url not in [origin.rstrip("/") for origin in value.allowed_origins]:
             raise ValueError("Technocore origin is not allowlisted")
         return value
+
+    @root_validator
+    def observer_is_read_only(cls, values: dict[str, object]) -> dict[str, object]:
+        observer = values.get("observer")
+        technocore = values.get("technocore")
+        if isinstance(observer, ObserverSettings) and observer.enabled:
+            if not isinstance(technocore, TechnocoreSettings):
+                return values
+            if not technocore.base_url.startswith("https://"):
+                raise ValueError("enabled observer requires an HTTPS Technocore authority")
+            for section in ("discovery", "service"):
+                configured = values.get(section)
+                if configured is not None and getattr(configured, "enabled", False):
+                    raise ValueError(
+                        "observer requires discovery and service writes to be disabled"
+                    )
+        return values
 
 
 def load_config(path: Path, environ: dict[str, str] | None = None) -> AppConfig:

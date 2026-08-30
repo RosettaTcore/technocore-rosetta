@@ -18,3 +18,4 @@ artifacts/
 *.sqlite3-shm
 *.sqlite3-wal
 KILL_SWITCH
+.DS_Store
