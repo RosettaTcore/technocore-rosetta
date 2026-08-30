@@ -31,6 +31,8 @@ health record for host monitoring.
 - the host-visible kill switch stops observation before another request;
 - Docker health checks cover egress readiness and observer freshness/zero-write state;
 - no model participates in probing, validation, change detection or any verdict.
+- the observed v0.10.0 release is bound to a verified GitHub commit, exact archived source,
+  dependency lock and immutable multi-platform OCI index before the observer is enabled.
 
 ## Residual risk and compensating controls
 

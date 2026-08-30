@@ -200,7 +200,7 @@ class ServiceCard(ClosedModel):
     did: StrictStr
     service_room: StrictStr
     request_mailbox: StrictStr
-    protocol_baseline: Literal["v0.7.0"] = "v0.7.0"
+    protocol_baseline: Literal["v0.7.0", "v0.10.0"] = "v0.10.0"
     scenarios: list[Literal["signed-mailbox-roundtrip-v1"]]
     adapter_profiles: list[StrictStr]
     request_schema_url: AnyHttpUrl

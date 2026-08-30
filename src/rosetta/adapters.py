@@ -15,6 +15,8 @@ from rosetta.local_protocol import ProtocolRecord, RateLimited, TechnocoreTarget
 from rosetta.registry import AdapterRegistry
 from rosetta.signer_client import Signer
 
+_RUNTIME_PROBE_TIMEOUT_SECONDS = 10
+
 
 @dataclass(frozen=True)
 class AdapterEvent:
@@ -186,7 +188,9 @@ def _runtime_probe(adapter_id: str) -> dict[str, Any]:
         env=environment,
         check=True,
         capture_output=True,
-        timeout=2,
+        # A cold Node.js process can exceed two seconds on a contended CI runner.
+        # Keep the probe bounded while allowing deterministic cold starts.
+        timeout=_RUNTIME_PROBE_TIMEOUT_SECONDS,
         text=True,
         input='{"operation":"capabilities"}',
     )

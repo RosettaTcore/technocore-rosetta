@@ -74,7 +74,13 @@ def test_service_origin_card_and_nonce_fail_closed(tmp_path: Path) -> None:
         registry = AdapterRegistry.load(ROOT / "config/adapters.lock.yaml")
         signer = AsyncSigner(tmp_path / "card.sqlite3", "synthetic-service-card-edge")
         card, attestation = await build_service_card(
-            signer.did, registry, signer, "https://reports.invalid", NOW, tmp_path / "service"
+            signer.did,
+            registry,
+            signer,
+            "https://reports.invalid",
+            "v0.7.0",
+            NOW,
+            tmp_path / "service",
         )
         assert verify_service_card(card, attestation, NOW)
         bad = dict(attestation)
@@ -100,7 +106,13 @@ def test_discovery_and_request_rejection_conflict_and_quota(
         rosetta = AsyncSigner(tmp_path / "rosetta.sqlite3", "synthetic-service-rosetta-edge")
         peer = AsyncSigner(tmp_path / "peer.sqlite3", "synthetic-service-peer-edge")
         card, attestation = await build_service_card(
-            rosetta.did, registry, rosetta, "https://reports.invalid", NOW, tmp_path / "service"
+            rosetta.did,
+            registry,
+            rosetta,
+            "https://reports.invalid",
+            "v0.7.0",
+            NOW,
+            tmp_path / "service",
         )
         gateway = DiscoveryGateway(
             target,

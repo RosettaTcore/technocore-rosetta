@@ -19,7 +19,7 @@ RUN python -m pip install --no-cache-dir --requirement requirements.lock
 COPY src ./src
 COPY config ./config
 COPY adapters ./adapters
-COPY vendor/technocore-chat-v0.7.0/mcp/src ./vendor/technocore-chat-v0.7.0/mcp/src
+COPY vendor/technocore-chat-v0.10.0/mcp/src ./vendor/technocore-chat-v0.10.0/mcp/src
 
 USER 65532:65532
 ENTRYPOINT ["python", "-m"]

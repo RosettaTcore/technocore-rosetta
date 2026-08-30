@@ -80,7 +80,7 @@ Required fields:
   "did": "did:key:z6Mk...",
   "service_room": "d-rosetta-<fp>",
   "request_mailbox": "mb-rosetta-<fp>",
-  "protocol_baseline": "v0.7.0",
+  "protocol_baseline": "v0.10.0",
   "scenarios": ["signed-mailbox-roundtrip-v1"],
   "adapter_profiles": ["raw-fetch", "official-mcp", "python-http", "typescript-http"],
   "request_schema_url": "<approved static URL>",

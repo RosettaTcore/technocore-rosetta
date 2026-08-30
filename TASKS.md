@@ -2,8 +2,8 @@
 
 ## Build execution status — 26 August 2026
 
-Phases 0–3 are implemented and pass both the deterministic fixture suite and the official upstream
-v0.7.0 OCI matrix. See `docs/LOCAL_MVP_STATUS.md`, `docs/QUALITY_ASSESSMENT.md` and
+Phases 0–3 are implemented and pass both the deterministic historical fixture suite and the
+official upstream v0.10.0 OCI matrix. See `docs/LOCAL_MVP_STATUS.md`, `docs/QUALITY_ASSESSMENT.md` and
 `artifacts/upstream-acceptance-authoritative-v2/` for exact evidence. No Phase 4 or later external action was
 attempted.
 

@@ -1,4 +1,4 @@
-"""Adapter that calls the exact vendored Technocore MCP 0.7.0 implementation.
+"""Adapter that calls the exact vendored Technocore MCP 0.10.0 implementation.
 
 The upstream MCP intentionally excludes the signed lane so private keys never enter model
 context. Rosetta therefore uses MCP for discovery/read/wait and its isolated signer output
@@ -29,9 +29,9 @@ if _parsed.scheme not in {"http", "https"} or _parsed.hostname not in {
     raise RuntimeError("target origin is not an approved local Technocore endpoint")
 
 root = Path(__file__).resolve().parents[2]
-upstream = root / "vendor" / "technocore-chat-v0.7.0" / "mcp" / "src"
+upstream = root / "vendor" / "technocore-chat-v0.10.0" / "mcp" / "src"
 if not upstream.exists():
-    upstream = Path("/opt/rosetta/vendor/technocore-chat-v0.7.0/mcp/src")
+    upstream = Path("/opt/rosetta/vendor/technocore-chat-v0.10.0/mcp/src")
 sys.path.insert(0, str(upstream))
 os.environ["TECHNOCORE_URL"] = ORIGIN
 
@@ -100,7 +100,7 @@ def invoke(message: dict[str, Any]) -> dict[str, Any]:
             **base,
             "ok": True,
             "runtime": f"python-{sys.version_info.major}.{sys.version_info.minor}",
-            "transport": "official-mcp-0.7.0+signed-http-boundary",
+            "transport": "official-mcp-0.10.0+signed-http-boundary",
             "upstream_version": VERSION,
             "tools": [item["name"] for item in listed["result"]["tools"]],  # type: ignore[index]
             "operations": ["health", "read_room", "wait_room", "post_signed"],

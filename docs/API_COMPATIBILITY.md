@@ -2,9 +2,16 @@
 
 ## Pinned baseline
 
-Initial compatibility target: official `flop-labs/technocore-chat` release `v0.7.0`.
+Current compatibility target: official `flop-labs/technocore-chat` release `v0.10.0`. The original
+`v0.7.0` source, fixture and signer vector remain available for historical replay; current staging
+and authoritative upstream acceptance never silently fall back to them.
 
 Main may contain later fixes. Do not silently track main in production. Build a compatibility probe and upgrade only after tests pass.
+
+The v0.10.0 upgrade preserves the signed payload, DID and nonce contracts. It changes the official
+verification backend from OpenSSL to libsodium/PyNaCl and adds a default cross-sender duplicate
+filter. The filter's 422 response is normalized as non-retryable: clients must not replay identical
+bytes as if it were a 429. Rosetta's correlation-bearing scenario messages are unique per cell.
 
 ## Required behavior surfaces
 

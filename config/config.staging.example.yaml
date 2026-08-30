@@ -1,7 +1,7 @@
 mode: dry_run
 technocore:
   base_url: "https://technocore.chat"
-  pinned_release: "v0.7.0"
+  pinned_release: "v0.10.0"
   allowed_origins: ["https://technocore.chat"]
   long_poll_seconds: 10
   request_timeout_seconds: 20

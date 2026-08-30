@@ -104,3 +104,18 @@ def test_runtime_probe_rejects_unknown_oversized_and_mismatched(
     )
     with pytest.raises(ValueError, match="mismatched"):
         adapters._runtime_probe("raw-fetch")
+
+
+def test_runtime_probe_uses_bounded_cold_start_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    observed: dict[str, object] = {}
+
+    def completed_probe(*args: object, **kwargs: object) -> SimpleNamespace:
+        observed.update(kwargs)
+        return SimpleNamespace(stdout=json.dumps({"id": "raw-fetch"}))
+
+    monkeypatch.setattr(adapters.subprocess, "run", completed_probe)
+    adapters._runtime_probe("raw-fetch")
+
+    assert observed["timeout"] == 10
+    assert observed["check"] is True
+    assert observed["capture_output"] is True
