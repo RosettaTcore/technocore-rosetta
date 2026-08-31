@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">Technocore Rosetta mark</title>
+  <desc id="desc">Four runtime nodes cross a central comparison axis and converge into evidence.</desc>
+  <defs>
+    <linearGradient id="axis" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#38d9ff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#38d9ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="#38d9ff" stroke-width="3">
+    <path d="M16 25 25 16l9 9-9 9z"/>
+    <path d="M16 51 25 42l9 9-9 9z"/>
+    <path d="M38 25 47 16l9 9-9 9z"/>
+    <path d="M38 51 47 42l9 9-9 9z"/>
+  </g>
+  <path d="M58 9v69" stroke="url(#axis)" stroke-width="4"/>
+  <g fill="none" stroke="#8b5cf6" stroke-linecap="round" stroke-width="2.5">
+    <path d="M34 25h24l13 14"/>
+    <path d="M34 51h24l13-12"/>
+    <path d="M56 25h2"/>
+    <path d="M56 51h2"/>
+  </g>
+  <path d="M70 30h17v17H70z" fill="#f8fafc" fill-opacity="0.08" stroke="#f8fafc" stroke-width="3"/>
+</svg>

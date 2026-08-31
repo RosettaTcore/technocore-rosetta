@@ -34,9 +34,22 @@ Launch palette:
 
 Use a system sans-serif for interface text and a legible monospace for digests/version evidence.
 The static launch observatory adopts a restrained CSS four-node matrix mark and the abstract
-four-runtime social preview at `site/assets/rosetta-observatory-preview.png`. The preview is
-presentation artwork, not a certification mark, production identity or claim about live state.
-Logo/avatar expansion and repository account artwork remain separate approval items.
+four-runtime artwork. The reusable vector mark is `site/assets/rosetta-mark.svg`; it represents four
+runtime nodes crossing a comparison axis and converging into bounded evidence. It is used as the
+site favicon, web-manifest icon and on-page identity. The 1200×630 repository/social artwork is
+`site/assets/rosetta-social-card.jpg`, while the optimized in-page visual is
+`site/assets/rosetta-observatory-preview.webp`. The uncompressed PNG remains a source asset and must
+not be loaded by the launch page.
+
+The mark and artwork are presentation assets, not certification marks, production identities or
+claims about live state. Keep descriptive alternative text on meaningful artwork and an empty
+alternative on a mark adjacent to the written product name. Do not place a shield, checkmark,
+ranking, reward language or FLOP visual identity around the mark.
+
+The README leads with the evidence artwork, bounded value proposition and a proof-first path. The
+site leads with the same three claims: one signed workflow, four independent paths and replayable
+evidence. Repository/account avatar upload and any public URL remain explicit external launch
+actions.
 
 The Proton address is reserved for Rosetta operations but must not be published as a contact
 address without explicit approval.

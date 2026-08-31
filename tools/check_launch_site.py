@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from html.parser import HTMLParser
@@ -14,6 +15,11 @@ from rosetta.evidence import verify_bundle
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
 HTML = SITE / "index.html"
+README = ROOT / "README.md"
+MANIFEST = SITE / "site.webmanifest"
+MARK = SITE / "assets/rosetta-mark.svg"
+PREVIEW = SITE / "assets/rosetta-observatory-preview.webp"
+SOCIAL_CARD = SITE / "assets/rosetta-social-card.jpg"
 REFERENCE_ROOT = "sha256:0b3435df9b0f6eb8b1ac2eaab22120a0b14730764fceaa9d1a701860f43c1b9f"
 
 
@@ -54,6 +60,39 @@ def main() -> int:
         raise ValueError("operator contact details must not be published")
     if REFERENCE_ROOT.removeprefix("sha256:") not in source:
         raise ValueError("the reviewed reference root is absent from the page")
+    if len([tag for tag, _ in parser.tags if tag == "h1"]) != 1:
+        raise ValueError("launch page must contain exactly one h1")
+    html_attributes = next((attrs for tag, attrs in parser.tags if tag == "html"), {})
+    if html_attributes.get("lang") != "en":
+        raise ValueError("launch page language must be English")
+
+    meta = {
+        attrs.get("property") or attrs.get("name"): attrs.get("content", "")
+        for tag, attrs in parser.tags
+        if tag == "meta" and (attrs.get("property") or attrs.get("name"))
+    }
+    required_meta = {
+        "description",
+        "robots",
+        "og:title",
+        "og:description",
+        "og:image",
+        "og:image:width",
+        "og:image:height",
+        "og:image:alt",
+        "twitter:card",
+        "twitter:title",
+        "twitter:description",
+        "twitter:image",
+        "twitter:image:alt",
+    }
+    missing_meta = sorted(required_meta - meta.keys())
+    if missing_meta:
+        raise ValueError(f"launch metadata is incomplete: {missing_meta}")
+    if meta["og:image"] != "assets/rosetta-social-card.jpg":
+        raise ValueError("unexpected Open Graph image")
+    if meta["twitter:image"] != meta["og:image"]:
+        raise ValueError("Open Graph and Twitter preview images must match")
 
     csp = next(
         (
@@ -83,6 +122,10 @@ def main() -> int:
             if urlsplit(reference).scheme in {"http", "https"}:
                 raise ValueError(f"external executable or visual dependency: {reference}")
             _check_local_reference(reference)
+        if tag == "meta" and (
+            attrs.get("property") == "og:image" or attrs.get("name") == "twitter:image"
+        ):
+            _check_local_reference(attrs.get("content", ""))
         if tag == "a" and attrs.get("href"):
             reference = attrs["href"]
             parsed = urlsplit(reference)
@@ -97,10 +140,51 @@ def main() -> int:
             _check_local_reference(reference)
 
     script_sources = [attrs.get("src") for tag, attrs in parser.tags if tag == "script"]
-    if script_sources != ["app.js"]:
+    if script_sources != ["app.js?v=20260831"]:
         raise ValueError(f"unexpected script set: {script_sources}")
     if re.search(r"<script(?:\s[^>]*)?>\s*[^<\s]", source, flags=re.IGNORECASE):
         raise ValueError("inline script is forbidden")
+    if "rosetta-observatory-preview.png" in source:
+        raise ValueError("the unoptimized source artwork must not be loaded by the page")
+
+    for required_file in (MANIFEST, MARK, PREVIEW, SOCIAL_CARD):
+        if not required_file.is_file():
+            raise ValueError(f"missing launch asset: {required_file.relative_to(ROOT)}")
+    if PREVIEW.stat().st_size > 100_000:
+        raise ValueError("optimized hero artwork exceeds 100 KB")
+    if SOCIAL_CARD.stat().st_size > 200_000:
+        raise ValueError("social preview artwork exceeds 200 KB")
+
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    if manifest.get("name") != "Technocore Rosetta":
+        raise ValueError("unexpected web manifest product name")
+    if manifest.get("start_url") != "." or manifest.get("scope") != ".":
+        raise ValueError("web manifest must remain relocatable")
+    icons = manifest.get("icons")
+    if not isinstance(icons, list) or not icons or icons[0].get("src") != "assets/rosetta-mark.svg":
+        raise ValueError("web manifest must use the reviewed Rosetta mark")
+
+    readme = README.read_text(encoding="utf-8")
+    readme_requirements = {
+        "site/assets/rosetta-social-card.jpg",
+        "## See the proof first",
+        "## Why workflow-level evidence",
+        "No language model",
+        "## Audit and feedback",
+    }
+    missing_readme = sorted(value for value in readme_requirements if value not in readme)
+    if missing_readme:
+        raise ValueError(f"README launch narrative is incomplete: {missing_readme}")
+
+    for reference in re.findall(r"!?\[[^]]*\]\(([^)]+)\)", readme):
+        parsed = urlsplit(reference)
+        if parsed.scheme in {"http", "https"} or not parsed.path:
+            continue
+        candidate = (ROOT / parsed.path).resolve()
+        if ROOT not in candidate.parents and candidate != ROOT:
+            raise ValueError(f"README reference escapes the repository: {reference}")
+        if not candidate.exists():
+            raise ValueError(f"missing README reference: {reference}")
 
     actual_root = verify_bundle(SITE / "evidence/latest")
     if actual_root != REFERENCE_ROOT:
