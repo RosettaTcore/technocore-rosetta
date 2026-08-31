@@ -1,0 +1,1 @@
+{"consumer":"official-mcp","correlation_id":"11a0e54c11326ddf7b9cdf6b","fault":"429","mode":"upstream_oci","producer":"raw-fetch","scenario":"signed-mailbox-roundtrip-v1","schema":"rosetta.reproduction.v1"}

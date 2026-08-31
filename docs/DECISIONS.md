@@ -248,3 +248,17 @@ and disk budget. Create consistent backups with SQLite's backup API and stream t
 through Age encryption; the server stores no Age secret key. A systemd failure is durable local
 evidence, not an external notification. Pilot launch still requires an independently controlled
 alert destination and off-device copy.
+
+## ADR-040: Launch with a static evidence surface, not a public execution surface
+
+Present Rosetta as a read-only interoperability observatory through a dependency-free static site.
+The site may distribute a reviewed synthetic reference bundle and verify its checksums, canonical
+root and domain-separated Ed25519 attestation entirely in the browser. It has no analytics,
+third-party assets, script network access, dynamic API, mailbox, scheduler, signer or publisher.
+
+This makes Rosetta's strongest distinction legible at launch: complete workflow evidence across
+independent runtimes, including restart, cursor, rate-limit and uncertain-write behavior, rather
+than a broad claim of compatibility or trust. Recorded staging status must be labelled as a
+snapshot, not live telemetry. Static publication itself remains a separate operator gate; adding
+the files to the repository does not authorize hosting, repository visibility changes or public
+Technocore activity.

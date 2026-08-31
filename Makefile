@@ -1,4 +1,4 @@
-.PHONY: format lint type typescript test coverage unit integration adversarial secret-scan demo verify evolution-image evolution-verify container-acceptance upstream-acceptance acceptance install-hooks lock lock-check
+.PHONY: format lint type typescript test coverage unit integration adversarial secret-scan demo verify evolution-image evolution-verify container-acceptance upstream-acceptance acceptance install-hooks lock lock-check site-package site-check site-preview
 
 PYTHON ?= python3
 PYTHONPATH := src:.
@@ -67,4 +67,17 @@ container-acceptance:
 upstream-acceptance:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tools/upstream_acceptance.py --output artifacts/upstream-acceptance --soak-iterations 20
 
-acceptance: lint type typescript coverage secret-scan demo verify
+site-package:
+	$(PYTHON) tools/package_launch_evidence.py
+
+site-check:
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tools/check_launch_site.py
+	$(PYTHON) tools/package_launch_evidence.py --check
+	node --check site/app.js
+	node --check site/verifier.mjs
+	node --test tests/site/verifier.test.mjs
+
+site-preview:
+	$(PYTHON) -m http.server 4173 --directory site
+
+acceptance: lint type typescript coverage secret-scan demo verify site-check

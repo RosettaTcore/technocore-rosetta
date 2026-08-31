@@ -8,6 +8,17 @@ The project is a complete local MVP with a reviewed read-only staging observer. 
 identities and pinned local or reviewed upstream components. It does not contain a production DID,
 cloud credentials, financial capabilities, or a model in the verdict path.
 
+## Launch observatory
+
+The repository includes a static, read-only launch surface under [`site/`](site/). It presents the
+four-runtime v0.10.0 reference matrix, an inspectable synthetic signed bundle and a browser verifier
+that uploads nothing. Preview it locally with `make site-preview` and validate its security boundary,
+links, deterministic archive and real Ed25519 verification with `make site-check`.
+
+The observatory is presentation and evidence distribution, not a public execution API. It adds no
+mailbox, scheduler, signer, dynamic backend, analytics or production identity. See
+[`docs/LAUNCH_OBSERVATORY.md`](docs/LAUNCH_OBSERVATORY.md) for operator and update procedures.
+
 ## What it verifies
 
 - raw Node.js HTTP, official MCP, Python `httpx`, and TypeScript `fetch` interoperability;
@@ -110,6 +121,7 @@ be rebuilt and revalidated on another host.
 - `tests/`: unit, integration, and adversarial suites;
 - `tools/`: local acceptance, isolation, backup, and secret-scanning utilities;
 - `deploy/`: non-production container and service templates;
+- `site/`: static read-only launch observatory and synthetic reference evidence;
 - `vendor/`: the exact reviewed Technocore source used for offline provenance.
 
 ## Deployment status
