@@ -16,12 +16,25 @@ ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
 HTML = SITE / "index.html"
 README = ROOT / "README.md"
+PAGES_WORKFLOW = ROOT / ".github/workflows/pages.yml"
 MANIFEST = SITE / "site.webmanifest"
+ROBOTS = SITE / "robots.txt"
+SITEMAP = SITE / "sitemap.xml"
 MARK = SITE / "assets/rosetta-mark.svg"
 PREVIEW = SITE / "assets/rosetta-observatory-preview.webp"
 SOCIAL_CARD = SITE / "assets/rosetta-social-card.jpg"
 PROFILE_AVATAR = SITE / "assets/rosetta-profile-avatar.png"
 REFERENCE_ROOT = "sha256:0b3435df9b0f6eb8b1ac2eaab22120a0b14730764fceaa9d1a701860f43c1b9f"
+PUBLIC_ORIGIN = "https://rosettatcore.github.io/technocore-rosetta/"
+PUBLIC_CARD = f"{PUBLIC_ORIGIN}assets/rosetta-social-card.jpg"
+PAGES_ACTIONS = {
+    "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+    "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+    "actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d",
+    "actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9",
+    "actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128",
+}
 
 
 class SiteParser(HTMLParser):
@@ -85,6 +98,7 @@ def main() -> int:
         "robots",
         "og:title",
         "og:description",
+        "og:url",
         "og:image",
         "og:image:width",
         "og:image:height",
@@ -98,7 +112,9 @@ def main() -> int:
     missing_meta = sorted(required_meta - meta.keys())
     if missing_meta:
         raise ValueError(f"launch metadata is incomplete: {missing_meta}")
-    if meta["og:image"] != "assets/rosetta-social-card.jpg":
+    if meta["og:url"] != PUBLIC_ORIGIN:
+        raise ValueError("unexpected canonical Open Graph URL")
+    if meta["og:image"] != PUBLIC_CARD:
         raise ValueError("unexpected Open Graph image")
     if meta["twitter:image"] != meta["og:image"]:
         raise ValueError("Open Graph and Twitter preview images must match")
@@ -128,7 +144,10 @@ def main() -> int:
         attribute = "src" if tag in {"script", "img"} else "href" if tag == "link" else None
         if attribute and attrs.get(attribute):
             reference = attrs[attribute]
-            if urlsplit(reference).scheme in {"http", "https"}:
+            is_canonical = tag == "link" and attrs.get("rel") == "canonical"
+            if is_canonical and reference != PUBLIC_ORIGIN:
+                raise ValueError("unexpected canonical link")
+            if urlsplit(reference).scheme in {"http", "https"} and not is_canonical:
                 raise ValueError(f"external executable or visual dependency: {reference}")
             _check_local_reference(reference)
         if tag == "meta" and (
@@ -156,7 +175,15 @@ def main() -> int:
     if "rosetta-observatory-preview.png" in source:
         raise ValueError("the unoptimized source artwork must not be loaded by the page")
 
-    for required_file in (MANIFEST, MARK, PREVIEW, SOCIAL_CARD, PROFILE_AVATAR):
+    canonical_links = [
+        attrs.get("href")
+        for tag, attrs in parser.tags
+        if tag == "link" and attrs.get("rel") == "canonical"
+    ]
+    if canonical_links != [PUBLIC_ORIGIN]:
+        raise ValueError(f"unexpected canonical link set: {canonical_links}")
+
+    for required_file in (MANIFEST, ROBOTS, SITEMAP, MARK, PREVIEW, SOCIAL_CARD, PROFILE_AVATAR):
         if not required_file.is_file():
             raise ValueError(f"missing launch asset: {required_file.relative_to(ROOT)}")
     if PREVIEW.stat().st_size > 100_000:
@@ -184,9 +211,25 @@ def main() -> int:
     if not isinstance(icons, list) or not icons or icons[0].get("src") != "assets/rosetta-mark.svg":
         raise ValueError("web manifest must use the reviewed Rosetta mark")
 
+    robots = ROBOTS.read_text(encoding="utf-8")
+    if robots != f"User-agent: *\nAllow: /\n\nSitemap: {PUBLIC_ORIGIN}sitemap.xml\n":
+        raise ValueError("robots.txt does not match the reviewed public origin")
+    expected_sitemap = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        "  <url>\n"
+        f"    <loc>{PUBLIC_ORIGIN}</loc>\n"
+        "    <lastmod>2026-09-01</lastmod>\n"
+        "  </url>\n"
+        "</urlset>\n"
+    )
+    if SITEMAP.read_text(encoding="utf-8") != expected_sitemap:
+        raise ValueError("sitemap.xml does not match the reviewed public origin")
+
     readme = README.read_text(encoding="utf-8")
     readme_requirements = {
         "site/assets/rosetta-social-card.jpg",
+        PUBLIC_ORIGIN,
         "## See the proof first",
         "## Why workflow-level evidence",
         "No language model",
@@ -195,6 +238,31 @@ def main() -> int:
     missing_readme = sorted(value for value in readme_requirements if value not in readme)
     if missing_readme:
         raise ValueError(f"README launch narrative is incomplete: {missing_readme}")
+
+    workflow = PAGES_WORKFLOW.read_text(encoding="utf-8")
+    workflow_actions = set(re.findall(r"^\s*uses:\s*([^\s#]+)", workflow, flags=re.MULTILINE))
+    if workflow_actions != PAGES_ACTIONS:
+        raise ValueError(f"unexpected Pages action set: {sorted(workflow_actions)}")
+    workflow_requirements = {
+        "workflow_run:",
+        "workflows: [CI]",
+        "branches: [main]",
+        "workflow_dispatch:",
+        "github.event.workflow_run.conclusion == 'success'",
+        "github.event.workflow_run.head_branch == 'main'",
+        "github.ref == 'refs/heads/main'",
+        "persist-credentials: false",
+        "run: make site-check PYTHON=python",
+        "path: ./site",
+        "pages: write",
+        "id-token: write",
+        "name: github-pages",
+    }
+    missing_workflow = sorted(value for value in workflow_requirements if value not in workflow)
+    if missing_workflow:
+        raise ValueError(f"Pages workflow is incomplete: {missing_workflow}")
+    if "pull_request_target:" in workflow or "pull_request:" in workflow:
+        raise ValueError("Pages publication must not run with a pull-request trigger")
 
     for reference in re.findall(r"!?\[[^]]*\]\(([^)]+)\)", readme):
         parsed = urlsplit(reference)

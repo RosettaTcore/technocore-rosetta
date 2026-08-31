@@ -29,8 +29,32 @@ def test_workflows_have_read_only_authority_and_safe_triggers() -> None:
 
         text = path.read_text(encoding="utf-8")
         assert "permissions: write-all" not in text
-        assert not re.search(r"^\s+[a-z-]+:\s+write\s*$", text, re.MULTILINE)
         assert "secrets: inherit" not in text
+
+        jobs = workflow.get("jobs")
+        assert isinstance(jobs, dict)
+        if path.name == "pages.yml":
+            assert triggers == {
+                "workflow_run": {
+                    "workflows": ["CI"],
+                    "branches": ["main"],
+                    "types": ["completed"],
+                },
+                "workflow_dispatch": None,
+            }
+            assert jobs["build"]["permissions"] == {"contents": "read", "pages": "write"}
+            assert jobs["deploy"]["permissions"] == {
+                "contents": "read",
+                "pages": "write",
+                "id-token": "write",
+            }
+            assert "github.event.workflow_run.conclusion == 'success'" in jobs["build"]["if"]
+            assert "github.ref == 'refs/heads/main'" in jobs["build"]["if"]
+            assert "github.event.workflow_run.head_branch == 'main'" in jobs["build"]["if"]
+            assert jobs["deploy"]["needs"] == "build"
+            assert jobs["deploy"]["if"] == jobs["build"]["if"]
+        else:
+            assert not re.search(r"^\s+[a-z-]+:\s+write\s*$", text, re.MULTILINE)
 
 
 def test_external_actions_are_commit_pinned_without_persisted_credentials() -> None:

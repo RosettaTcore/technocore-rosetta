@@ -43,20 +43,37 @@ substituted-signature cases.
 It also ratchets required launch metadata, the README proof-first narrative, the reusable brand
 mark and size limits for loaded artwork.
 
-## Public URL finalization
+## Public origin and deployment
 
-The repository intentionally contains no guessed canonical site URL. After an immutable public
-origin is approved and before announcing it:
+The proposed canonical origin, pending explicit repository-visibility and Pages approval, is:
 
-1. add an absolute `link[rel=canonical]` and matching `og:url`;
-2. replace relative Open Graph and Twitter image references with the absolute 1200×630 card URL;
-3. add the public observatory URL to the repository homepage and the README's first-screen actions;
-4. update `tools/check_launch_site.py` to require the exact approved origin;
-5. verify the rendered social card with at least two preview debuggers without adding their scripts;
-6. run `make site-check` and the full acceptance gate again.
+```text
+https://rosettatcore.github.io/technocore-rosetta/
+```
 
-Until this step is complete, the local page remains a launch candidate rather than a published
-canonical website.
+GitHub Pages keeps the public static surface separate from the no-ingress Hetzner observer. The
+deployment receives only the checked-in `site/` directory. It receives no server state, secret,
+signer, publisher credential, mailbox capability or GitHub write credential beyond GitHub's
+short-lived Pages deployment token.
+
+`.github/workflows/pages.yml` is deliberately downstream of the `CI` workflow on `main`. It refuses
+failed CI runs, checks out the exact CI-reviewed commit, installs hash-locked runtime dependencies,
+runs `make site-check`, uploads only `site/`, and deploys through the `github-pages` environment.
+Every third-party action is pinned to a full reviewed commit. Manual dispatch runs the same checks.
+
+GitHub Free requires this repository to be public before Pages can be enabled. Before the first
+deployment:
+
+1. complete the current-tree and reachable-history privacy/secret review;
+2. obtain explicit approval to make the repository public;
+3. set Pages source to **GitHub Actions**;
+4. merge the reviewed publication workflow only after its pull-request CI passes;
+5. verify the canonical URL, assets, CSP, one-click evidence path, robots file and sitemap;
+6. add the canonical URL to the repository homepage;
+7. verify the rendered social card with at least two preview debuggers without adding their scripts.
+
+A future custom domain is a new origin change. It requires an updated canonical URL, social image
+URLs, sitemap, site ratchet, DNS review and HTTPS verification before announcement.
 
 ## Evidence update procedure
 
