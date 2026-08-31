@@ -8,7 +8,7 @@ Phases 0–3 plus the controlled evolution proposal lane are implemented. The au
 acceptance path runs the official Technocore `v0.10.0` image while preserving the original v0.7.0
 fixture and evidence for historical replay. No public Technocore write,
 production DID, publisher or public service intake was used. Source control uses a
-dedicated private GitHub repository and identity, separate from the operator's other projects.
+dedicated public GitHub repository and identity, separate from the operator's other projects.
 The no-ingress read-only observer is running on its dedicated staging host; its 72-hour gate is not
 yet complete.
 
@@ -43,7 +43,7 @@ yet complete.
 - universal Python 3.10+ transitive hash locks and a reproducible lock-drift gate;
 - long-running read-only observer with fixed-path egress, restart deduplication, atomic health/
   evidence state, host kill switch and one-server staging artifacts;
-- reviewed static-publication candidate with canonical metadata, no-download same-origin evidence
+- public read-only observatory with canonical metadata, no-download same-origin evidence
   verification, optional offline audit, sitemap and a CI-gated GitHub Pages workflow.
 
 ## Verified results
@@ -83,10 +83,14 @@ yet complete.
 - observer container smoke: initial change evidence pass, restart deduplication pass, kill switch
   pass and `public_writes: 0` throughout;
 - deployed observer check on 30 August 2026: service active/enabled, zero restarts, healthy
-  `dry_run` state and `public_writes: 0`; the deployed commit remains `4d2a374...` until this
-  launch-readiness change is reviewed and merged;
+  `dry_run` state and `public_writes: 0`; the deployed commit remains `4d2a374...` because static
+  publication did not redeploy or change the no-ingress observer;
 - GitHub Pages project-subpath QA: desktop and 390×844 mobile pass; all relative assets load and
-  the one-click verifier validates the 15-file reference bundle.
+  the one-click verifier validates the 15-file reference bundle;
+- public Pages deployment: success from reviewed `main` commit `8ddaee9` in workflow run
+  `33446317758`; the live verifier reproduced
+  `sha256:0b3435df9b0f6eb8b1ac2eaab22120a0b14730764fceaa9d1a701860f43c1b9f` and accepted the
+  domain-separated Ed25519 attestation.
 
 ## Remaining production-only work
 
@@ -95,9 +99,8 @@ yet complete.
 - operator approval-key ceremony and addition of its public DID to protected evolution policy;
 - external alert delivery and an independently controlled encrypted off-device backup destination;
 - public contact-surface approval, including whether the Proton address is published;
-- repository visibility, static Pages activation, bounded public intake and exact first signed
-  payload approvals;
+- bounded public intake and exact first signed payload approvals;
 - production deployment of the reviewed, signed release after all applicable gates pass.
 
-The repository is version-controlled in its dedicated private remote. CI and deployment files do
-not authorize a deployment, production identity, public service intake or external publication.
+The repository and static observatory are public. This publication does not authorize a production
+identity, public service intake, Technocore writes or any broader external action.

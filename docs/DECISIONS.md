@@ -269,13 +269,15 @@ Technocore activity.
 
 ## ADR-041: Publish the static observatory through CI-gated GitHub Pages
 
-Select `https://rosettatcore.github.io/technocore-rosetta/` as the initial canonical public origin,
-subject to the explicit repository-visibility and Pages activation gates.
+Select `https://rosettatcore.github.io/technocore-rosetta/` as the initial canonical public origin.
+The explicit repository-visibility and Pages activation gates were approved and executed on
+1 September 2026, after the reachable-history review and green publication PR #22.
 Keep it operationally separate from the no-ingress Hetzner observer so static publication does not
 open another listener on the staging host or invalidate the 72-hour SSH-only observation period.
 
 The Pages workflow runs only after successful `main` CI or explicit manual dispatch, re-verifies
 the exact site artifact, and uploads only `site/`. All actions are pinned to immutable commits and
 the deployment uses GitHub's short-lived Pages identity; Rosetta stores no publication secret.
-Making the repository public and enabling Pages remain explicit operator actions because GitHub
-Free does not publish Pages from a private repository.
+The first publication deployed reviewed `main` commit `8ddaee9` in Pages workflow run
+`33446317758`. Future origin, custom-domain or publication-authority changes remain explicit
+operator actions.
