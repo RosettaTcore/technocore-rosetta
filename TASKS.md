@@ -1,6 +1,6 @@
 # Implementation backlog
 
-## Build execution status — 30 August 2026
+## Build execution status — 1 September 2026
 
 Phases 0–3 are implemented and pass both the deterministic historical fixture suite and the
 official upstream v0.10.0 OCI matrix. A separately approved no-ingress, read-only Phase 4 observer
@@ -94,7 +94,7 @@ candidate can modify or authorize its own authority boundary.
 ## Phase 4 — cloud read-only staging (explicit approval)
 
 - [x] Re-run novelty landscape check and record nearest competitors.
-- [ ] Define the launch branding system: verify name/handle availability, create logo/avatar and
+- [x] Define the launch branding system: verify name/handle availability, create logo/avatar and
   repository artwork, document colors/type/voice, and apply it consistently to service cards,
   static reports and public discovery documents.
 - [x] Provision dedicated EU VPS/project.

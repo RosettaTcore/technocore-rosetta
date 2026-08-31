@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rosettatcore.github.io/technocore-rosetta/sitemap.xml

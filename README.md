@@ -3,6 +3,8 @@
 [![CI](https://github.com/RosettaTcore/technocore-rosetta/actions/workflows/ci.yml/badge.svg)](https://github.com/RosettaTcore/technocore-rosetta/actions/workflows/ci.yml)
 [Apache-2.0](LICENSE) · Python 3.10–3.12 · deterministic verdicts · dry-run by default
 
+**[Open the live interoperability observatory →](https://rosettatcore.github.io/technocore-rosetta/)**
+
 ![Four independent runtime paths converge through Rosetta into one evidence bundle.](site/assets/rosetta-social-card.jpg)
 
 **One signed workflow. Four independent paths. Evidence you can replay.**
@@ -16,13 +18,15 @@ Rosetta complements protocol vectors and conformance suites. Its focus is the st
 around a real mailbox roundtrip: restart and cursor recovery, HTTP 429 handling, uncertain-write
 reconciliation, differential reads and exactly-once confirmation.
 
-> **Current status:** complete local MVP and reviewed read-only staging observer. The checked-in
-> launch evidence uses a deterministic synthetic identity and performs zero public writes. Public
-> request intake, production identity use and publication remain separately approved release gates.
+> **Current status:** complete local MVP, reviewed read-only staging observer and public static
+> observatory. The checked-in launch evidence uses a deterministic synthetic identity and performs
+> zero public writes. Public request intake, production identity use and Technocore publication
+> remain separately approved release gates.
 
 ## See the proof first
 
-Preview the static launch observatory with only Python's standard library:
+Use the [live observatory](https://rosettatcore.github.io/technocore-rosetta/) or preview the exact
+same static artifact locally with only Python's standard library:
 
 ```sh
 make site-preview

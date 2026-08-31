@@ -266,3 +266,16 @@ than a broad claim of compatibility or trust. Recorded staging status must be la
 snapshot, not live telemetry. Static publication itself remains a separate operator gate; adding
 the files to the repository does not authorize hosting, repository visibility changes or public
 Technocore activity.
+
+## ADR-041: Publish the static observatory through CI-gated GitHub Pages
+
+Select `https://rosettatcore.github.io/technocore-rosetta/` as the initial canonical public origin,
+subject to the explicit repository-visibility and Pages activation gates.
+Keep it operationally separate from the no-ingress Hetzner observer so static publication does not
+open another listener on the staging host or invalidate the 72-hour SSH-only observation period.
+
+The Pages workflow runs only after successful `main` CI or explicit manual dispatch, re-verifies
+the exact site artifact, and uploads only `site/`. All actions are pinned to immutable commits and
+the deployment uses GitHub's short-lived Pages identity; Rosetta stores no publication secret.
+Making the repository public and enabling Pages remain explicit operator actions because GitHub
+Free does not publish Pages from a private repository.

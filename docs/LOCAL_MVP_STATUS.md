@@ -1,6 +1,6 @@
 # Local MVP status
 
-Date: 30 August 2026
+Date: 1 September 2026
 
 ## Outcome
 
@@ -42,7 +42,9 @@ yet complete.
   or storing a production seed;
 - universal Python 3.10+ transitive hash locks and a reproducible lock-drift gate;
 - long-running read-only observer with fixed-path egress, restart deduplication, atomic health/
-  evidence state, host kill switch and one-server staging artifacts.
+  evidence state, host kill switch and one-server staging artifacts;
+- reviewed static-publication candidate with canonical metadata, no-download same-origin evidence
+  verification, optional offline audit, sitemap and a CI-gated GitHub Pages workflow.
 
 ## Verified results
 
@@ -51,7 +53,7 @@ yet complete.
 - Ruff lint/security: pass;
 - Mypy strict: pass for 31 source modules;
 - TypeScript strict check: pass;
-- secret scan: pass over 198 files;
+- secret scan: pass over 236 files;
 - fresh install from the development hash lock: pass; `pip check`: pass;
 - recorded runtime dependency OSV batch query: no known vulnerabilities;
 - official upstream matrix: 4/4 cells pass;
@@ -82,7 +84,9 @@ yet complete.
   pass and `public_writes: 0` throughout;
 - deployed observer check on 30 August 2026: service active/enabled, zero restarts, healthy
   `dry_run` state and `public_writes: 0`; the deployed commit remains `4d2a374...` until this
-  launch-readiness change is reviewed and merged.
+  launch-readiness change is reviewed and merged;
+- GitHub Pages project-subpath QA: desktop and 390×844 mobile pass; all relative assets load and
+  the one-click verifier validates the 15-file reference bundle.
 
 ## Remaining production-only work
 
@@ -90,8 +94,9 @@ yet complete.
 - production key-generation/recovery ceremony and secret-store provisioning;
 - operator approval-key ceremony and addition of its public DID to protected evolution policy;
 - external alert delivery and an independently controlled encrypted off-device backup destination;
-- branding artwork and public contact-surface approval;
-- static publication destination, bounded public intake and exact first signed payload approvals;
+- public contact-surface approval, including whether the Proton address is published;
+- repository visibility, static Pages activation, bounded public intake and exact first signed
+  payload approvals;
 - production deployment of the reviewed, signed release after all applicable gates pass.
 
 The repository is version-controlled in its dedicated private remote. CI and deployment files do
