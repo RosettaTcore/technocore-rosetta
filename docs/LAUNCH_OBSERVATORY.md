@@ -1,8 +1,10 @@
 # Static launch observatory
 
 The launch observatory under `site/` is Rosetta's public, read-only presentation layer. It exposes
-the bounded launch claim, the four-runtime matrix, a synthetic signed reference bundle and a local
-browser verifier. It does not expose a scheduler, signer, mailbox, publisher, dynamic API or live
+the bounded launch claim, the four-runtime matrix, a synthetic signed reference bundle and two
+browser verification paths. The primary path verifies the hosted reference in one click with no
+manual download. The advanced path accepts an operator-owned local bundle for independent offline
+verification. The site does not expose a scheduler, signer, mailbox, publisher, dynamic API or live
 host telemetry.
 
 ## Local preview
@@ -14,15 +16,19 @@ python3 -m http.server 4173 --directory site
 ```
 
 Open `http://127.0.0.1:4173/`. The page has no third-party scripts, fonts, analytics or runtime
-dependencies. Its content-security policy disables network connections from scripts. The only
-external links are ordinary navigational links to this repository.
+dependencies. Its content-security policy permits script requests only to the page's own origin;
+the hosted verifier omits credentials, rejects redirects and applies strict file-count and byte
+bounds. The only external links are ordinary navigational links to this repository.
 
 The primary visitor path is deliberately proof-first:
 
 ```text
 understand the bounded claim -> inspect the reference result
-  -> download and extract the bundle -> verify it locally -> inspect implementation/security
+  -> verify the hosted evidence in one click -> inspect implementation/security
 ```
+
+Downloading, extracting and selecting a bundle remains available under advanced verification. It
+is not required for the primary product experience.
 
 Run the fail-closed site gate with:
 
@@ -31,8 +37,9 @@ make site-check
 ```
 
 The gate checks local resources, active-content restrictions, the content-security policy, the
-exact reference bundle root, its Ed25519 attestation, the deterministic download archive and the
-same browser verification code against valid, mutated, extra-file and substituted-signature cases.
+exact reference bundle root, its Ed25519 attestation, the deterministic optional archive and the
+same browser verification code against valid, mutated, extra-file, cross-origin and
+substituted-signature cases.
 It also ratchets required launch metadata, the README proof-first narrative, the reusable brand
 mark and size limits for loaded artwork.
 
@@ -79,6 +86,8 @@ Immediately after the 72-hour review, replace the displayed operator-check date 
 with the exact reviewed outcome, or remove the strip if no current evidence record can be linked.
 Never roll the date forward without the corresponding operator record.
 
-The browser verifier processes user-selected files in memory. It uploads nothing and performs no
-network request. It validates byte integrity and the domain-separated signature; it does not judge
-the meaning or safety of the observed system.
+The instant verifier fetches only the reviewed evidence path from the page's own origin without
+credentials and validates the returned bytes in memory. This proves that the served files match
+their bundle root and domain-separated signature; it does not make the serving origin independent.
+The advanced verifier processes user-selected files in memory, uploads nothing and performs no
+network request. Neither path judges the meaning or safety of the observed system.

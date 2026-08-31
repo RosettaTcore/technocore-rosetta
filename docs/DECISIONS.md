@@ -254,7 +254,11 @@ alert destination and off-device copy.
 Present Rosetta as a read-only interoperability observatory through a dependency-free static site.
 The site may distribute a reviewed synthetic reference bundle and verify its checksums, canonical
 root and domain-separated Ed25519 attestation entirely in the browser. It has no analytics,
-third-party assets, script network access, dynamic API, mailbox, scheduler, signer or publisher.
+third-party assets, dynamic API, mailbox, scheduler, signer or publisher. The primary interaction
+fetches only the bounded evidence path from the page's own origin without credentials or redirects,
+then verifies the returned bytes in memory. Strict count and byte limits apply. An advanced
+user-selected-file verifier remains networkless for independent copies, but manual download is not
+a prerequisite for the product experience.
 
 This makes Rosetta's strongest distinction legible at launch: complete workflow evidence across
 independent runtimes, including restart, cursor, rate-limit and uncertain-write behavior, rather
