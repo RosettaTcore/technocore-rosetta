@@ -33,10 +33,11 @@ Launch palette:
 - caution amber `#F59E0B` only for warnings.
 
 Use a system sans-serif for interface text and a legible monospace for digests/version evidence.
-The static launch observatory adopts a restrained CSS four-node matrix mark and the abstract
-four-runtime artwork. The reusable vector mark is `site/assets/rosetta-mark.svg`; it represents four
-runtime nodes crossing a comparison axis and converging into bounded evidence. It is used as the
-site favicon, web-manifest icon and on-page identity. The 1200×630 repository/social artwork is
+The static launch observatory adopts a restrained four-path matrix mark and the abstract
+four-runtime artwork. The reusable vector mark is `site/assets/rosetta-mark.svg`; its four filled
+signal paths remain distinct around a faceted deterministic evidence core. The dark optical tile,
+cyan input paths and violet comparison paths stay legible at 16 px without relying on fine strokes.
+It is used as the site favicon, web-manifest icon and on-page identity. The 1200×630 repository/social artwork is
 `site/assets/rosetta-social-card.jpg`, while the optimized in-page visual is
 `site/assets/rosetta-observatory-preview.webp`. The uncompressed PNG remains a source asset and must
 not be loaded by the launch page.

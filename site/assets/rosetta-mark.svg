@@ -1,25 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
   <title id="title">Technocore Rosetta mark</title>
-  <desc id="desc">Four runtime nodes cross a central comparison axis and converge into evidence.</desc>
+  <desc id="desc">Four runtime paths converge on a faceted deterministic evidence core.</desc>
   <defs>
-    <linearGradient id="axis" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#38d9ff" stop-opacity="0"/>
-      <stop offset="0.5" stop-color="#8b5cf6"/>
-      <stop offset="1" stop-color="#38d9ff" stop-opacity="0"/>
+    <linearGradient id="tile" x1="12" y1="10" x2="84" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#141D39"/>
+      <stop offset="0.52" stop-color="#0B1020"/>
+      <stop offset="1" stop-color="#070A14"/>
     </linearGradient>
+    <linearGradient id="cyan" x1="15" y1="18" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8CEEFF"/>
+      <stop offset="1" stop-color="#20C8F4"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="48" y1="48" x2="81" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#7452E8"/>
+    </linearGradient>
+    <linearGradient id="core" x1="38" y1="36" x2="60" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.46" stop-color="#EAFBFF"/>
+      <stop offset="1" stop-color="#C9D6FF"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientTransform="translate(48 48) rotate(90) scale(33)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B5CF6" stop-opacity="0.22"/>
+      <stop offset="0.58" stop-color="#38D9FF" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#38D9FF" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <g fill="none" stroke="#38d9ff" stroke-width="3">
-    <path d="M16 25 25 16l9 9-9 9z"/>
-    <path d="M16 51 25 42l9 9-9 9z"/>
-    <path d="M38 25 47 16l9 9-9 9z"/>
-    <path d="M38 51 47 42l9 9-9 9z"/>
-  </g>
-  <path d="M58 9v69" stroke="url(#axis)" stroke-width="4"/>
-  <g fill="none" stroke="#8b5cf6" stroke-linecap="round" stroke-width="2.5">
-    <path d="M34 25h24l13 14"/>
-    <path d="M34 51h24l13-12"/>
-    <path d="M56 25h2"/>
-    <path d="M56 51h2"/>
-  </g>
-  <path d="M70 30h17v17H70z" fill="#f8fafc" fill-opacity="0.08" stroke="#f8fafc" stroke-width="3"/>
+
+  <rect x="2" y="2" width="92" height="92" rx="23" fill="url(#tile)"/>
+  <rect x="2.75" y="2.75" width="90.5" height="90.5" rx="22.25" fill="none" stroke="#A8C4FF" stroke-opacity="0.16" stroke-width="1.5"/>
+  <circle cx="48" cy="48" r="33" fill="url(#halo)"/>
+
+  <!-- Four reviewed runtime paths. Filled geometry stays crisp at favicon sizes. -->
+  <path d="M17 22.5 22.5 17H35l11 20-9 9-20-11V22.5Z" fill="url(#cyan)"/>
+  <path d="M61 17h12.5l5.5 5.5V35L59 46l-9-9 11-20Z" fill="url(#violet)"/>
+  <path d="M17 61l20-11 9 9-11 20H22.5L17 73.5V61Z" fill="url(#cyan)"/>
+  <path d="m59 50 20 11v12.5L73.5 79H61L50 59l9-9Z" fill="url(#violet)"/>
+
+  <!-- Negative-space separators keep the four paths independently legible. -->
+  <path d="m36.9 42.6 5.7-5.7 5.4 5.4 5.4-5.4 5.7 5.7-5.4 5.4 5.4 5.4-5.7 5.7-5.4-5.4-5.4 5.4-5.7-5.7 5.4-5.4-5.4-5.4Z" fill="#0B1020"/>
+
+  <!-- One canonical evidence core, faceted rather than certification-shaped. -->
+  <path d="m48 35 13 13-13 13-13-13 13-13Z" fill="url(#core)"/>
+  <path d="m48 35 13 13H48V35Z" fill="#FFFFFF" fill-opacity="0.66"/>
+  <path d="m48 61-13-13h13v13Z" fill="#A9C7FF" fill-opacity="0.55"/>
+  <path d="m48 42 6 6-6 6-6-6 6-6Z" fill="#0B1020"/>
 </svg>
