@@ -42,6 +42,11 @@ It is used as the site favicon, web-manifest icon and on-page identity. The 1200
 `site/assets/rosetta-observatory-preview.webp`. The uncompressed PNG remains a source asset and must
 not be loaded by the launch page.
 
+The dedicated GitHub account avatar is `site/assets/rosetta-profile-avatar.png`: an 800×800 PNG
+under 1 MB with safe margins for a circular crop. It preserves the approved four-path geometry but
+uses restrained optical depth so the account remains recognizable at 32 px. Do not substitute the
+social card, source artwork or a generated variant that has not passed the small-size review.
+
 The mark and artwork are presentation assets, not certification marks, production identities or
 claims about live state. Keep descriptive alternative text on meaningful artwork and an empty
 alternative on a mark adjacent to the written product name. Do not place a shield, checkmark,
@@ -49,7 +54,7 @@ ranking, reward language or FLOP visual identity around the mark.
 
 The README leads with the evidence artwork, bounded value proposition and a proof-first path. The
 site leads with the same three claims: one signed workflow, four independent paths and replayable
-evidence. Repository/account avatar upload and any public URL remain explicit external launch
+evidence. Changing an external account avatar and approving any public URL remain explicit launch
 actions.
 
 The Proton address is reserved for Rosetta operations but must not be published as a contact

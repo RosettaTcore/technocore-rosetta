@@ -20,6 +20,7 @@ MANIFEST = SITE / "site.webmanifest"
 MARK = SITE / "assets/rosetta-mark.svg"
 PREVIEW = SITE / "assets/rosetta-observatory-preview.webp"
 SOCIAL_CARD = SITE / "assets/rosetta-social-card.jpg"
+PROFILE_AVATAR = SITE / "assets/rosetta-profile-avatar.png"
 REFERENCE_ROOT = "sha256:0b3435df9b0f6eb8b1ac2eaab22120a0b14730764fceaa9d1a701860f43c1b9f"
 
 
@@ -147,13 +148,24 @@ def main() -> int:
     if "rosetta-observatory-preview.png" in source:
         raise ValueError("the unoptimized source artwork must not be loaded by the page")
 
-    for required_file in (MANIFEST, MARK, PREVIEW, SOCIAL_CARD):
+    for required_file in (MANIFEST, MARK, PREVIEW, SOCIAL_CARD, PROFILE_AVATAR):
         if not required_file.is_file():
             raise ValueError(f"missing launch asset: {required_file.relative_to(ROOT)}")
     if PREVIEW.stat().st_size > 100_000:
         raise ValueError("optimized hero artwork exceeds 100 KB")
     if SOCIAL_CARD.stat().st_size > 200_000:
         raise ValueError("social preview artwork exceeds 200 KB")
+    if PROFILE_AVATAR.stat().st_size > 1_000_000:
+        raise ValueError("profile avatar exceeds 1 MB")
+    avatar_header = PROFILE_AVATAR.read_bytes()[:24]
+    if avatar_header[:8] != b"\x89PNG\r\n\x1a\n" or avatar_header[12:16] != b"IHDR":
+        raise ValueError("profile avatar must be a valid PNG")
+    avatar_dimensions = (
+        int.from_bytes(avatar_header[16:20], "big"),
+        int.from_bytes(avatar_header[20:24], "big"),
+    )
+    if avatar_dimensions != (800, 800):
+        raise ValueError(f"unexpected profile avatar dimensions: {avatar_dimensions}")
 
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     if manifest.get("name") != "Technocore Rosetta":
