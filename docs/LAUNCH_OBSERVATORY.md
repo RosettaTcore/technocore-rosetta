@@ -17,6 +17,13 @@ Open `http://127.0.0.1:4173/`. The page has no third-party scripts, fonts, analy
 dependencies. Its content-security policy disables network connections from scripts. The only
 external links are ordinary navigational links to this repository.
 
+The primary visitor path is deliberately proof-first:
+
+```text
+understand the bounded claim -> inspect the reference result
+  -> download and extract the bundle -> verify it locally -> inspect implementation/security
+```
+
 Run the fail-closed site gate with:
 
 ```sh
@@ -26,6 +33,23 @@ make site-check
 The gate checks local resources, active-content restrictions, the content-security policy, the
 exact reference bundle root, its Ed25519 attestation, the deterministic download archive and the
 same browser verification code against valid, mutated, extra-file and substituted-signature cases.
+It also ratchets required launch metadata, the README proof-first narrative, the reusable brand
+mark and size limits for loaded artwork.
+
+## Public URL finalization
+
+The repository intentionally contains no guessed canonical site URL. After an immutable public
+origin is approved and before announcing it:
+
+1. add an absolute `link[rel=canonical]` and matching `og:url`;
+2. replace relative Open Graph and Twitter image references with the absolute 1200×630 card URL;
+3. add the public observatory URL to the repository homepage and the README's first-screen actions;
+4. update `tools/check_launch_site.py` to require the exact approved origin;
+5. verify the rendered social card with at least two preview debuggers without adding their scripts;
+6. run `make site-check` and the full acceptance gate again.
+
+Until this step is complete, the local page remains a launch candidate rather than a published
+canonical website.
 
 ## Evidence update procedure
 
@@ -50,6 +74,10 @@ The status strip is explicitly a recorded snapshot. It must never look or behave
 telemetry unless a separately reviewed, privacy-preserving static status publication mechanism is
 added. A green recorded snapshot does not imply current availability, protocol safety, trust,
 endorsement or certification.
+
+Immediately after the 72-hour review, replace the displayed operator-check date and pending state
+with the exact reviewed outcome, or remove the strip if no current evidence record can be linked.
+Never roll the date forward without the corresponding operator record.
 
 The browser verifier processes user-selected files in memory. It uploads nothing and performs no
 network request. It validates byte integrity and the domain-separated signature; it does not judge

@@ -1,0 +1,55 @@
+name: Reproducibility discrepancy
+description: Report a Rosetta result, verifier, or documented command that you cannot reproduce.
+title: "repro: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for checking the evidence. Include only public, non-secret information. Never paste a private mailbox capability, credential, key, seed, recovery material, or production DID secret.
+  - type: input
+    id: bundle-root
+    attributes:
+      label: Bundle root
+      description: The complete sha256-prefixed bundle root, if applicable.
+      placeholder: sha256:...
+    validations:
+      required: false
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: Operating system, architecture, Python, Node.js, and container-runtime versions.
+      placeholder: macOS 15 arm64; Python 3.12; Node.js 20; Docker 27
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Exact command or verifier action
+      description: Redact any private paths or identifiers before submitting.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed result
+      description: Include the stable reason code or bounded error output when available.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed secrets, credentials, private mailbox capabilities, key material, and private identifiers.
+          required: true
+        - label: I understand that this form is for reproducibility discrepancies, not trust, certification, or reward claims.
+          required: true

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
     <meta name="theme-color" content="#0b1020">
+    <meta name="referrer" content="no-referrer">
+    <meta name="robots" content="index, follow, max-image-preview:large">
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
@@ -18,22 +20,39 @@
       property="og:description"
       content="One signed workflow. Four independent paths. Evidence you can replay."
     >
+    <meta property="og:site_name" content="Technocore Rosetta">
+    <meta property="og:locale" content="en_US">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="assets/rosetta-observatory-preview.png">
+    <meta property="og:image" content="assets/rosetta-social-card.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta
+      property="og:image:alt"
+      content="Four independent runtime paths converge through Rosetta into one evidence bundle."
+    >
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Technocore Rosetta — Interoperability Observatory">
+    <meta
+      name="twitter:description"
+      content="One signed workflow. Four independent paths. Evidence you can replay."
+    >
+    <meta name="twitter:image" content="assets/rosetta-social-card.jpg">
+    <meta
+      name="twitter:image:alt"
+      content="Four independent runtime paths converge through Rosetta into one evidence bundle."
+    >
     <title>Technocore Rosetta — Interoperability Observatory</title>
-    <link rel="icon" href="assets/rosetta-observatory-preview.png">
-    <link rel="stylesheet" href="styles.css">
-    <script type="module" src="app.js"></script>
+    <link rel="icon" type="image/svg+xml" href="assets/rosetta-mark.svg">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="stylesheet" href="styles.css?v=20260831">
+    <script type="module" src="app.js?v=20260831"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to evidence</a>
 
     <header class="site-header" data-header>
       <a class="brand" href="#top" aria-label="Technocore Rosetta home">
-        <span class="brand-mark" aria-hidden="true">
-          <i></i><i></i><i></i><i></i><b></b>
-        </span>
+        <img class="brand-mark" src="assets/rosetta-mark.svg" width="32" height="32" alt="">
         <span>Technocore <strong>Rosetta</strong></span>
       </a>
       <nav aria-label="Primary navigation">
@@ -52,11 +71,17 @@
     <main id="main">
       <section class="hero" id="top" aria-labelledby="hero-title">
         <div class="hero-copy">
-          <p class="eyebrow"><span class="pulse" aria-hidden="true"></span> Read-only launch observatory</p>
+          <p class="eyebrow"><span class="pulse" aria-hidden="true"></span> End-to-end interoperability evidence</p>
           <h1 id="hero-title">One signed workflow.<br><span>Four independent paths.</span><br>Evidence you can replay.</h1>
           <p class="hero-lede">
-            Rosetta runs a complete Technocore mailbox roundtrip across independent runtimes,
-            detects behavioral drift, and seals the bounded transcript into a verifiable evidence bundle.
+            Before an integrator upgrades Technocore or an adapter, Rosetta runs the complete signed
+            mailbox roundtrip across independent runtimes, detects behavioral drift, and seals the
+            bounded transcript into a verifiable evidence bundle.
+          </p>
+          <p class="hero-assurance" aria-label="Assurance boundaries">
+            <span>Deterministic verdicts</span>
+            <span>Offline verification</span>
+            <span>No model in the verdict path</span>
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="#evidence">Inspect latest evidence</a>
@@ -71,9 +96,11 @@
 
         <figure class="hero-figure">
           <img
-            src="assets/rosetta-observatory-preview.png"
+            src="assets/rosetta-observatory-preview.webp"
             width="1536"
             height="1024"
+            decoding="async"
+            fetchpriority="high"
             alt="Four abstract runtime nodes converge through a central comparison axis into one evidence bundle."
           >
           <figcaption>
@@ -91,12 +118,15 @@
           <li><span aria-hidden="true"></span>Public intake disabled</li>
           <li><span aria-hidden="true"></span>72-hour review pending</li>
         </ul>
-        <p class="status-note">Not live telemetry</p>
+        <p class="status-note">
+          Not live telemetry ·
+          <a href="https://github.com/RosettaTcore/technocore-rosetta/blob/main/docs/STAGING_SECURITY_REVIEW.md" rel="noopener noreferrer">review record ↗</a>
+        </p>
       </section>
 
       <section class="section intro" aria-labelledby="why-title">
         <div>
-          <p class="eyebrow">Beyond protocol vectors</p>
+          <p class="eyebrow">For integrators, maintainers and agent operators</p>
           <h2 id="why-title">Compatibility is a workflow property.</h2>
         </div>
         <div class="intro-copy">
@@ -109,6 +139,20 @@
             <span>429 backoff</span><span>cursor resume</span><span>restart recovery</span>
             <span>uncertain-write reconciliation</span><span>differential reads</span>
             <span>exactly-once confirmation</span>
+          </div>
+          <div class="audience-grid" aria-label="Rosetta users and outcomes">
+            <article>
+              <strong>Integrators</strong>
+              <span>Make upgrade decisions from exact versioned evidence.</span>
+            </article>
+            <article>
+              <strong>Maintainers</strong>
+              <span>Receive stable reason codes and minimal reproductions.</span>
+            </article>
+            <article>
+              <strong>Agent operators</strong>
+              <span>Verify observed behavior without trusting a prose claim.</span>
+            </article>
           </div>
         </div>
       </section>
@@ -221,11 +265,22 @@
         </div>
 
         <div class="verifier-panel">
+          <div class="verifier-download">
+            <div>
+              <span>1</span>
+              <p><strong>Download the reference bundle</strong><small>Then extract the ZIP on your device.</small></p>
+            </div>
+            <a
+              class="button button-secondary"
+              href="evidence/rosetta-v0.10.0-reference.zip"
+              download
+            >Download ZIP</a>
+          </div>
           <div class="drop-zone">
             <span class="drop-icon" aria-hidden="true">⌁</span>
-            <label for="bundle-input">Choose an extracted bundle directory</label>
-            <p>Expected: <code>checksums.txt</code>, <code>attestation.json</code>, and all listed payload files.</p>
-            <input id="bundle-input" type="file" webkitdirectory multiple>
+            <label for="bundle-input"><span>2</span> Choose the extracted bundle directory</label>
+            <p id="bundle-help">Expected: <code>checksums.txt</code>, <code>attestation.json</code>, and all listed payload files.</p>
+            <input id="bundle-input" type="file" webkitdirectory multiple aria-describedby="bundle-help">
           </div>
           <div class="verification-result" id="verification-result" aria-live="polite" data-state="idle">
             <span class="result-mark" aria-hidden="true">—</span>
@@ -267,13 +322,14 @@
         <div class="hero-actions">
           <a class="button button-primary" href="https://github.com/RosettaTcore/technocore-rosetta" rel="noopener noreferrer">Inspect the implementation</a>
           <a class="button button-secondary" href="https://github.com/RosettaTcore/technocore-rosetta/blob/main/docs/SECURITY.md" rel="noopener noreferrer">Read the security model</a>
+          <a class="text-link" href="https://github.com/RosettaTcore/technocore-rosetta/issues/new/choose" rel="noopener noreferrer">Report a discrepancy <span aria-hidden="true">→</span></a>
         </div>
       </section>
     </main>
 
     <footer>
       <div class="brand footer-brand">
-        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></span>
+        <img class="brand-mark" src="assets/rosetta-mark.svg" width="32" height="32" alt="">
         <span>Technocore <strong>Rosetta</strong></span>
       </div>
       <p>Reproducible cross-runtime evidence for Technocore workflows.</p>
