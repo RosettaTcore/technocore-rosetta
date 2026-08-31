@@ -63,6 +63,14 @@ def main() -> int:
         raise ValueError("the reviewed reference root is absent from the page")
     if len([tag for tag, _ in parser.tags if tag == "h1"]) != 1:
         raise ValueError("launch page must contain exactly one h1")
+    if source.count("data-verify-hosted") < 3:
+        raise ValueError(
+            "instant hosted verification must be available from every primary proof path"
+        )
+    if source.count("data-hosted-status") != 1:
+        raise ValueError("launch page must expose exactly one hosted-verification status indicator")
+    if "Verify the live reference. No download." not in source:
+        raise ValueError("the launch page must lead with no-download verification")
     html_attributes = next((attrs for tag, attrs in parser.tags if tag == "html"), {})
     if html_attributes.get("lang") != "en":
         raise ValueError("launch page language must be English")
@@ -107,7 +115,7 @@ def main() -> int:
         "default-src 'self'",
         "script-src 'self'",
         "style-src 'self'",
-        "connect-src 'none'",
+        "connect-src 'self'",
         "object-src 'none'",
         "base-uri 'none'",
         "form-action 'none'",
@@ -141,7 +149,7 @@ def main() -> int:
             _check_local_reference(reference)
 
     script_sources = [attrs.get("src") for tag, attrs in parser.tags if tag == "script"]
-    if script_sources != ["app.js?v=20260831"]:
+    if script_sources != ["app.js?v=20260901b"]:
         raise ValueError(f"unexpected script set: {script_sources}")
     if re.search(r"<script(?:\s[^>]*)?>\s*[^<\s]", source, flags=re.IGNORECASE):
         raise ValueError("inline script is forbidden")

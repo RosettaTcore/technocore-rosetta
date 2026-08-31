@@ -122,7 +122,7 @@ footer {
   gap: clamp(2rem, 5vw, 5.5rem);
   align-items: center;
   min-height: calc(100vh - 4.5rem);
-  padding: 6rem 0 5.5rem;
+  padding: 3.5rem 0 4.5rem;
 }
 
 .eyebrow {
@@ -152,8 +152,8 @@ p { margin-top: 0; }
 
 h1 {
   max-width: 13ch;
-  margin-bottom: 1.5rem;
-  font-size: clamp(3.1rem, 6.6vw, 6.5rem);
+  margin-bottom: 0.9rem;
+  font-size: clamp(3.1rem, 5vw, 4.35rem);
   line-height: 0.94;
   letter-spacing: -0.065em;
   text-wrap: balance;
@@ -177,16 +177,16 @@ h3 { letter-spacing: -0.025em; }
 
 .hero-lede {
   max-width: 42rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   color: #b8c3d6;
-  font-size: clamp(1.06rem, 1.4vw, 1.22rem);
+  font-size: clamp(1rem, 1.2vw, 1.12rem);
 }
 
 .hero-assurance {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem 1.1rem;
-  margin: -0.8rem 0 2rem;
+  margin: 0 0 1.05rem;
   color: var(--muted);
   font: 0.68rem "SFMono-Regular", Consolas, monospace;
 }
@@ -224,6 +224,7 @@ h3 { letter-spacing: -0.025em; }
 }
 
 .button:hover { transform: translateY(-2px); }
+.button[aria-disabled="true"] { pointer-events: none; opacity: 0.62; }
 .button:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -235,7 +236,7 @@ a:focus-visible { outline: 3px solid rgba(56, 217, 255, 0.45); outline-offset: 3
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   max-width: 42rem;
-  margin: 3.2rem 0 0;
+  margin: 2.2rem 0 0;
   padding-top: 1.25rem;
   border-top: 1px solid var(--line);
 }
@@ -370,17 +371,25 @@ a:focus-visible { outline: 3px solid rgba(56, 217, 255, 0.45); outline-offset: 3
 .verifier-intro ol { margin: 2rem 0 0; padding-left: 1.2rem; color: var(--muted); }
 .verifier-intro li { margin: 0.45rem 0; padding-left: 0.35rem; }
 .verifier-panel { padding: 1.15rem; border: 1px solid var(--line); border-radius: 0.9rem; background: rgba(14,22,41,0.72); }
-.verifier-download { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; padding: 0.85rem 0.9rem; border: 1px solid var(--line); border-radius: 0.6rem; background: rgba(0,0,0,0.14); }
-.verifier-download > div { display: flex; align-items: center; gap: 0.75rem; }
-.verifier-download > div > span,
-.drop-zone label > span { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border: 1px solid var(--line-bright); border-radius: 50%; color: var(--cyan); font: 0.68rem "SFMono-Regular", Consolas, monospace; }
-.verifier-download p { display: grid; gap: 0.12rem; margin: 0; }
-.verifier-download strong { font-size: 0.78rem; }
-.verifier-download small { color: var(--muted); font-size: 0.68rem; }
-.verifier-download .button { flex: 0 0 auto; min-height: 2.55rem; font-size: 0.76rem; }
-.drop-zone { display: grid; justify-items: center; padding: 3.2rem 1.5rem; border: 1px dashed rgba(56,217,255,0.4); border-radius: 0.65rem; text-align: center; background: rgba(56,217,255,0.025); }
+.instant-verifier { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; padding: 1.2rem; border: 1px solid var(--line-bright); border-radius: 0.7rem; background: linear-gradient(120deg, rgba(56,217,255,0.08), rgba(139,92,246,0.08)); }
+.instant-verifier > div { display: flex; align-items: center; gap: 0.8rem; }
+.instant-verifier > div > span { display: inline-grid; place-items: center; min-width: 3rem; min-height: 1.7rem; padding: 0.2rem 0.45rem; border: 1px solid rgba(66,226,184,0.35); border-radius: 99rem; color: var(--green); font: 0.62rem "SFMono-Regular", Consolas, monospace; text-transform: uppercase; letter-spacing: 0.06em; }
+.instant-verifier > div > span[data-state="working"] { color: var(--cyan); border-color: rgba(56,217,255,0.45); }
+.instant-verifier > div > span[data-state="invalid"] { color: var(--amber); border-color: rgba(245,158,11,0.45); }
+.instant-verifier p { display: grid; gap: 0.12rem; margin: 0; }
+.instant-verifier strong { font-size: 0.84rem; }
+.instant-verifier small { color: var(--muted); font-size: 0.68rem; }
+.instant-verifier .button { flex: 0 0 auto; }
+.verification-scope { margin: 0.9rem 0 0; color: var(--muted); font-size: 0.68rem; }
+.advanced-verifier { margin-top: 1rem; border-top: 1px solid var(--line); }
+.advanced-verifier summary { padding: 1rem 0.2rem 0.2rem; color: #cbd5e1; font-size: 0.76rem; font-weight: 720; cursor: pointer; }
+.advanced-verifier summary:hover { color: var(--white); }
+.advanced-verifier-body { padding-top: 1rem; }
+.advanced-verifier-body > p { margin-bottom: 1rem; color: var(--muted); font-size: 0.72rem; }
+.advanced-verifier-body > .button { min-height: 2.55rem; margin-bottom: 1rem; font-size: 0.76rem; }
+.drop-zone { display: grid; justify-items: center; padding: 2.5rem 1.5rem; border: 1px dashed rgba(56,217,255,0.4); border-radius: 0.65rem; text-align: center; background: rgba(56,217,255,0.025); }
 .drop-icon { display: grid; place-items: center; width: 3rem; height: 3rem; margin-bottom: 1rem; border: 1px solid var(--line-bright); border-radius: 50%; color: var(--cyan); font-size: 1.5rem; }
-.drop-zone label { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.45rem; font-weight: 780; cursor: pointer; }
+.drop-zone label { margin-bottom: 0.45rem; font-weight: 780; cursor: pointer; }
 .drop-zone p { max-width: 30rem; margin-bottom: 1.2rem; color: var(--muted); font-size: 0.75rem; }
 .drop-zone input { max-width: 100%; color: var(--muted); font-size: 0.74rem; }
 .drop-zone input::file-selector-button { margin-right: 0.7rem; padding: 0.52rem 0.75rem; color: var(--white); border: 1px solid var(--line-bright); border-radius: 0.35rem; background: rgba(56,217,255,0.08); cursor: pointer; }
@@ -465,8 +474,9 @@ footer p { margin: 0; }
   .proof-card dl { grid-template-columns: 1fr; }
   .proof-card dl div { border-right: 0; }
   .evidence-actions .button { width: 100%; }
-  .verifier-download { align-items: stretch; flex-direction: column; }
-  .verifier-download .button { width: 100%; }
+  .instant-verifier { align-items: stretch; flex-direction: column; }
+  .instant-verifier .button,
+  .advanced-verifier-body > .button { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

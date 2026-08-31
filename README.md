@@ -28,9 +28,11 @@ Preview the static launch observatory with only Python's standard library:
 make site-preview
 ```
 
-Open <http://127.0.0.1:4173/>, download the reference bundle, extract it and select the directory in
-the browser verifier. Verification stays on the device: no upload, network request or model is
-involved.
+Open <http://127.0.0.1:4173/> and select **Verify live evidence**. The page fetches only the bounded
+reference files from its own origin, then recomputes every digest, the bundle root and the Ed25519
+attestation in the browser. No account, install, upload or model is involved. Downloading a bundle
+is an optional advanced path for an independent offline audit, not a prerequisite for using the
+observatory.
 
 The same launch surface can be checked non-interactively:
 
@@ -39,8 +41,8 @@ make site-check
 ```
 
 That gate validates the site's security boundary, deterministic archive, exact bundle root and real
-Ed25519 attestation. It also exercises the browser verifier against valid, mutated, extra-file and
-substituted-signature cases.
+Ed25519 attestation. It also exercises both the instant same-origin verifier and the independent
+file verifier against valid, mutated, extra-file, cross-origin and substituted-signature cases.
 
 | Reviewed reference | Result |
 |---|---|
