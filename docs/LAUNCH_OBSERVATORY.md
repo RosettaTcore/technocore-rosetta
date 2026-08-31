@@ -45,7 +45,7 @@ mark and size limits for loaded artwork.
 
 ## Public origin and deployment
 
-The proposed canonical origin, pending explicit repository-visibility and Pages approval, is:
+The canonical public origin is:
 
 ```text
 https://rosettatcore.github.io/technocore-rosetta/
@@ -61,16 +61,16 @@ failed CI runs, checks out the exact CI-reviewed commit, installs hash-locked ru
 runs `make site-check`, uploads only `site/`, and deploys through the `github-pages` environment.
 Every third-party action is pinned to a full reviewed commit. Manual dispatch runs the same checks.
 
-GitHub Free requires this repository to be public before Pages can be enabled. Before the first
-deployment:
+The initial publication gates were completed on 1 September 2026. The repository was made public
+only after a reachable-history privacy review; Pages was set to **GitHub Actions**; publication PR
+[#22](https://github.com/RosettaTcore/technocore-rosetta/pull/22) passed both required CI jobs and
+was squash-merged as `8ddaee9`; and Pages run
+[#1](https://github.com/RosettaTcore/technocore-rosetta/actions/runs/33446317758) re-verified and
+deployed the site successfully. Post-deployment browser verification loaded the canonical URL and
+assets, then validated all 15 hosted payloads, the exact bundle root and the Ed25519 attestation.
 
-1. complete the current-tree and reachable-history privacy/secret review;
-2. obtain explicit approval to make the repository public;
-3. set Pages source to **GitHub Actions**;
-4. merge the reviewed publication workflow only after its pull-request CI passes;
-5. verify the canonical URL, assets, CSP, one-click evidence path, robots file and sitemap;
-6. add the canonical URL to the repository homepage;
-7. verify the rendered social card with at least two preview debuggers without adding their scripts.
+The repository homepage should retain the canonical URL. Social-card previews may be checked with
+external debuggers, but their scripts or tracking assets must never be added to this site.
 
 A future custom domain is a new origin change. It requires an updated canonical URL, social image
 URLs, sitemap, site ratchet, DNS review and HTTPS verification before announcement.

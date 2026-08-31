@@ -100,6 +100,7 @@ candidate can modify or authorize its own authority boundary.
 - [x] Provision dedicated EU VPS/project.
 - [x] Deploy the read-only observer and egress proxy; keep scheduler, runners and signer absent.
 - [x] Verify runner and signer isolation.
+- [x] Publish the read-only observatory through CI-gated GitHub Pages with no public intake.
 - [ ] Configure encrypted backups, alerts, budgets and kill switch.
 - [ ] Poll official release/manifest sources read-only for 72 hours.
 - [x] Run public protocol probes only if they are read-only and within published limits.
