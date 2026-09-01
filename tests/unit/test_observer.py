@@ -160,7 +160,8 @@ def test_probe_rejects_invalid_json_documents(
 @pytest.mark.parametrize(
     "mutation,error",
     [
-        ({"info": {"version": "9.0.0"}}, "openapi_release"),
+        ({"info": {"version": "9.0.0"}}, "release_metadata_mismatch"),
+        ({"info": {}}, "invalid_release_metadata"),
         ({"openapi": "2.0"}, "openapi_version"),
         ({"paths": {}}, "metadata_path"),
     ],
@@ -181,6 +182,25 @@ def test_probe_rejects_status_and_invalid_document_links() -> None:
     with pytest.raises(RuntimeError, match="unexpected_status"):
         client.probe()
     client.close()
+
+
+def test_probe_accepts_consistent_release_drift_as_evidence() -> None:
+    documents = _documents()
+    manifest = json.loads(documents["/.well-known/agent.json"][1])
+    manifest["version"] = "0.8.0"
+    documents["/.well-known/agent.json"] = ("application/json", json.dumps(manifest).encode())
+    openapi = json.loads(documents["/openapi.json"][1])
+    openapi["info"]["version"] = "0.8.0"
+    documents["/openapi.json"] = ("application/json", json.dumps(openapi).encode())
+    client = _client(_transport(documents)[0])
+    try:
+        result = client.probe()
+    finally:
+        client.close()
+    assert result.release == "0.8.0"
+    assert result.expected_release == "0.7.0"
+    assert result.compatibility_status == "release_drift"
+    assert result.as_dict()["compatibility_status"] == "release_drift"
 
     for documentation, error in (
         (None, "documentation"),
@@ -250,6 +270,57 @@ def test_observer_persists_change_once_and_deduplicates_across_restart(tmp_path:
     assert health["status"] == "healthy" and health["public_writes"] == 0
 
 
+def test_observer_records_release_drift_without_failing_safety(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    client = FakeClient()
+    client.observation = ProtocolObservation(
+        "0.8.0",
+        "sha256:" + "3" * 64,
+        client.observation.endpoints,
+        "0.7.0",
+        "release_drift",
+    )
+    service = ObserverService(config, client=client, clock=lambda: NOW)  # type: ignore[arg-type]
+    result = service.observe_once()
+    service.close()
+    assert result["safety_status"] == "safe"
+    assert result["compatibility_status"] == "release_drift"
+    assert result["compatibility_reason"] == "release_drift"
+    assert result["release"] == "0.8.0"
+    evidence = json.loads(next((tmp_path / "evidence").glob("*.json")).read_text())
+    assert evidence["expected_release"] == "0.7.0"
+    assert evidence["compatibility_status"] == "release_drift"
+
+
+def test_observer_rejects_malformed_upstream_without_failing_safety(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    client = FakeClient()
+    client.probe = (  # type: ignore[method-assign]
+        lambda: (_ for _ in ()).throw(RuntimeError("authority_origin_mismatch"))
+    )
+    service = ObserverService(config, client=client, clock=lambda: NOW)  # type: ignore[arg-type]
+    result = service.observe_once()
+    service.close()
+    assert result["safety_status"] == "safe"
+    assert result["compatibility_status"] == "rejected"
+    assert result["compatibility_reason"] == "authority_origin_mismatch"
+    assert result["observation_current"] is False
+
+
+def test_observer_marks_local_persistence_failure_unsafe(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    service = ObserverService(config, client=FakeClient(), clock=lambda: NOW)  # type: ignore[arg-type]
+    service.store.record_protocol_observation = (  # type: ignore[method-assign]
+        lambda *_args: (_ for _ in ()).throw(OSError("local storage failure"))
+    )
+    with pytest.raises(OSError, match="storage failure"):
+        service.observe_once()
+    health = json.loads((tmp_path / "state/health.json").read_text())
+    assert health["safety_status"] == "unsafe"
+    assert health["reason"] == "observer_internal_error"
+    service.close()
+
+
 def test_observer_kill_switch_and_failure_are_fail_closed_and_redacted(tmp_path: Path) -> None:
     config = _config(tmp_path)
     switch = Path(config.operations.kill_switch_file)
@@ -262,12 +333,15 @@ def test_observer_kill_switch_and_failure_are_fail_closed_and_redacted(tmp_path:
 
     switch.unlink()
     failing = ObserverService(config, client=FakeClient(fail=True), clock=lambda: NOW)  # type: ignore[arg-type]
-    with pytest.raises(httpx.ConnectError):
-        failing.observe_once()
+    result = failing.observe_once()
     failing.close()
     raw_health = (tmp_path / "state/health.json").read_text()
     assert "sensitive upstream details" not in raw_health
-    assert json.loads(raw_health)["reason"] == "ConnectError"
+    health = json.loads(raw_health)
+    assert health["compatibility_reason"] == "ConnectError"
+    assert health["compatibility_status"] == "unavailable"
+    assert health["safety_status"] == "safe"
+    assert result["public_writes"] == 0
     assert _error_reason(RuntimeError("unexpected_status:/healthz:503")) == "unexpected_status"
     assert _error_reason(RuntimeError("external secret detail")) == "RuntimeError"
 
@@ -290,7 +364,7 @@ def test_observer_run_modes_stop_cleanly(tmp_path: Path) -> None:
             self.service_holder[0].request_stop()
             raise self.error
 
-    for error in (RuntimeError("transient"), httpx.ConnectError("down")):
+    for error in (RuntimeError("transient"), TypeError("internal")):
         holder: list[ObserverService] = []
         service = ObserverService(  # type: ignore[arg-type]
             config, client=StopThenFail(holder, error), clock=lambda: NOW
@@ -299,7 +373,7 @@ def test_observer_run_modes_stop_cleanly(tmp_path: Path) -> None:
         service.run()
         service.close()
 
-    for error in (RuntimeError("transient"), httpx.ConnectError("down")):
+    for error in (RuntimeError("transient"), TypeError("internal")):
         failing_once = ObserverService(  # type: ignore[arg-type]
             config, client=FakeClient(fail=True), clock=lambda: NOW
         )
@@ -308,7 +382,17 @@ def test_observer_run_modes_stop_cleanly(tmp_path: Path) -> None:
         )
         with pytest.raises(type(error)):
             failing_once.run(once=True)
+        health = json.loads((tmp_path / "state/health.json").read_text())
+        assert health["safety_status"] == "unsafe"
+        assert health["reason"] == "observer_internal_error"
         failing_once.close()
+
+    unavailable_once = ObserverService(  # type: ignore[arg-type]
+        config, client=FakeClient(fail=True), clock=lambda: NOW
+    )
+    unavailable_once.run(once=True)
+    assert json.loads((tmp_path / "state/health.json").read_text())["safety_status"] == "safe"
+    unavailable_once.close()
 
 
 def test_observer_continuous_wait_honors_switch_and_stop(
@@ -382,5 +466,20 @@ def test_atomic_json_removes_temporary_file_after_failed_replace(
         observer_module.os, "replace", lambda *_args: (_ for _ in ()).throw(OSError("full"))
     )
     with pytest.raises(OSError, match="full"):
+        _atomic_json(path, {"a": 1})
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_atomic_json_handles_replace_failure_after_temporary_disappears(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "value.json"
+
+    def disappearing_replace(source: str, _destination: Path) -> None:
+        Path(source).unlink()
+        raise OSError("replace interrupted")
+
+    monkeypatch.setattr(observer_module.os, "replace", disappearing_replace)
+    with pytest.raises(OSError, match="interrupted"):
         _atomic_json(path, {"a": 1})
     assert list(tmp_path.iterdir()) == []

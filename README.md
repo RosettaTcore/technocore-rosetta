@@ -20,8 +20,10 @@ reconciliation, differential reads and exactly-once confirmation.
 
 > **Current status:** complete local MVP, reviewed read-only staging observer and public static
 > observatory. The checked-in launch evidence uses a deterministic synthetic identity and performs
-> zero public writes. Public request intake, production identity use and Technocore publication
-> remain separately approved release gates.
+> zero public writes. Observer safety is reported separately from upstream availability and release
+> drift, so a Technocore upgrade cannot silently become trusted or unnecessarily take the read-only
+> product offline. Public request intake, production identity use and Technocore publication remain
+> separately approved release gates.
 
 ## See the proof first
 

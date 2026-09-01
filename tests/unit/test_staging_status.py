@@ -15,10 +15,12 @@ def _write_state(tmp_path: Path) -> tuple[Path, Path]:
     state.mkdir()
     evidence.mkdir()
     health = {
-        "schema": "rosetta.observer-health.v1",
+        "schema": "rosetta.observer-health.v2",
         "mode": "dry_run",
         "public_writes": 0,
         "status": "healthy",
+        "safety_status": "safe",
+        "compatibility_status": "compatible",
         "checked_at": NOW.isoformat(),
         "release": "0.10.0",
         "protocol_digest": DIGEST,
@@ -33,6 +35,7 @@ def _write_state(tmp_path: Path) -> tuple[Path, Path]:
     (evidence / f"{'a' * 64}.json").write_text(json.dumps(observation), encoding="utf-8")
     store = StateStore(state / "observer.sqlite3")
     store.record_protocol_observation(DIGEST, "0.10.0", NOW)
+    store.record_observer_check(NOW, "safe", "compatible")
     store.close()
     return state, evidence
 
@@ -66,6 +69,50 @@ def test_staging_status_fails_closed_on_stale_or_writable_health(tmp_path: Path)
     assert result["status"] == "fail"
     assert "public_write_count_nonzero" in result["reasons"]
     assert "health_stale" in result["reasons"]
+
+
+def test_staging_status_passes_safety_with_compatibility_warning(tmp_path: Path) -> None:
+    state, evidence = _write_state(tmp_path)
+    health = json.loads((state / "health.json").read_text(encoding="utf-8"))
+    health["compatibility_status"] = "unavailable"
+    health["compatibility_reason"] = "unexpected_status"
+    health["observation_current"] = False
+    (state / "health.json").write_text(json.dumps(health), encoding="utf-8")
+    result = _check(state, evidence)
+    assert result["status"] == "pass_with_warnings"
+    assert result["reasons"] == []
+    assert "compatibility_unavailable" in result["warnings"]
+
+
+def test_staging_status_allows_safe_check_before_first_protocol_observation(tmp_path: Path) -> None:
+    state, evidence = _write_state(tmp_path)
+    health = json.loads((state / "health.json").read_text(encoding="utf-8"))
+    health.pop("release")
+    health.pop("protocol_digest")
+    health["compatibility_status"] = "unavailable"
+    health["observation_current"] = False
+    (state / "health.json").write_text(json.dumps(health), encoding="utf-8")
+    for path in evidence.iterdir():
+        path.unlink()
+    result = _check(state, evidence)
+    assert result["status"] == "pass_with_warnings"
+    assert result["reasons"] == []
+    assert "no_protocol_observation" in result["warnings"]
+
+
+def test_staging_status_blocks_unsafe_local_observer(tmp_path: Path) -> None:
+    state, evidence = _write_state(tmp_path)
+    health = json.loads((state / "health.json").read_text(encoding="utf-8"))
+    health["status"] = "degraded"
+    health["safety_status"] = "unsafe"
+    (state / "health.json").write_text(json.dumps(health), encoding="utf-8")
+    store = StateStore(state / "observer.sqlite3")
+    store.record_observer_check(NOW + timedelta(seconds=1), "unsafe", "unknown")
+    store.close()
+    result = _check(state, evidence)
+    assert result["status"] == "fail"
+    assert "observer_safety_not_safe" in result["reasons"]
+    assert "unsafe_check_recorded" in result["reasons"]
 
 
 def test_staging_status_fails_closed_on_kill_switch_and_missing_evidence(tmp_path: Path) -> None:

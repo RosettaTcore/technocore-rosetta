@@ -32,10 +32,12 @@ SAFE_ERROR_REASONS = frozenset(
         "invalid_document_shape",
         "invalid_health_response",
         "invalid_json",
+        "invalid_release_metadata",
         "manifest_release_mismatch",
         "missing_documentation_links",
         "openapi_release_mismatch",
         "redirect_rejected",
+        "release_metadata_mismatch",
         "required_metadata_path_missing",
         "response_too_large",
         "unexpected_content_type",
@@ -67,11 +69,15 @@ class ProtocolObservation:
     release: str
     protocol_digest: str
     endpoints: tuple[EndpointEvidence, ...]
+    expected_release: str | None = None
+    compatibility_status: str = "compatible"
 
     def as_dict(self) -> dict[str, object]:
         return {
             "schema": "rosetta.protocol-observation.v1",
             "release": self.release,
+            "expected_release": self.expected_release or self.release,
+            "compatibility_status": self.compatibility_status,
             "protocol_digest": self.protocol_digest,
             "endpoints": [endpoint.as_dict() for endpoint in self.endpoints],
         }
@@ -170,11 +176,18 @@ class ReadOnlyProbeClient:
         openapi = documents["/openapi.json"]
         if manifest.get("name") != "technocore-chat":
             raise RuntimeError("unexpected_service_identity")
-        if manifest.get("version") != self.expected_release:
-            raise RuntimeError("manifest_release_mismatch")
+        manifest_release = manifest.get("version")
         info = openapi.get("info")
-        if not isinstance(info, dict) or info.get("version") != self.expected_release:
-            raise RuntimeError("openapi_release_mismatch")
+        openapi_release = info.get("version") if isinstance(info, dict) else None
+        if (
+            not isinstance(manifest_release, str)
+            or not manifest_release
+            or not isinstance(openapi_release, str)
+            or not openapi_release
+        ):
+            raise RuntimeError("invalid_release_metadata")
+        if manifest_release != openapi_release:
+            raise RuntimeError("release_metadata_mismatch")
         if not str(openapi.get("openapi", "")).startswith("3.1"):
             raise RuntimeError("unsupported_openapi_version")
         paths = openapi.get("paths")
@@ -187,11 +200,20 @@ class ReadOnlyProbeClient:
         self._validate_authority_url(documentation.get("manual"), "/llms.txt")
 
         digest_input = {
-            "release": self.expected_release,
+            "release": manifest_release,
             "endpoints": {item.path: item.sha256 for item in evidence},
         }
         protocol_digest = "sha256:" + hashlib.sha256(canonical_json(digest_input)).hexdigest()
-        return ProtocolObservation(self.expected_release, protocol_digest, tuple(evidence))
+        compatibility_status = (
+            "compatible" if manifest_release == self.expected_release else "release_drift"
+        )
+        return ProtocolObservation(
+            manifest_release,
+            protocol_digest,
+            tuple(evidence),
+            self.expected_release,
+            compatibility_status,
+        )
 
 
 def _atomic_json(path: Path, value: dict[str, object]) -> None:
@@ -258,7 +280,7 @@ class ObserverService:
         _atomic_json(
             self.state_directory / "health.json",
             {
-                "schema": "rosetta.observer-health.v1",
+                "schema": "rosetta.observer-health.v2",
                 "mode": "dry_run",
                 "public_writes": 0,
                 **fields,
@@ -268,15 +290,98 @@ class ObserverService:
     def observe_once(self) -> dict[str, object]:
         now = self.clock()
         if kill_switch_active(self.kill_switch):
-            self._health(status="stopped", reason="kill_switch_active", checked_at=now.isoformat())
+            self._health(
+                status="stopped",
+                safety_status="unsafe",
+                compatibility_status="unknown",
+                reason="kill_switch_active",
+                checked_at=now.isoformat(),
+            )
             raise RuntimeError("kill_switch_active")
         try:
             observation = self.client.probe()
+        except Exception as exc:
+            reason = _error_reason(exc)
+            expected_probe_failure = (
+                isinstance(exc, httpx.RequestError) or reason in SAFE_ERROR_REASONS
+            )
+            if not expected_probe_failure:
+                errors, _ = self.store.record_component_result(
+                    "read_only_observer",
+                    False,
+                    self.config.operations.fail_read_only_after_errors,
+                    now,
+                )
+                self.store.record_observer_check(
+                    now, "unsafe", "unknown", "observer_internal_error"
+                )
+                self._health(
+                    status="degraded",
+                    safety_status="unsafe",
+                    compatibility_status="unknown",
+                    reason="observer_internal_error",
+                    consecutive_errors=errors,
+                    checked_at=now.astimezone(timezone.utc).isoformat(),
+                )
+                raise
+
+            unavailable = isinstance(exc, httpx.RequestError) or reason in {
+                "unexpected_status",
+                "invalid_health_response",
+            }
+            compatibility_status = "unavailable" if unavailable else "rejected"
+            errors, _ = self.store.record_component_result(
+                "upstream_compatibility",
+                False,
+                self.config.operations.fail_read_only_after_errors,
+                now,
+            )
+            self.store.record_component_result(
+                "read_only_observer",
+                True,
+                self.config.operations.fail_read_only_after_errors,
+                now,
+            )
+            self.store.record_observer_check(now, "safe", compatibility_status, reason)
+            compatibility_result: dict[str, object] = {
+                "status": "healthy",
+                "safety_status": "safe",
+                "compatibility_status": compatibility_status,
+                "compatibility_reason": reason,
+                "consecutive_compatibility_issues": errors,
+                "checked_at": now.astimezone(timezone.utc).isoformat(),
+                "observation_current": False,
+                "public_writes": 0,
+            }
+            latest = self.store.latest_protocol_observation()
+            if latest is not None:
+                compatibility_result.update(
+                    {
+                        "release": latest[1],
+                        "protocol_digest": latest[0],
+                        "last_observed_at": latest[2],
+                    }
+                )
+            self._health(**compatibility_result)
+            return compatibility_result
+
+        try:
             changed = self.store.record_protocol_observation(
                 observation.protocol_digest, observation.release, now
             )
             self.store.record_component_result(
                 "read_only_observer", True, self.config.operations.fail_read_only_after_errors, now
+            )
+            compatibility_ok = observation.compatibility_status == "compatible"
+            compatibility_issues, _ = self.store.record_component_result(
+                "upstream_compatibility",
+                compatibility_ok,
+                self.config.operations.fail_read_only_after_errors,
+                now,
+            )
+            compatibility_reason = None if compatibility_ok else "release_drift"
+            self.store.record_observer_check(
+                now, "safe", observation.compatibility_status, compatibility_reason
             )
             if changed:
                 evidence = {
@@ -289,21 +394,30 @@ class ObserverService:
                 _atomic_json(self.evidence_directory / f"{digest_name}.json", evidence)
             result: dict[str, object] = {
                 "status": "healthy",
+                "safety_status": "safe",
+                "compatibility_status": observation.compatibility_status,
                 "checked_at": now.astimezone(timezone.utc).isoformat(),
                 "release": observation.release,
                 "protocol_digest": observation.protocol_digest,
                 "changed": changed,
+                "observation_current": True,
                 "public_writes": 0,
             }
+            if compatibility_reason is not None:
+                result["compatibility_reason"] = compatibility_reason
+                result["consecutive_compatibility_issues"] = compatibility_issues
             self._health(**result)
             return result
-        except Exception as exc:
+        except Exception:
             errors, degraded = self.store.record_component_result(
                 "read_only_observer", False, self.config.operations.fail_read_only_after_errors, now
             )
+            self.store.record_observer_check(now, "unsafe", "unknown", "observer_internal_error")
             self._health(
                 status="degraded" if degraded else "retrying",
-                reason=_error_reason(exc),
+                safety_status="unsafe",
+                compatibility_status="unknown",
+                reason="observer_internal_error",
                 consecutive_errors=errors,
                 checked_at=now.astimezone(timezone.utc).isoformat(),
             )

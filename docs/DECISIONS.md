@@ -243,8 +243,8 @@ backup, provisioning and first use remain explicit operator ceremonies.
 ## ADR-039: Local health failure and encrypted backup are necessary but not sufficient alerts
 
 Run a fail-closed offline staging validator on a systemd timer. It checks health freshness, dry-run
-mode, zero writes, pinned release, content-addressed evidence, SQLite integrity/counts, kill switch
-and disk budget. Create consistent backups with SQLite's backup API and stream the snapshot directly
+mode, zero writes, observer safety, content-addressed evidence, SQLite integrity/counts, kill switch
+and disk budget. Release drift is reported separately under ADR-042. Create consistent backups with SQLite's backup API and stream the snapshot directly
 through Age encryption; the server stores no Age secret key. A systemd failure is durable local
 evidence, not an external notification. Pilot launch still requires an independently controlled
 alert destination and off-device copy.
@@ -281,3 +281,27 @@ the deployment uses GitHub's short-lived Pages identity; Rosetta stores no publi
 The first publication deployed reviewed `main` commit `8ddaee9` in Pages workflow run
 `33446317758`. Future origin, custom-domain or publication-authority changes remain explicit
 operator actions.
+
+## ADR-042: Separate Rosetta safety from upstream compatibility
+
+Do not let an upstream release or availability incident erase evidence about Rosetta's own safety
+boundary. The observer health record and offline validator expose two independent verdicts:
+
+- `safety_status` covers only locally enforceable invariants: dry-run operation, zero public writes,
+  a fresh observer heartbeat, intact local state, bounded evidence, no kill switch and no internal
+  observer failure;
+- `compatibility_status` is `compatible`, `release_drift`, `unavailable` or `rejected` and records
+  the state of the fixed-origin public protocol surface without granting it authority.
+
+A consistent new upstream release is observed and content-addressed only after service identity,
+authority links, manifest/OpenAPI version agreement, OpenAPI 3.1 shape, fixed metadata paths,
+content type and size limits pass. It is not silently promoted to the tested execution baseline.
+HTTP failures and malformed documents produce warnings and retain the last known digest; endpoint
+bodies and sensitive exception details remain unpersisted.
+
+Compatibility warnings do not reset an otherwise continuous read-only safety window and do not
+take the static observatory offline. They also do not authorize public execution: enabling intake,
+signing or Technocore writes still requires a currently reviewed compatibility baseline and the
+later launch gates. A Rosetta change that expands methods, destinations, credentials, listeners or
+write authority resets the affected safety gate; an upstream version change by itself does not.
+No model participates in either verdict.

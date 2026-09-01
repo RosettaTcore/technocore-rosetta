@@ -288,7 +288,7 @@ a:focus-visible { outline: 3px solid rgba(56, 217, 255, 0.45); outline-offset: 3
 .status-strip ul { display: flex; flex: 1; justify-content: center; gap: 1.5rem; margin: 0; padding: 0; list-style: none; }
 .status-strip li { white-space: nowrap; }
 .status-strip li span { display: inline-block; width: 0.38rem; height: 0.38rem; margin-right: 0.42rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 0.6rem rgba(66, 226, 184, 0.8); }
-.status-strip li:last-child span { background: var(--amber); box-shadow: 0 0 0.6rem rgba(245, 158, 11, 0.7); }
+.status-strip li.warning span { background: var(--amber); box-shadow: 0 0 0.6rem rgba(245, 158, 11, 0.7); }
 .status-label { color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; }
 .status-note { white-space: nowrap; }
 .status-note a { color: #c6d0df; text-underline-offset: 0.2em; }

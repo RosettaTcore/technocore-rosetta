@@ -56,7 +56,7 @@ services:
         - CMD
         - python
         - -c
-        - "import datetime,json,pathlib,sys; h=json.loads(pathlib.Path('/var/lib/rosetta/state/health.json').read_text()); age=(datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(h['checked_at'])).total_seconds(); sys.exit(0 if h.get('status') == 'healthy' and h.get('public_writes') == 0 and age < 660 else 1)"
+        - "import datetime,json,pathlib,sys; h=json.loads(pathlib.Path('/var/lib/rosetta/state/health.json').read_text()); age=(datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(h['checked_at'])).total_seconds(); sys.exit(0 if h.get('status') == 'healthy' and h.get('safety_status') == 'safe' and h.get('public_writes') == 0 and age < 660 else 1)"
       interval: 30s
       timeout: 3s
       retries: 3
