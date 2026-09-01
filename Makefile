@@ -1,7 +1,8 @@
-.PHONY: format lint type typescript test coverage unit integration adversarial secret-scan demo verify evolution-image evolution-verify container-acceptance upstream-acceptance acceptance install-hooks lock lock-check site-package site-check site-preview
+.PHONY: format lint type typescript test coverage unit integration adversarial secret-scan demo verify evolution-image evolution-verify container-acceptance upstream-acceptance upgrade-canary acceptance install-hooks lock lock-check site-package site-check site-preview
 
 PYTHON ?= python3
 PYTHONPATH := src:.
+UPGRADE_CANARY_OUTPUT ?= artifacts/upgrade-canary
 
 install-hooks:
 	git config --local core.hooksPath .githooks
@@ -66,6 +67,9 @@ container-acceptance:
 
 upstream-acceptance:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tools/upstream_acceptance.py --output artifacts/upstream-acceptance --soak-iterations 20
+
+upgrade-canary:
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tools/upgrade_canary.py --output $(UPGRADE_CANARY_OUTPUT)
 
 site-package:
 	$(PYTHON) tools/package_launch_evidence.py

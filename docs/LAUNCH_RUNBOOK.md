@@ -26,6 +26,29 @@ production identity or a public write.
 
 No later gate inherits authority from an earlier gate.
 
+## Next-upstream upgrade canary
+
+Before launch and after any observer change, run the deterministic no-network canary into a fresh
+output directory:
+
+```sh
+PYTHONPATH=src:. .venv/bin/python tools/upgrade_canary.py \
+  --output artifacts/upgrade-canary
+```
+
+The canary drives one long-lived observer instance through the reviewed baseline, an additive
+synthetic next release, HTTP 429, HTTP 503, rejected authority metadata and recovery to the
+reviewed baseline. It passes only if every durable checkpoint remains safety-safe, all requests are
+GETs to the three fixed metadata paths, public writes remain zero, the observer never requests a
+stop, recovery needs no process restart and SQLite integrity remains intact. The synthetic release
+does not prove an unknown future protocol compatible; it proves that release churn cannot stop the
+read-only product or silently promote a new execution baseline. A real upstream tag still requires
+the pinned differential acceptance matrix before any write-capable promotion.
+
+The integration gate also injects an unexpected internal probe exception. The same process must
+continue and recover on its next healthy cycle, but the failed cycle remains durably `unsafe` and
+therefore resets the affected safety window. Availability never overrides an honest safety verdict.
+
 ## 72-hour staging review
 
 Run the offline state validator from the deployed release:
