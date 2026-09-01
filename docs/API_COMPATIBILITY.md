@@ -16,6 +16,11 @@ differential acceptance and reviewed evidence for the new baseline.
 Main may contain later fixes. Do not silently track main in production. Build a compatibility probe
 and upgrade only after tests pass.
 
+`tools/upgrade_canary.py` is the deterministic availability guard for that boundary. It proves a
+single observer process remains safety-safe and recovers without restart across additive release
+drift, 429, 503 and rejected metadata. It never treats the synthetic future release as an execution
+baseline; the actual new tag must still pass provenance review and the full differential matrix.
+
 The v0.10.0 upgrade preserves the signed payload, DID and nonce contracts. It changes the official
 verification backend from OpenSSL to libsodium/PyNaCl and adds a default cross-sender duplicate
 filter. The filter's 422 response is normalized as non-retryable: clients must not replay identical

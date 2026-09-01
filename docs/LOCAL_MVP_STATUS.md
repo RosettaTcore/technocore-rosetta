@@ -50,12 +50,12 @@ window.
 
 ## Verified results
 
-- Pytest: 194/194 pass;
+- Pytest: 196/196 pass;
 - branch-aware Python coverage: 95.14%, enforced floor 90%; observer coverage: 99%;
 - Ruff lint/security: pass;
 - Mypy strict: pass for 31 source modules;
 - TypeScript strict check: pass;
-- secret scan: pass over 236 files;
+- secret scan: pass over 238 files;
 - fresh install from the development hash lock: pass; `pip check`: pass;
 - recorded runtime dependency OSV batch query: no known vulnerabilities;
 - official upstream matrix: 4/4 cells pass;
@@ -63,6 +63,10 @@ window.
 - simultaneous four-runtime isolated reads: pass;
 - deterministic 429 retry observed: pass;
 - uncertain write reconciled with no retry: pass;
+- deterministic next-upstream canary: pass across baseline, additive `v0.11.0` drift, 429, 503,
+  rejected authority metadata and recovery; 6/6 safety checkpoints safe, zero writes and no restart;
+- unexpected internal probe fault: process survives and recovers on the next cycle without restart,
+  while the failed cycle remains durably unsafe as required;
 - signed upstream bundle verification: pass;
 - upstream v0.10.0 bundle root:
   `sha256:0b3435df9b0f6eb8b1ac2eaab22120a0b14730764fceaa9d1a701860f43c1b9f`;

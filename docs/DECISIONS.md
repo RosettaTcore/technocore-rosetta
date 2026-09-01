@@ -305,3 +305,15 @@ signing or Technocore writes still requires a currently reviewed compatibility b
 later launch gates. A Rosetta change that expands methods, destinations, credentials, listeners or
 write authority resets the affected safety gate; an upstream version change by itself does not.
 No model participates in either verdict.
+
+## ADR-043: Make upstream churn a deterministic launch canary
+
+Add a no-network canary that drives one long-lived observer instance through the reviewed release,
+an additive synthetic next release, rate limiting, unavailability, rejected authority metadata and
+recovery. Require six durable safety-safe checkpoints, GET-only fixed paths, zero public writes,
+intact SQLite state, bounded content-addressed evidence and recovery without process restart.
+
+This canary proves availability and fail-closed behavior, not compatibility with an unknown future
+release. Rosetta records a structurally acceptable new version as `release_drift` but never promotes
+it into execution. A real upstream tag still needs provenance review, immutable pinning and the
+complete cross-runtime differential matrix before any write-capable boundary changes.
