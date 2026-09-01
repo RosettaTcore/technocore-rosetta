@@ -31,6 +31,7 @@ def test_staging_compose_has_no_ingress_secrets_or_worker_internet() -> None:
     assert services["observer"]["depends_on"]["egress-proxy"]["condition"] == "service_healthy"
     assert services["observer"]["command"][0] == "rosetta.observer"
     assert "public_writes" in services["observer"]["healthcheck"]["test"][-1]
+    assert "safety_status" in services["observer"]["healthcheck"]["test"][-1]
 
 
 def test_staging_profile_is_strictly_read_only_and_closed() -> None:

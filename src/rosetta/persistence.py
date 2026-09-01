@@ -68,6 +68,13 @@ class StateStore:
                 last_seen_at TEXT NOT NULL,
                 observation_count INTEGER NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS observer_checks (
+                checked_at TEXT PRIMARY KEY,
+                safety_status TEXT NOT NULL CHECK(safety_status IN ('safe', 'unsafe')),
+                compatibility_status TEXT NOT NULL,
+                reason TEXT,
+                public_writes INTEGER NOT NULL CHECK(public_writes = 0)
+            );
             """
         )
 
@@ -259,6 +266,25 @@ class StateStore:
         if row is None:
             return None
         return str(row[0]), str(row[1]), str(row[2]), int(row[3])
+
+    def record_observer_check(
+        self,
+        now: datetime,
+        safety_status: str,
+        compatibility_status: str,
+        reason: str | None = None,
+    ) -> None:
+        if safety_status not in {"safe", "unsafe"}:
+            raise ValueError("invalid safety status")
+        self.connection.execute(
+            "INSERT OR REPLACE INTO observer_checks VALUES (?, ?, ?, ?, 0)",
+            (
+                now.astimezone(timezone.utc).isoformat(),
+                safety_status,
+                compatibility_status,
+                reason,
+            ),
+        )
 
     def close(self) -> None:
         self.connection.close()

@@ -9,8 +9,10 @@ acceptance path runs the official Technocore `v0.10.0` image while preserving th
 fixture and evidence for historical replay. No public Technocore write,
 production DID, publisher or public service intake was used. Source control uses a
 dedicated public GitHub repository and identity, separate from the operator's other projects.
-The no-ingress read-only observer is running on its dedicated staging host; its 72-hour gate is not
-yet complete.
+The no-ingress read-only observer is running on its dedicated staging host. The 1 September check
+verified its zero-write safety boundary while upstream availability was degraded; safety and
+compatibility are now independent verdicts, so external release churn does not reset the safety
+window.
 
 ## Implemented
 
@@ -48,8 +50,8 @@ yet complete.
 
 ## Verified results
 
-- Pytest: 185/185 pass;
-- branch-aware Python coverage: 95.01%, enforced floor 90%;
+- Pytest: 194/194 pass;
+- branch-aware Python coverage: 95.14%, enforced floor 90%; observer coverage: 99%;
 - Ruff lint/security: pass;
 - Mypy strict: pass for 31 source modules;
 - TypeScript strict check: pass;
@@ -82,9 +84,9 @@ yet complete.
   or direct worker egress;
 - observer container smoke: initial change evidence pass, restart deduplication pass, kill switch
   pass and `public_writes: 0` throughout;
-- deployed observer check on 30 August 2026: service active/enabled, zero restarts, healthy
-  `dry_run` state and `public_writes: 0`; the deployed commit remains `4d2a374...` because static
-  publication did not redeploy or change the no-ingress observer;
+- deployed observer check on 1 September 2026: service active/enabled, zero restarts, `dry_run`,
+  `public_writes: 0`, SSH-only public listener and 7% disk use; all watched upstream endpoints
+  returned 503, recorded separately as an availability warning;
 - GitHub Pages project-subpath QA: desktop and 390×844 mobile pass; all relative assets load and
   the one-click verifier validates the 15-file reference bundle;
 - public Pages deployment: success from reviewed `main` commit `8ddaee9` in workflow run
@@ -94,7 +96,7 @@ yet complete.
 
 ## Remaining production-only work
 
-- completion and human review of the running 72-hour staging soak;
+- completion and human review of the initial safety window; upstream warnings do not reset it;
 - production key-generation/recovery ceremony and secret-store provisioning;
 - operator approval-key ceremony and addition of its public DID to protected evolution policy;
 - external alert delivery and an independently controlled encrypted off-device backup destination;

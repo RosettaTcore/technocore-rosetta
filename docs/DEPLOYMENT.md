@@ -152,7 +152,9 @@ then exits without attempting another request; systemd may restart it, but it re
 the switch exists. Removal is a manual incident-review decision. Rollback stops the unit, restores
 the previous `/opt/rosetta/current` release and immutable image setting, then starts the unit again.
 
-Read-only staging acceptance requires at least 72 hours with: service active, no non-SSH host
-listener, no public writes, no unexplained restarts, health current, bounded disk growth and every
-new protocol digest reviewed. Public signing, discovery/service intake and publication each remain
+Read-only staging acceptance requires continuous safety-safe operation with: service active, no
+non-SSH host listener, no public writes, no unexplained restarts, a fresh local heartbeat and
+bounded disk growth. Upstream availability and release drift are separate compatibility warnings;
+they do not reset the read-only safety window. A changed digest must be reviewed before it becomes
+an execution baseline. Public signing, discovery/service intake and publication each remain
 separate approval gates.

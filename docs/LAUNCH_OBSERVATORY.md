@@ -99,9 +99,10 @@ telemetry unless a separately reviewed, privacy-preserving static status publica
 added. A green recorded snapshot does not imply current availability, protocol safety, trust,
 endorsement or certification.
 
-Immediately after the 72-hour review, replace the displayed operator-check date and pending state
-with the exact reviewed outcome, or remove the strip if no current evidence record can be linked.
-Never roll the date forward without the corresponding operator record.
+After every operator review, replace the displayed date and safety/compatibility states with the
+exact recorded outcome, or remove the strip if no current evidence record can be linked. Never roll
+the date forward without the corresponding operator record, and never present an upstream warning
+as a failure of Rosetta's locally enforced zero-write boundary.
 
 The instant verifier fetches only the reviewed evidence path from the page's own origin without
 credentials and validates the returned bytes in memory. This proves that the served files match

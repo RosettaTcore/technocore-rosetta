@@ -153,9 +153,11 @@ uses no identity or secret, disables discovery/service/publishing/model access a
 minutes through the fixed-path egress boundary. Validate one local observation against a controlled
 fixture with `rosetta-observer --config CONFIG --once`; do not point tests at a public endpoint.
 
-For the deployed observer, inspect `/var/lib/rosetta/state/health.json` from the host. A healthy
-record always says `public_writes: 0`. Endpoint bodies are neither logged nor persisted: evidence
-contains only byte counts, content types and SHA-256 digests plus the pinned release. The first
+For the deployed observer, inspect `/var/lib/rosetta/state/health.json` from the host. A safety-safe
+record says `safety_status: safe` and `public_writes: 0`; compatibility is reported independently as
+`compatible`, `release_drift`, `unavailable` or `rejected`. Endpoint bodies are neither logged nor
+persisted: evidence contains only byte counts, content types and SHA-256 digests plus the observed
+and expected releases. The first
 appearance of a combined digest creates one file; identical later polls update SQLite counters and
 health only, so normal operation has bounded evidence growth.
 

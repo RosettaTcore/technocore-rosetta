@@ -84,6 +84,9 @@ def test_persistence_indexes_health_and_usage_edges(tmp_path: Path) -> None:
     assert store.record_component_result("runner", True, 2, NOW) == (0, False)
     assert not store.component_quarantined("runner")
     assert not store.component_quarantined("missing")
+    store.record_observer_check(NOW, "safe", "unavailable", "unexpected_status")
+    with pytest.raises(ValueError, match="safety status"):
+        store.record_observer_check(NOW, "unknown", "unknown")
     store.close()
 
 

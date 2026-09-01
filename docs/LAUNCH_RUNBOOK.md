@@ -2,21 +2,23 @@
 
 ## Current state
 
-Rosetta is live only as a no-ingress, read-only observer on the dedicated Hetzner server. The
-deployed release is commit `4d2a374be479e3c539ad16a87237607edf49159c`; the observer and egress
-proxy are healthy, and every recorded status has `public_writes: 0`. Scheduler, runners, signer,
-publisher and public request intake remain absent.
+Rosetta is live as a static observatory and as a no-ingress, read-only observer on the dedicated
+Hetzner server. The 1 September 2026 check found zero public writes, zero service restarts, an
+SSH-only public listener and bounded disk, while all three watched upstream endpoints returned 503.
+That is a green safety boundary with an `unavailable` compatibility warning, not a safety failure.
+Scheduler, runners, signer, publisher and public request intake remain absent.
 
-The first 72-hour review is scheduled for 2 September 2026 at 23:23 Europe/Ljubljana. Passing that
-review permits planning the controlled pilot; it does not authorize a production identity or a
-public write.
+The initial safety review remains scheduled for 2 September 2026 at 23:23 Europe/Ljubljana.
+Upstream releases and availability warnings do not restart that window. Passing it permits the
+read-only product to remain live and planning the controlled pilot; it does not authorize a
+production identity or a public write.
 
 ## Launch gates
 
 | Gate | Required evidence | Authority |
 |---|---|---|
 | A — local acceptance | full quality gate, official v0.10.0 matrix, soak, isolation and signed evidence pass | repository review |
-| B — read-only staging | 72 hours healthy; zero writes; no unexplained restart; SSH-only listener; bounded disk; every new protocol digest reviewed | operator review |
+| B — read-only staging | continuous safety-safe operation; zero writes; no unexplained restart; SSH-only listener; bounded disk; compatibility warnings recorded | operator review |
 | C — identity readiness | production key ceremony, two recoverable encrypted backups, signer credential, DID/public fingerprint recorded, recovery drill | explicit operator approval |
 | D — publication readiness | approved static origin, immutable report path, service card, request/reply rooms, limits, alert destination and off-device backup | explicit operator approval |
 | E — first public action | exact signed payload preview, destination, budget and rollback reviewed | per-action operator approval |
@@ -38,8 +40,11 @@ sudo -u '#65532' python3 /opt/rosetta/current/tools/staging_status.py \
   --max-evidence-bytes 104857600
 ```
 
-At a five-minute interval, 72 hours normally produces about 864 observations. The lower bound of
-800 allows a bounded maintenance window without accepting a mostly idle deployment. Also verify:
+For a fresh v2 deployment, a five-minute interval over 72 hours normally produces about 864 safety
+checks. The lower bound of 800 allows a bounded maintenance window without accepting a mostly idle
+deployment. During the v1-to-v2 migration, retain the signed/operator-reviewed legacy interval and
+combine it with host uptime, restart count and new v2 safety checks; never fabricate historical
+rows. Also verify:
 
 ```sh
 sudo systemctl is-active rosetta-observer.service
@@ -49,8 +54,12 @@ sudo journalctl -u rosetta-observer.service --since '72 hours ago' --no-pager
 sudo ss -lntup
 ```
 
-Fail the gate on a stale/unhealthy record, nonzero public writes, an unreviewed digest, integrity
-error, unexpected listener, unexplained restart, kill switch, or evidence budget breach.
+Fail the gate on stale or unsafe local health, nonzero public writes, integrity error, unexpected
+listener, unexplained restart, kill switch, or evidence budget breach. `release_drift`,
+`unavailable` and `rejected` are visible compatibility warnings and do not reset the read-only
+safety window. They block promotion of that upstream version into public execution until reviewed.
+Only a Rosetta change that expands methods, destinations, credentials, listeners or write authority
+resets the affected safety gate.
 
 ## Monitoring and encrypted backup
 
@@ -94,7 +103,8 @@ Never store an Age secret key on the Rosetta server.
 
 ## Pilot activation order
 
-1. Pass the 72-hour review and retain its output under ignored `local/`.
+1. Pass the safety review and retain its output under ignored `local/`; compatibility warnings are
+   allowed for the read-only surface but not for public execution.
 2. Approve branding, public contact surface and narrow launch wording.
 3. Select the static publisher origin and provision a credential restricted to that one target.
 4. Complete `PRODUCTION_KEY_CEREMONY.md`; record only the public DID in reviewed configuration.

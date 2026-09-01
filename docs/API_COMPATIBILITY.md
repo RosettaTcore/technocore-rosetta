@@ -6,7 +6,15 @@ Current compatibility target: official `flop-labs/technocore-chat` release `v0.1
 `v0.7.0` source, fixture and signer vector remain available for historical replay; current staging
 and authoritative upstream acceptance never silently fall back to them.
 
-Main may contain later fixes. Do not silently track main in production. Build a compatibility probe and upgrade only after tests pass.
+This target is the reviewed execution baseline, not a requirement that the read-only observer stop
+when upstream changes. The observer records a structurally valid, consistently versioned newer
+surface as `release_drift`; availability failures are `unavailable`, and rejected identity,
+authority or document invariants are `rejected`. These remain warnings while Rosetta's zero-write
+safety boundary is intact. Promotion into adapter execution still requires provenance,
+differential acceptance and reviewed evidence for the new baseline.
+
+Main may contain later fixes. Do not silently track main in production. Build a compatibility probe
+and upgrade only after tests pass.
 
 The v0.10.0 upgrade preserves the signed payload, DID and nonce contracts. It changes the official
 verification backend from OpenSSL to libsodium/PyNaCl and adds a default cross-sender duplicate
