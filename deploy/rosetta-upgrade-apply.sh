@@ -69,6 +69,9 @@ for module in rosetta.egress rosetta.observer; do
     --cap-drop ALL --security-opt no-new-privileges \
     "$new_image" "$module" --help >/dev/null
 done
+docker run --rm --network none --read-only --user 65532:65532 \
+  --cap-drop ALL --security-opt no-new-privileges --entrypoint python \
+  "$new_image" /opt/rosetta/tools/staging_status.py --help >/dev/null
 
 ROSETTA_IMAGE="$new_image" \
 ROSETTA_CONFIG=/etc/rosetta/config.yaml \

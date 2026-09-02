@@ -116,11 +116,13 @@ def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:
     assert "docker run --rm --network none --read-only --user 65532:65532" in apply_script
     assert "--cap-drop ALL --security-opt no-new-privileges" in apply_script
     assert '"$new_image" "$module" --help >/dev/null' in apply_script
+    assert '"$new_image" /opt/rosetta/tools/staging_status.py --help >/dev/null' in apply_script
     assert 'cat "$backup_directory/live-verification.pending" >&2' in apply_script
     live_verifier = (ROOT / "tools/verify_staging_live.py").read_text()
-    assert "user=RUNTIME_UID" in live_verifier
-    assert "group=RUNTIME_GID" in live_verifier
-    assert "extra_groups=()" in live_verifier
+    assert '"docker",' in live_verifier
+    assert '"exec",' in live_verifier
+    assert '"65532:65532",' in live_verifier
+    assert '"/opt/rosetta/tools/staging_status.py",' in live_verifier
     assert '"setpriv"' not in live_verifier
     assert "offline_status_failed:" in live_verifier
     assert 'sqlite_source="$backup_directory/sqlite-source"' in apply_script
@@ -147,7 +149,7 @@ def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
     healthcheck = compose["services"]["egress-proxy"]["healthcheck"]["test"][-1]
     ci = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
 
-    normalization = "RUN chmod -R u=rwX,go=rX src config adapters vendor"
+    normalization = "RUN chmod -R u=rwX,go=rX src config adapters tools vendor"
     runtime_user = "USER 65532:65532"
     runtime_import = (
         'RUN test "$(id -u)" = "65532" && ' 'python -c "import rosetta.egress, rosetta.observer"'
@@ -156,7 +158,8 @@ def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
     assert runtime_import in dockerfile
     assert dockerfile.index(normalization) < dockerfile.index(runtime_user)
     assert dockerfile.index(runtime_user) < dockerfile.index(runtime_import)
-    assert dockerfile.count("COPY --chown=0:0") == 5
+    assert dockerfile.count("COPY --chown=0:0") == 6
+    assert "COPY --chown=0:0 tools/staging_status.py ./tools/staging_status.py" in dockerfile
     assert "r=c.getresponse()" in healthcheck
     assert "r.read()" in healthcheck
     assert "c.close()" in healthcheck
@@ -169,5 +172,4 @@ def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
     assert '--tag rosetta/observer:ci "$RUNNER_TEMP/release-tree"' in image_steps
     assert "for module in rosetta.egress rosetta.observer" in image_steps
     assert "--network none --read-only --user 65532:65532" in image_steps
-    assert "--cap-drop ALL --cap-add SETUID --cap-add SETGID" in image_steps
-    assert "result.stdout.strip()" in image_steps
+    assert "rosetta/observer:ci /opt/rosetta/tools/staging_status.py --help" in image_steps
