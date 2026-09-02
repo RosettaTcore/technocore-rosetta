@@ -396,3 +396,12 @@ eight stable checker reasons; malformed, oversized, unavailable or empty failed 
 stable verifier reason of its own. CI exercises the numeric transition in the final release image
 with a read-only root filesystem, no network, `no-new-privileges` and only `SETUID`/`SETGID`
 capabilities.
+
+The follow-up release showed that the hardened upgrade unit also rejects Python's native child
+identity transition before the checker starts, even though the same transition succeeds in the
+isolated image gate. Do not weaken the unit or add ambient host capabilities to accommodate a
+redundant identity change. Package the fixed offline checker in the immutable observer image and
+execute it inside the already-running observer container as explicit UID/GID 65532. This checks the
+exact container view of the mounted state and evidence, while retaining its read-only rootfs,
+dropped capabilities, `no-new-privileges` and network boundary. The upgrade and CI gates invoke the
+packaged checker with `--help` under the same numeric identity before any staging downtime.

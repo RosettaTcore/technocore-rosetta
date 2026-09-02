@@ -13,8 +13,6 @@ from typing import Any
 PROJECT = "technocore-rosetta-staging"
 MAX_HEALTH_AGE_SECONDS = 660
 MAX_STATUS_OUTPUT_BYTES = 64 * 1024
-RUNTIME_UID = 65532
-RUNTIME_GID = 65532
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -39,14 +37,19 @@ def command(*parts: str) -> str:
         raise VerificationError(f"command_unavailable:{Path(parts[0]).name}") from exc
 
 
-def runtime_status(
-    status_script: Path,
+def container_status(
+    container_id: str,
     *,
     runner: Runner = subprocess.run,
 ) -> dict[str, Any]:
     parts = [
-        "/usr/bin/python3",
-        str(status_script),
+        "docker",
+        "exec",
+        "--user",
+        "65532:65532",
+        container_id,
+        "python",
+        "/opt/rosetta/tools/staging_status.py",
         "--state-dir",
         "/var/lib/rosetta/state",
         "--evidence-dir",
@@ -66,9 +69,6 @@ def runtime_status(
             check=False,
             capture_output=True,
             text=True,
-            user=RUNTIME_UID,
-            group=RUNTIME_GID,
-            extra_groups=(),
         )
     except (OSError, subprocess.SubprocessError) as exc:
         raise VerificationError("offline_status_unavailable") from exc
@@ -172,7 +172,7 @@ def verify(
         "health_stale",
     )
 
-    status = runtime_status(expected_release_dir / "tools/staging_status.py")
+    status = container_status(str(observer["Id"]))
     require(status["status"] in {"pass", "pass_with_warnings"}, "offline_status_failed")
     require(status["unsafe_check_count"] == 0, "unsafe_check_recorded")
     return {

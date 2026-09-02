@@ -19,13 +19,14 @@ RUN python -m pip install --no-cache-dir --require-hashes --requirement requirem
 COPY --chown=0:0 src ./src
 COPY --chown=0:0 config ./config
 COPY --chown=0:0 adapters ./adapters
+COPY --chown=0:0 tools/staging_status.py ./tools/staging_status.py
 COPY --chown=0:0 vendor/technocore-chat-v0.10.0/mcp/src ./vendor/technocore-chat-v0.10.0/mcp/src
 
 # A signed release may be materialized by a root-owned extraction directory with stricter source
 # modes than a normal checkout. Normalize the copied runtime tree while retaining executable bits
 # only where the reviewed source declared them. Code remains root-owned and the deployed rootfs is
 # read-only.
-RUN chmod -R u=rwX,go=rX src config adapters vendor
+RUN chmod -R u=rwX,go=rX src config adapters tools vendor
 
 USER 65532:65532
 
