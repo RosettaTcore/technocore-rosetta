@@ -336,3 +336,9 @@ health record plus independent host/container/offline checks. Any activation or 
 failure restores the prior symlink, image setting and service automatically. A release-drift
 warning is visible but does not fail a safety-safe read-only deployment. No production identity,
 public-write authority or self-evolution approval is conveyed by a release signature.
+
+Because the observer database uses SQLite WAL mode, the stopped-state backup copies the database
+and any regular, non-symlink WAL/SHM sidecars into the root-only writable backup directory before
+calling SQLite's backup API. This preserves the read-only mount over live state while still letting
+SQLite create or update shared-memory metadata against the frozen copy. The resulting database must
+pass `PRAGMA integrity_check` before activation proceeds.

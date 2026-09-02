@@ -84,18 +84,36 @@ PY
 
 systemctl stop "$service"
 service_stopped=1
-python3 - "$backup_directory/observer.sqlite3" <<'PY'
+sqlite_source="$backup_directory/sqlite-source"
+install -d -o root -g root -m 0700 "$sqlite_source"
+database_source="/var/lib/rosetta/state/observer.sqlite3"
+test -f "$database_source"
+test ! -L "$database_source"
+install -o root -g root -m 0600 "$database_source" "$sqlite_source/observer.sqlite3"
+for suffix in -wal -shm; do
+  sidecar_source="${database_source}${suffix}"
+  if test -e "$sidecar_source"; then
+    test -f "$sidecar_source"
+    test ! -L "$sidecar_source"
+    install -o root -g root -m 0600 \
+      "$sidecar_source" "$sqlite_source/observer.sqlite3${suffix}"
+  fi
+done
+python3 - "$sqlite_source/observer.sqlite3" "$backup_directory/observer.sqlite3" <<'PY'
 import sqlite3
 import sys
 
-source = sqlite3.connect("file:/var/lib/rosetta/state/observer.sqlite3?mode=ro", uri=True)
-target = sqlite3.connect(sys.argv[1])
+source = sqlite3.connect(sys.argv[1])
+target = sqlite3.connect(sys.argv[2])
 try:
     source.backup(target)
+    if target.execute("PRAGMA integrity_check").fetchone() != ("ok",):
+        raise RuntimeError("backup_integrity_failed")
 finally:
     target.close()
     source.close()
 PY
+rm -rf "$sqlite_source"
 tar -czf "$backup_directory/evidence.tar.gz" -C /var/lib/rosetta evidence
 if test -f /var/lib/rosetta/state/health.json; then
   install -o root -g root -m 0600 /var/lib/rosetta/state/health.json "$backup_directory/health.json"

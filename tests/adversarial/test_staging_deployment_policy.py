@@ -111,3 +111,7 @@ def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:
     assert "verify_staging_live.py" in apply_script
     assert "rollback" in apply_script
     assert "trap 'rollback 143' TERM" in apply_script
+    assert 'sqlite_source="$backup_directory/sqlite-source"' in apply_script
+    assert "for suffix in -wal -shm" in apply_script
+    assert 'test ! -L "$sidecar_source"' in apply_script
+    assert "PRAGMA integrity_check" in apply_script
