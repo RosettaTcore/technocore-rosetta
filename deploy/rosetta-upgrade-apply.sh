@@ -11,6 +11,12 @@ service="rosetta-observer.service"
 activated=0
 service_stopped=0
 
+replace_existing_file() {
+  local source="$1"
+  local destination="$2"
+  python3 "$release_dir/tools/replace_existing_file.py" "$source" "$destination"
+}
+
 printf '%s\n' "$commit" | grep -Eq '^[0-9a-f]{40}$'
 printf '%s\n' "$previous_commit" | grep -Eq '^[0-9a-f]{40}$'
 test "$(id -u)" = "0"
@@ -34,7 +40,7 @@ rollback() {
     systemctl stop "$service"
     ln -sfn "$previous_release" /opt/rosetta/.current.rollback
     mv -Tf /opt/rosetta/.current.rollback "$current_link"
-    install -o root -g root -m 0600 "$backup_directory/staging.env" "$environment_file"
+    replace_existing_file "$backup_directory/staging.env" "$environment_file"
   fi
   if test "$service_stopped" = "1"; then
     systemctl start "$service"
@@ -119,7 +125,7 @@ if test -f /var/lib/rosetta/state/health.json; then
   install -o root -g root -m 0600 /var/lib/rosetta/state/health.json "$backup_directory/health.json"
 fi
 
-environment_new="${environment_file}.new"
+environment_new="$backup_directory/staging.env.new"
 awk -v image="$new_image" '
   BEGIN { replaced = 0 }
   $0 ~ /^ROSETTA_IMAGE=/ { print "ROSETTA_IMAGE=" image; replaced = 1; next }
@@ -133,7 +139,7 @@ activated=1
 activation_time="$(date -u +%Y-%m-%dT%H:%M:%S%z)"
 ln -sfn "$release_dir" /opt/rosetta/.current.new
 mv -Tf /opt/rosetta/.current.new "$current_link"
-mv -f "$environment_new" "$environment_file"
+replace_existing_file "$environment_new" "$environment_file"
 systemctl start "$service"
 
 verified=0

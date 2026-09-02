@@ -34,4 +34,6 @@ gate. `rosetta-upgrade.service` accepts only three fixed spool files and can be 
 unprivileged deployment account through the narrow `rosetta-upgrade.sudoers` rule.
 `rosetta-upgrade-apply.sh` builds before downtime, backs up state, atomically activates the reviewed
 release, verifies a fresh zero-write observation and automatically restores the previous release on
-failure. See `docs/DEPLOYMENT.md`; release signing grants no public-write or identity authority.
+failure. Its environment update can write only the existing root-owned file, never the surrounding
+configuration directory or signer allowlist. See `docs/DEPLOYMENT.md`; release signing grants no
+public-write or identity authority.
