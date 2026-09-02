@@ -210,6 +210,12 @@ copies the SQLite database and present WAL/SHM sidecars into the root-only backu
 backup API there. Activation cannot proceed unless that frozen-copy backup passes SQLite integrity
 checking.
 
+The systemd sandbox exposes only the existing `staging.env` file as writable, not the surrounding
+configuration directory or release signer allowlist. The gate renders replacement content under
+the root-only backup directory, validates both source and destination as bounded root-owned regular
+files without following links, writes through the existing file descriptor and flushes it to disk.
+Rollback uses the same constrained write path.
+
 An upstream version change does not itself require a Rosetta deployment. The running observer
 records a safe `release_drift` compatibility warning and stays live. Only a reviewed baseline or
 Rosetta code/configuration change enters this signed release path. Release signatures authorize

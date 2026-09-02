@@ -342,3 +342,10 @@ and any regular, non-symlink WAL/SHM sidecars into the root-only writable backup
 calling SQLite's backup API. This preserves the read-only mount over live state while still letting
 SQLite create or update shared-memory metadata against the frozen copy. The resulting database must
 pass `PRAGMA integrity_check` before activation proceeds.
+
+The upgrade sandbox grants write access to the existing `/etc/rosetta/staging.env` file, never its
+parent directory or the release signer allowlist. New environment content is rendered in the
+root-only backup directory, bounded and checked as a root-owned, non-linked regular file, then
+written through an `O_NOFOLLOW` descriptor to the already allowlisted destination and `fsync`ed.
+Rollback restores the prior content through the same narrow primitive. This avoids expanding the
+unit's write authority merely to support a sibling temporary file.

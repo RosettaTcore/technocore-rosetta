@@ -115,3 +115,15 @@ def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:
     assert "for suffix in -wal -shm" in apply_script
     assert 'test ! -L "$sidecar_source"' in apply_script
     assert "PRAGMA integrity_check" in apply_script
+    assert 'environment_new="$backup_directory/staging.env.new"' in apply_script
+    assert 'environment_new="${environment_file}.new"' not in apply_script
+    replace_tool = (ROOT / "tools/replace_existing_file.py").read_text()
+    assert "os.O_RDWR" in replace_tool
+    assert 'getattr(os, "O_NOFOLLOW", None)' in replace_tool
+    assert "os.ftruncate(destination_fd, 0)" in replace_tool
+    assert "os.fsync(destination_fd)" in replace_tool
+    assert "destination_verification_failed" in replace_tool
+    assert 'replace_existing_file "$backup_directory/staging.env"' in apply_script
+    assert 'replace_existing_file "$environment_new" "$environment_file"' in apply_script
+    assert "ReadWritePaths=/opt/rosetta /etc/rosetta/staging.env " in unit
+    assert "ReadWritePaths=/opt/rosetta /etc/rosetta " not in unit
