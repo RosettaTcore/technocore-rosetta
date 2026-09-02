@@ -21,6 +21,10 @@ COPY config ./config
 COPY adapters ./adapters
 COPY vendor/technocore-chat-v0.10.0/mcp/src ./vendor/technocore-chat-v0.10.0/mcp/src
 
+# Fail the image build before deployment if either staging entrypoint is absent from the
+# assembled filesystem. The remote upgrade gate also repeats this check in the final image.
+RUN python -c "import rosetta.egress, rosetta.observer"
+
 USER 65532:65532
 ENTRYPOINT ["python", "-m"]
 CMD ["rosetta.cli", "--help"]

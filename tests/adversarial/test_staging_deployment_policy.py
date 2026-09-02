@@ -111,6 +111,12 @@ def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:
     assert "verify_staging_live.py" in apply_script
     assert "rollback" in apply_script
     assert "trap 'rollback 143' TERM" in apply_script
+    assert 'docker build --no-cache --file "$release_dir/deploy/Dockerfile"' in apply_script
+    assert "for module in rosetta.egress rosetta.observer" in apply_script
+    assert "docker run --rm --network none --read-only --user 65532:65532" in apply_script
+    assert "--cap-drop ALL --security-opt no-new-privileges" in apply_script
+    assert '"$new_image" "$module" --help >/dev/null' in apply_script
+    assert 'cat "$backup_directory/live-verification.pending" >&2' in apply_script
     assert 'sqlite_source="$backup_directory/sqlite-source"' in apply_script
     assert "for suffix in -wal -shm" in apply_script
     assert 'test ! -L "$sidecar_source"' in apply_script
@@ -127,3 +133,21 @@ def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:
     assert 'replace_existing_file "$environment_new" "$environment_file"' in apply_script
     assert "ReadWritePaths=/opt/rosetta /etc/rosetta/staging.env " in unit
     assert "ReadWritePaths=/opt/rosetta /etc/rosetta " not in unit
+
+
+def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
+    dockerfile = (ROOT / "deploy/Dockerfile").read_text()
+    compose = yaml.safe_load((ROOT / "deploy/compose.staging.yaml").read_text())
+    healthcheck = compose["services"]["egress-proxy"]["healthcheck"]["test"][-1]
+    ci = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+
+    assert 'RUN python -c "import rosetta.egress, rosetta.observer"' in dockerfile
+    assert "r=c.getresponse()" in healthcheck
+    assert "r.read()" in healthcheck
+    assert "c.close()" in healthcheck
+    assert "r.status == 404" in healthcheck
+    image_job = ci["jobs"]["observer-image"]
+    image_steps = "\n".join(str(step) for step in image_job["steps"])
+    assert "docker build --no-cache --file deploy/Dockerfile" in image_steps
+    assert "for module in rosetta.egress rosetta.observer" in image_steps
+    assert "--network none --read-only --user 65532:65532" in image_steps

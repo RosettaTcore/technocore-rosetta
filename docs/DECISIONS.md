@@ -349,3 +349,23 @@ root-only backup directory, bounded and checked as a root-owned, non-linked regu
 written through an `O_NOFOLLOW` descriptor to the already allowlisted destination and `fsync`ed.
 Rollback restores the prior content through the same narrow primitive. This avoids expanding the
 unit's write authority merely to support a sibling temporary file.
+
+## ADR-045: Prove the assembled observer image before creating downtime
+
+A signed source archive is necessary but does not prove that the host assembled the expected
+runtime filesystem. During the 2 September 2026 staging upgrade, Docker reported a successful
+image build whose egress entrypoint then failed with `No module named rosetta.egress`.
+The supervisor restarted it repeatedly, live verification failed closed and ADR-044 restored the
+known-good release without unsafe behavior or public writes.
+
+Build every signed staging release without host layer-cache reuse, removing stale cache state as
+an ambiguity, and import both staging modules inside the Dockerfile. After resolving the immutable
+image ID, run both exact entrypoints with
+`--help` as UID/GID 65532 in a read-only, capability-free, no-network container. These checks occur
+before the known-good observer is stopped, so an incomplete image causes zero deployment downtime.
+CI independently builds the same Dockerfile without cache reuse and repeats both isolated
+entrypoint checks, making the assembled production artifact a required change check rather than
+relying only on source-level imports.
+Live-verification failure also emits its final stable structured reason to the upgrade journal.
+The egress health probe must consume and close its response so routine readiness checks do not
+produce misleading connection-reset tracebacks.
