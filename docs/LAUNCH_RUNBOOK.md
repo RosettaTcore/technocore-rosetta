@@ -13,6 +13,13 @@ Upstream releases and availability warnings do not restart that window. Passing 
 read-only product to remain live and planning the controlled pilot; it does not authorize a
 production identity or a public write.
 
+The 2 September upgrade rehearsal activated reviewed commit
+`bdd95d614eb7c9ac1ef9b45046e7f421f8437970` and independently confirmed two healthy expected
+containers, a fresh `safe` observation and zero public writes. Upstream v0.11.3 was recorded as
+`release_drift`, as designed. The rehearsal exposed excessive provider-console work, so routine
+releases now use the signed fixed-path gate in `DEPLOYMENT.md`; installing that gate once and then
+re-locking root password login is the remaining bootstrap step.
+
 ## Launch gates
 
 | Gate | Required evidence | Authority |
@@ -54,7 +61,8 @@ therefore resets the affected safety window. Availability never overrides an hon
 Run the offline state validator from the deployed release:
 
 ```sh
-sudo -u '#65532' python3 /opt/rosetta/current/tools/staging_status.py \
+sudo setpriv --reuid=65532 --regid=65532 --clear-groups \
+  python3 /opt/rosetta/current/tools/staging_status.py \
   --state-dir /var/lib/rosetta/state \
   --evidence-dir /var/lib/rosetta/evidence \
   --expected-release v0.10.0 \

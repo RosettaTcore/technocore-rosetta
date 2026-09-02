@@ -50,6 +50,7 @@ Production runners must not share a writable filesystem or network namespace wit
 /run/rosetta-signer/             Unix socket
 /etc/rosetta/                    non-secret config and adapter lock
 /run/secrets/                    service-specific secret mounts
+/var/lib/rosetta/upgrades/       fixed incoming spool and root-only verification work
 ```
 
 Mount each path only into the service that requires it. Runner containers receive none of them.
@@ -89,6 +90,7 @@ before public service intake. Exact setup and restore gates are in `LAUNCH_RUNBO
 - Separate cloud project and billing alert.
 - No cloud API token inside Rosetta.
 - Kill switch must work without entering scheduler or runner containers.
+- Routine deployment uses the signed fixed-path gate; provider-console root login remains locked.
 
 ## Read-only staging on the single pilot server
 
@@ -158,3 +160,53 @@ bounded disk growth. Upstream availability and release drift are separate compat
 they do not reset the read-only safety window. A changed digest must be reviewed before it becomes
 an execution baseline. Public signing, discovery/service intake and publication each remain
 separate approval gates.
+
+## Signed remote upgrades
+
+Routine upgrades use `tools/release_package.py`; they do not use an interactive root shell. Install
+the root-owned gate once from a reviewed checkout while provider-console access is available:
+
+```sh
+printf '%s\n' 'rosetta-release ssh-ed25519 APPROVED_RELEASE_PUBLIC_KEY' \
+  > /root/rosetta-release-allowed-signers
+deploy/install-rosetta-upgrader.sh "$PWD" /root/rosetta-release-allowed-signers
+```
+
+The placeholder is an SSH **public** key only. Keep the private release-signing key on the operator
+workstation or hardware-backed agent. After checking the installed files, lock root password login
+again. The `rosetta` account receives permission only to start and inspect the fixed
+`rosetta-upgrade.service`; it never receives general `sudo` or a writable root-owned executable.
+
+Prepare a package locally from a reviewed, committed ref. `--previous-commit` must be the exact
+current target on the server:
+
+```sh
+python3 tools/release_package.py prepare \
+  --repository "$PWD" \
+  --ref REVIEWED_COMMIT \
+  --previous-commit CURRENT_SERVER_COMMIT \
+  --output local/releases/REVIEWED_COMMIT \
+  --signing-key /path/to/release-signing-key
+```
+
+Upload exactly `release.tar.gz`, `release-manifest.json` and `release-manifest.json.sig` to
+`/var/lib/rosetta/upgrades/incoming/`, then run:
+
+```sh
+sudo systemctl start rosetta-upgrade.service
+sudo systemctl --no-pager status rosetta-upgrade.service
+sudo journalctl -u rosetta-upgrade.service -n 200 --no-pager
+```
+
+The gate copies the upload without following links, verifies its canonical manifest and
+domain-separated signature, checks digest and predecessor, and extracts only bounded regular files
+and directories. It builds and validates the new image before stopping the observer. The stopped
+interval covers the consistent SQLite/evidence backup and atomic activation only. A fresh healthy,
+safe, zero-write observation and the complete host/container/offline verifier must pass within five
+minutes. Otherwise the previous release and image are restored and restarted automatically.
+
+An upstream version change does not itself require a Rosetta deployment. The running observer
+records a safe `release_drift` compatibility warning and stays live. Only a reviewed baseline or
+Rosetta code/configuration change enters this signed release path. Release signatures authorize
+deployment of the exact read-only package only; public Technocore writes and production identity
+remain separate gates.

@@ -1,0 +1,39 @@
+[Unit]
+Description=Verify and apply one signed Rosetta release
+Requires=docker.service
+After=docker.service
+ConditionPathExists=/var/lib/rosetta/upgrades/incoming/release-manifest.json
+ConditionPathExists=/var/lib/rosetta/upgrades/incoming/release-manifest.json.sig
+ConditionPathExists=/var/lib/rosetta/upgrades/incoming/release.tar.gz
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/rosetta-release-package stage --incoming /var/lib/rosetta/upgrades/incoming --allowed-signers /etc/rosetta/release-allowed-signers --current-link /opt/rosetta/current --release-root /opt/rosetta/releases --work-root /var/lib/rosetta/upgrades/work
+TimeoutStartSec=15min
+TimeoutStopSec=2min
+User=root
+Group=root
+UMask=0077
+RuntimeDirectory=rosetta-upgrade-docker-config
+Environment=DOCKER_CONFIG=/run/rosetta-upgrade-docker-config
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/rosetta /etc/rosetta/staging.env /var/backups/rosetta /var/lib/rosetta/upgrades
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectKernelLogs=yes
+ProtectHostname=yes
+ProtectClock=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+CapabilityBoundingSet=CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER CAP_SETGID CAP_SETUID
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -86,3 +86,28 @@ def test_production_signer_uses_encrypted_credential_and_no_network() -> None:
     assert "ProtectKernelTunables=yes" in unit
     assert "Environment=" not in unit
     assert "synthetic" not in unit.lower()
+
+
+def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:
+    unit = (ROOT / "deploy/rosetta-upgrade.service").read_text()
+    sudoers = (ROOT / "deploy/rosetta-upgrade.sudoers").read_text()
+    installer = (ROOT / "deploy/install-rosetta-upgrader.sh").read_text()
+    apply_script = (ROOT / "deploy/rosetta-upgrade-apply.sh").read_text()
+
+    assert "release-manifest.json.sig" in unit
+    assert "release-allowed-signers" in unit
+    assert "User=root" in unit
+    assert "RestrictAddressFamilies=AF_UNIX AF_NETLINK" in unit
+    assert "ProtectSystem=strict" in unit
+    assert "TimeoutStartSec=15min" in unit
+    assert "CapabilityBoundingSet=CAP_CHOWN" in unit
+    assert "systemctl start rosetta-upgrade.service" in sudoers
+    assert "NOPASSWD: ALL" not in sudoers
+    assert "rosetta-release-package" in installer
+    assert "visudo -cf" in installer
+    assert "count == 1 && bad == 0" in installer
+    assert (ROOT / "tools/release_package.py").read_text().startswith("#!/usr/bin/env python3")
+    assert "ROSETTA_IMAGE" in apply_script
+    assert "verify_staging_live.py" in apply_script
+    assert "rollback" in apply_script
+    assert "trap 'rollback 143' TERM" in apply_script

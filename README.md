@@ -174,8 +174,8 @@ Commands refuse unsafe or non-empty output targets where replacement would be am
 
 The current measured baseline includes:
 
-- 185 passing Python tests;
-- 95.01% branch-aware Python coverage with a 90% enforced floor;
+- 213 passing Python tests;
+- 95.14% branch-aware Python coverage with a 90% enforced floor;
 - strict Ruff, Mypy and TypeScript checks;
 - transitive, hash-locked Python dependencies;
 - official four-runtime matrix and 20-iteration soak passes;
@@ -204,6 +204,12 @@ be rebuilt and revalidated on another host.
 The checked-in deployment files provide a no-ingress, read-only staging profile. They do not
 authorize public writes. Production key generation, public request intake, Technocore writes and
 report publication remain separate operator-approved release gates.
+
+Reviewed updates can be packaged as predecessor-bound SSH-signed Git archives and applied through
+a fixed root-owned systemd gate. The deployment account has no general root command: the gate
+builds before downtime, takes a consistent backup, verifies a fresh safe zero-write observation and
+automatically restores the prior release on failure. An upstream release alone is observed as
+compatibility drift and does not stop the read-only product or trigger an automatic deployment.
 
 The controlled launch sequence, 72-hour review, encrypted-backup preparation and remaining inputs
 are in [`docs/LAUNCH_RUNBOOK.md`](docs/LAUNCH_RUNBOOK.md). Production identity handling is specified
