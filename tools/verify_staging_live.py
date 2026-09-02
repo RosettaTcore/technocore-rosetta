@@ -5,11 +5,17 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 PROJECT = "technocore-rosetta-staging"
 MAX_HEALTH_AGE_SECONDS = 660
+MAX_STATUS_OUTPUT_BYTES = 64 * 1024
+RUNTIME_UID = 65532
+RUNTIME_GID = 65532
+Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 
 class VerificationError(RuntimeError):
@@ -31,6 +37,59 @@ def command(*parts: str) -> str:
         raise VerificationError(f"command_failed:{Path(parts[0]).name}") from exc
     except OSError as exc:
         raise VerificationError(f"command_unavailable:{Path(parts[0]).name}") from exc
+
+
+def runtime_status(
+    status_script: Path,
+    *,
+    runner: Runner = subprocess.run,
+) -> dict[str, Any]:
+    parts = [
+        "/usr/bin/python3",
+        str(status_script),
+        "--state-dir",
+        "/var/lib/rosetta/state",
+        "--evidence-dir",
+        "/var/lib/rosetta/evidence",
+        "--expected-release",
+        "v0.10.0",
+        "--max-age-seconds",
+        str(MAX_HEALTH_AGE_SECONDS),
+        "--min-observations",
+        "1",
+        "--max-evidence-bytes",
+        "104857600",
+    ]
+    try:
+        completed = runner(
+            parts,
+            check=False,
+            capture_output=True,
+            text=True,
+            user=RUNTIME_UID,
+            group=RUNTIME_GID,
+            extra_groups=(),
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise VerificationError("offline_status_unavailable") from exc
+    raw = completed.stdout.strip()
+    if completed.returncode != 0 and not raw:
+        raise VerificationError("offline_status_child_failed")
+    if len(raw.encode("utf-8")) > MAX_STATUS_OUTPUT_BYTES:
+        raise VerificationError("offline_status_output_oversized")
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise VerificationError("offline_status_output_invalid") from exc
+    if not isinstance(value, dict) or value.get("schema") != "rosetta.staging-status.v2":
+        raise VerificationError("offline_status_output_invalid")
+    if completed.returncode != 0:
+        reasons = value.get("reasons")
+        if isinstance(reasons, list) and reasons and all(isinstance(item, str) for item in reasons):
+            detail = ",".join(reasons[:8])
+            raise VerificationError(f"offline_status_failed:{detail}")
+        raise VerificationError("offline_status_failed")
+    return value
 
 
 def verify(
@@ -113,28 +172,7 @@ def verify(
         "health_stale",
     )
 
-    status = json.loads(
-        command(
-            "setpriv",
-            "--reuid=65532",
-            "--regid=65532",
-            "--clear-groups",
-            "python3",
-            "/opt/rosetta/current/tools/staging_status.py",
-            "--state-dir",
-            "/var/lib/rosetta/state",
-            "--evidence-dir",
-            "/var/lib/rosetta/evidence",
-            "--expected-release",
-            "v0.10.0",
-            "--max-age-seconds",
-            str(MAX_HEALTH_AGE_SECONDS),
-            "--min-observations",
-            "1",
-            "--max-evidence-bytes",
-            "104857600",
-        )
-    )
+    status = runtime_status(expected_release_dir / "tools/staging_status.py")
     require(status["status"] in {"pass", "pass_with_warnings"}, "offline_status_failed")
     require(status["unsafe_check_count"] == 0, "unsafe_check_recorded")
     return {
