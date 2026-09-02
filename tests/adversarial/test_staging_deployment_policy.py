@@ -141,13 +141,26 @@ def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
     healthcheck = compose["services"]["egress-proxy"]["healthcheck"]["test"][-1]
     ci = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
 
-    assert 'RUN python -c "import rosetta.egress, rosetta.observer"' in dockerfile
+    normalization = "RUN chmod -R u=rwX,go=rX src config adapters vendor"
+    runtime_user = "USER 65532:65532"
+    runtime_import = (
+        'RUN test "$(id -u)" = "65532" && '
+        'python -c "import rosetta.egress, rosetta.observer"'
+    )
+    assert normalization in dockerfile
+    assert runtime_import in dockerfile
+    assert dockerfile.index(normalization) < dockerfile.index(runtime_user)
+    assert dockerfile.index(runtime_user) < dockerfile.index(runtime_import)
+    assert dockerfile.count("COPY --chown=0:0") == 5
     assert "r=c.getresponse()" in healthcheck
     assert "r.read()" in healthcheck
     assert "c.close()" in healthcheck
     assert "r.status == 404" in healthcheck
     image_job = ci["jobs"]["observer-image"]
     image_steps = "\n".join(str(step) for step in image_job["steps"])
-    assert "docker build --no-cache --file deploy/Dockerfile" in image_steps
+    assert "git archive --format=tar.gz" in image_steps
+    assert "from tools.release_package import extract_archive" in image_steps
+    assert '"$RUNNER_TEMP/release-tree/deploy/Dockerfile"' in image_steps
+    assert '--tag rosetta/observer:ci "$RUNNER_TEMP/release-tree"' in image_steps
     assert "for module in rosetta.egress rosetta.observer" in image_steps
     assert "--network none --read-only --user 65532:65532" in image_steps

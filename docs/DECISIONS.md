@@ -369,3 +369,12 @@ relying only on source-level imports.
 Live-verification failure also emits its final stable structured reason to the upgrade journal.
 The egress health probe must consume and close its response so routine readiness checks do not
 produce misleading connection-reset tracebacks.
+
+The first follow-up release proved that cache reuse was not the cause: a no-cache build imported
+both modules as root, while the same final image could not resolve `rosetta.egress` as the
+production UID. Treat source-tree modes and ownership as untrusted build inputs. The Dockerfile
+therefore copies the runtime tree as root, normalizes it to owner-writable/world-readable with
+directory traversal and only reviewed executable bits retained, and performs its build-time import
+only after switching to UID/GID 65532. CI now builds from a `git archive` tree extracted through
+the same bounded release extractor used by the server instead of building directly from the
+checkout. The final remote entrypoint checks remain the authoritative pre-downtime gate.
