@@ -1,6 +1,8 @@
 [Unit]
 Description=Validate Technocore Rosetta read-only staging state
 After=rosetta-observer.service
+OnSuccess=rosetta-healthcheck-notify@success.service
+OnFailure=rosetta-healthcheck-notify@fail.service
 
 [Service]
 Type=oneshot

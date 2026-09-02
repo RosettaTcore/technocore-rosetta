@@ -96,8 +96,10 @@ resets the affected safety gate.
 ## Monitoring and encrypted backup
 
 Install `rosetta-healthcheck.service` and `.timer` after reviewing their paths. A failed check is
-durable in systemd and the journal. It is not an external alert; an operator-selected destination
-must be added before Gate D.
+durable in systemd and the journal. The optional notifier reports only `success` or `fail` to one
+exact `https://hc-ping.com/<check-id>` destination loaded as a systemd credential. It rejects every
+other host, scheme, port, query, fragment, redirect and path shape, and never includes local health
+data in the request. The destination must be independently controlled before Gate D.
 
 The encrypted backup timer requires Debian's `age` package and a file containing only an approved
 Age public recipient at `/etc/rosetta/backup-recipient.txt`. The backup process uses SQLite's backup
@@ -117,21 +119,22 @@ sudo install -o root -g root -m 0644 APPROVED_AGE_PUBLIC_RECIPIENT_FILE \
   /etc/rosetta/backup-recipient.txt
 ```
 
-Then install and exercise the units:
+Optionally place the exact Healthchecks.io ping URL in a root-readable local file. Then install and
+exercise the units with the reviewed one-time installer. Omit the third argument only while
+preparing Gate D; without it, local failures remain durable but no external alert is delivered.
 
 ```sh
-sudo install -o root -g root -m 0644 deploy/rosetta-healthcheck.service /etc/systemd/system/
-sudo install -o root -g root -m 0644 deploy/rosetta-healthcheck.timer /etc/systemd/system/
-sudo install -o root -g root -m 0644 deploy/rosetta-backup.service /etc/systemd/system/
-sudo install -o root -g root -m 0644 deploy/rosetta-backup.timer /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl start rosetta-healthcheck.service
-sudo systemctl start rosetta-backup.service
+sudo deploy/install-rosetta-operations.sh \
+  "$(readlink -f /opt/rosetta/current)" \
+  APPROVED_AGE_PUBLIC_RECIPIENT_FILE \
+  APPROVED_HEALTHCHECKS_URL_FILE
 ```
 
-Inspect the one-shot results and restore one encrypted archive on a separate trusted machine before
-enabling the timers. Record the restore result and ciphertext hash under ignored operator records.
-Never store an Age secret key on the Rosetta server.
+The installer validates the current immutable release, recipient, optional alert destination,
+service outcomes and active timers. Copy the first ciphertext off-device and restore it on a
+separate trusted machine immediately after installation. Disable the backup timer if that recovery
+test fails. Record the restore result and ciphertext hash under ignored operator records. Never
+store an Age secret key on the Rosetta server.
 
 ## Pilot activation order
 

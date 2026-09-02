@@ -29,6 +29,11 @@ systemd credential into the networkless signer. None of these units authorize pr
 creation, public signing or publication; follow `docs/LAUNCH_RUNBOOK.md` and the separate key
 ceremony.
 
+`rosetta-healthcheck-notify@.service` is an optional separate notifier for one exact
+Healthchecks.io check. It receives only a ping URL credential and emits only success/failure; the
+local validator itself remains networkless. `install-rosetta-operations.sh` installs, exercises and
+enables the health and encrypted-backup timers from the immutable current release.
+
 `install-rosetta-upgrader.sh` performs the one-time installation of a root-owned signed-release
 gate. `rosetta-upgrade.service` accepts only three fixed spool files and can be started by the
 unprivileged deployment account through the narrow `rosetta-upgrade.sudoers` rule.
