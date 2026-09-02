@@ -205,6 +205,11 @@ interval covers the consistent SQLite/evidence backup and atomic activation only
 safe, zero-write observation and the complete host/container/offline verifier must pass within five
 minutes. Otherwise the previous release and image are restored and restarted automatically.
 
+The state directory remains read-only inside the upgrade unit. After the observer stops, the gate
+copies the SQLite database and present WAL/SHM sidecars into the root-only backup area and runs the
+backup API there. Activation cannot proceed unless that frozen-copy backup passes SQLite integrity
+checking.
+
 An upstream version change does not itself require a Rosetta deployment. The running observer
 records a safe `release_drift` compatibility warning and stays live. Only a reviewed baseline or
 Rosetta code/configuration change enters this signed release path. Release signatures authorize
