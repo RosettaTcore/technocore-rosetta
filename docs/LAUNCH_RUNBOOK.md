@@ -8,17 +8,18 @@ SSH-only public listener and bounded disk, while all three watched upstream endp
 That is a green safety boundary with an `unavailable` compatibility warning, not a safety failure.
 Scheduler, runners, signer, publisher and public request intake remain absent.
 
-The initial safety review remains scheduled for 2 September 2026 at 23:23 Europe/Ljubljana.
-Upstream releases and availability warnings do not restart that window. Passing it permits the
+The transitional safety review passed on 3 September 2026 after 73 hours and 34 minutes. It combined
+the truthful legacy interval with v2 safety checkpoints as required below: zero public writes, no
+unexplained restarts, SSH-only public listeners, bounded disk and a final complete verifier pass.
+Upstream releases and availability warnings did not restart that window. Gate B permits the
 read-only product to remain live and planning the controlled pilot; it does not authorize a
 production identity or a public write.
 
-The 2 September upgrade rehearsal activated reviewed commit
-`bdd95d614eb7c9ac1ef9b45046e7f421f8437970` and independently confirmed two healthy expected
+The signed fixed-path gate is installed and the 3 September release activated reviewed commit
+`db810b15954cef1bbecfa8f25e4000ec40d16092`. It independently confirmed two healthy expected
 containers, a fresh `safe` observation and zero public writes. Upstream v0.11.3 was recorded as
-`release_drift`, as designed. The rehearsal exposed excessive provider-console work, so routine
-releases now use the signed fixed-path gate in `DEPLOYMENT.md`; installing that gate once and then
-re-locking root password login is the remaining bootstrap step.
+`release_drift`, as designed. The release completed through the narrow deployment account without
+provider-console work, and retained automatic rollback plus the prior immutable release.
 
 ## Launch gates
 

@@ -1,13 +1,13 @@
 # Read-only staging security and effectiveness review
 
-Date: 30 August 2026
+Date: 3 September 2026
 
 ## Assessment
 
-The staging observer is suitable for a bounded 72-hour read-only launch on the dedicated pilot
-server after ordinary pull-request review and green CI. It is intentionally not yet a public
-service agent: it has no production identity, signing process, request intake, publisher or
-Technocore write path.
+The staging observer passed its transitional 72-hour read-only gate on the dedicated pilot server.
+The static observatory and no-ingress observer are suitable to remain publicly available. Rosetta
+is intentionally not yet a public service agent: it has no production identity, signing process,
+request intake, publisher or Technocore write path.
 
 The implementation is effective for its present purpose. It continuously proves Rosetta's local
 zero-write safety boundary and independently reports whether the fixed-origin Technocore metadata
@@ -51,6 +51,29 @@ health plus compatibility records for host monitoring.
 - Three metadata endpoints prove protocol visibility, not full live write interoperability. The
   complete four-runtime matrix remains offline until a separately approved public-write pilot.
 
+## 72-hour review result
+
+The review covered 30 August 2026 21:14 UTC through 2 September 2026 22:48 UTC, a 73-hour,
+34-minute observation period. The host had remained up since 29 August 2026 23:34 UTC. The initial
+v1 interval truthfully recorded zero writes, zero restarts, an SSH-only public listener and bounded
+disk while upstream returned HTTP 503. After the reviewed v2 safety/compatibility migration, each
+deployment verification recorded a fresh `safe` observation and zero writes. Two failed upgrade
+rehearsals stopped and restored the service through the documented transactional rollback; these
+are explained maintenance events, not unexplained restarts or unsafe checks.
+
+The final signed deployment activated commit `db810b15954cef1bbecfa8f25e4000ec40d16092` as immutable
+image `sha256:d19fd4871c9c9ca0168e13b2e67b3dc8d60dd7a8f3c5e181494d6af5faa3dd00`. Its independent
+post-activation verifier passed with two healthy expected containers, current observation,
+`safety_status: safe`, `public_writes: 0`, intact SQLite state, bounded evidence, no kill switch and
+the exact container isolation policy. The service was active and enabled with `NRestarts=0`; disk
+use was 9%; public TCP listeners were SSH only, with one additional loopback-only listener.
+
+Upstream v0.11.3 is recorded as `release_drift`. This is a compatibility warning and is not promoted
+to the v0.10.0 execution baseline. Under the migration rule in `LAUNCH_RUNBOOK.md`, the reviewed
+legacy interval plus truthful v2 checkpoints passes Gate B for the read-only surface. It does not
+pass Gates C–F or authorize a public identity, intake, signing, publication to Technocore, or any
+write.
+
 ## Launch gate
 
 Proceed with read-only staging only when the reviewed image digest, rendered Compose configuration,
@@ -59,3 +82,6 @@ window, require fresh safety-safe checks, zero public writes, zero unexplained r
 disk growth. Availability or release warnings stay visible and require compatibility review before
 execution promotion, but do not reset the read-only window. Any ambiguity about Rosetta's own
 safety boundary activates the kill switch and returns the server to the previous immutable release.
+Before a write-capable pilot, install and exercise the periodic healthcheck and encrypted-backup
+timers, test an independently controlled off-device restore, add an external alert destination,
+complete the production identity ceremony and obtain the remaining per-boundary approvals.
