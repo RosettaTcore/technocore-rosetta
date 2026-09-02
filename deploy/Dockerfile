@@ -14,17 +14,24 @@ RUN addgroup --system --gid 65532 rosetta && \
     adduser --system --uid 65532 --ingroup rosetta --home /nonexistent --no-create-home rosetta
 
 WORKDIR /opt/rosetta
-COPY requirements.lock pyproject.toml ./
+COPY --chown=0:0 requirements.lock pyproject.toml ./
 RUN python -m pip install --no-cache-dir --require-hashes --requirement requirements.lock
-COPY src ./src
-COPY config ./config
-COPY adapters ./adapters
-COPY vendor/technocore-chat-v0.10.0/mcp/src ./vendor/technocore-chat-v0.10.0/mcp/src
+COPY --chown=0:0 src ./src
+COPY --chown=0:0 config ./config
+COPY --chown=0:0 adapters ./adapters
+COPY --chown=0:0 vendor/technocore-chat-v0.10.0/mcp/src ./vendor/technocore-chat-v0.10.0/mcp/src
 
-# Fail the image build before deployment if either staging entrypoint is absent from the
-# assembled filesystem. The remote upgrade gate also repeats this check in the final image.
-RUN python -c "import rosetta.egress, rosetta.observer"
+# A signed release may be materialized by a root-owned extraction directory with stricter source
+# modes than a normal checkout. Normalize the copied runtime tree while retaining executable bits
+# only where the reviewed source declared them. Code remains root-owned and the deployed rootfs is
+# read-only.
+RUN chmod -R u=rwX,go=rX src config adapters vendor
 
 USER 65532:65532
+
+# Run the build-time import under the exact production identity. The remote gate repeats both
+# entrypoints in the final image before it creates any observer downtime.
+RUN test "$(id -u)" = "65532" && python -c "import rosetta.egress, rosetta.observer"
+
 ENTRYPOINT ["python", "-m"]
 CMD ["rosetta.cli", "--help"]

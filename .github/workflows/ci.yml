@@ -104,8 +104,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build without host layer-cache reuse
-        run: docker build --no-cache --file deploy/Dockerfile --tag rosetta/observer:ci .
+      - name: Materialize the production release tree
+        run: |
+          archive="$RUNNER_TEMP/release.tar.gz"
+          release_tree="$RUNNER_TEMP/release-tree"
+          git archive --format=tar.gz --output "$archive" "$GITHUB_SHA"
+          python3 - "$archive" "$release_tree" <<'PY'
+          import sys
+          from pathlib import Path
+
+          from tools.release_package import extract_archive
+
+          extract_archive(Path(sys.argv[1]), Path(sys.argv[2]))
+          PY
+
+      - name: Build release image without host layer-cache reuse
+        run: |
+          docker build --no-cache \
+            --file "$RUNNER_TEMP/release-tree/deploy/Dockerfile" \
+            --tag rosetta/observer:ci "$RUNNER_TEMP/release-tree"
 
       - name: Exercise the isolated staging entrypoints
         run: |
