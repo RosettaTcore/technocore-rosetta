@@ -1,6 +1,6 @@
 # Local MVP status
 
-Date: 2 September 2026
+Date: 3 September 2026
 
 ## Outcome
 
@@ -53,7 +53,7 @@ window.
 
 ## Verified results
 
-- Pytest: 213/213 pass;
+- Pytest: 228/228 pass;
 - branch-aware Python coverage: 95.14%, enforced floor 90%; observer coverage: 99%;
 - Ruff lint/security: pass;
 - Mypy strict: pass for 31 source modules;
@@ -99,6 +99,13 @@ window.
   `sha256:a1703bf5674d76749181cd44c2992d3809663e4378fe7ad64484b0cf460e996f`, two expected
   healthy containers, fresh `safe` observation, zero public writes and an explicit
   `release_drift` compatibility warning for upstream v0.11.3;
+- transitional 72-hour Gate B review: pass after 73 hours and 34 minutes, combining the truthful
+  v1 interval with v2 safety checkpoints; zero public writes, no unexplained restarts, SSH-only
+  public listeners and 9% disk use;
+- signed remote deployment on 3 September 2026: reviewed commit
+  `db810b15954cef1bbecfa8f25e4000ec40d16092`, immutable image
+  `sha256:d19fd4871c9c9ca0168e13b2e67b3dc8d60dd7a8f3c5e181494d6af5faa3dd00`, complete live verifier
+  pass, two healthy expected containers, current safe observation and zero public writes;
 - GitHub Pages project-subpath QA: desktop and 390×844 mobile pass; all relative assets load and
   the one-click verifier validates the 15-file reference bundle;
 - public Pages deployment: success from reviewed `main` commit `8ddaee9` in workflow run
@@ -108,7 +115,7 @@ window.
 
 ## Remaining production-only work
 
-- completion and human review of the initial safety window; upstream warnings do not reset it;
+- installation and exercise of the periodic healthcheck and encrypted-backup timers;
 - production key-generation/recovery ceremony and secret-store provisioning;
 - operator approval-key ceremony and addition of its public DID to protected evolution policy;
 - external alert delivery and an independently controlled encrypted off-device backup destination;
