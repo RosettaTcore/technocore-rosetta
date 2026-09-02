@@ -1,0 +1,6 @@
+Cmnd_Alias ROSETTA_UPGRADE = /usr/bin/systemctl start rosetta-upgrade.service, \
+    /usr/bin/systemctl is-active rosetta-upgrade.service, \
+    /usr/bin/systemctl --no-pager status rosetta-upgrade.service, \
+    /usr/bin/journalctl -u rosetta-upgrade.service -n 200 --no-pager
+
+rosetta ALL=(root) NOPASSWD: ROSETTA_UPGRADE

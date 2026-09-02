@@ -1,6 +1,6 @@
 # Local MVP status
 
-Date: 1 September 2026
+Date: 2 September 2026
 
 ## Outcome
 
@@ -47,10 +47,13 @@ window.
   evidence state, host kill switch and one-server staging artifacts;
 - public read-only observatory with canonical metadata, no-download same-origin evidence
   verification, optional offline audit, sitemap and a CI-gated GitHub Pages workflow.
+- signed, predecessor-bound remote release packages, a root-owned fixed-path deployment gate,
+  pre-downtime image validation, consistent state backup, fresh post-activation verification and
+  automatic rollback without routine provider-console access or general deployment-user `sudo`.
 
 ## Verified results
 
-- Pytest: 196/196 pass;
+- Pytest: 213/213 pass;
 - branch-aware Python coverage: 95.14%, enforced floor 90%; observer coverage: 99%;
 - Ruff lint/security: pass;
 - Mypy strict: pass for 31 source modules;
@@ -91,6 +94,11 @@ window.
 - deployed observer check on 1 September 2026: service active/enabled, zero restarts, `dry_run`,
   `public_writes: 0`, SSH-only public listener and 7% disk use; all watched upstream endpoints
   returned 503, recorded separately as an availability warning;
+- deployed observer upgrade rehearsal on 2 September 2026: reviewed commit
+  `bdd95d614eb7c9ac1ef9b45046e7f421f8437970`, immutable image
+  `sha256:a1703bf5674d76749181cd44c2992d3809663e4378fe7ad64484b0cf460e996f`, two expected
+  healthy containers, fresh `safe` observation, zero public writes and an explicit
+  `release_drift` compatibility warning for upstream v0.11.3;
 - GitHub Pages project-subpath QA: desktop and 390×844 mobile pass; all relative assets load and
   the one-click verifier validates the 15-file reference bundle;
 - public Pages deployment: success from reviewed `main` commit `8ddaee9` in workflow run

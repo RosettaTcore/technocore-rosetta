@@ -317,3 +317,22 @@ This canary proves availability and fail-closed behavior, not compatibility with
 release. Rosetta records a structurally acceptable new version as `release_drift` but never promotes
 it into execution. A real upstream tag still needs provenance review, immutable pinning and the
 complete cross-runtime differential matrix before any write-capable boundary changes.
+
+## ADR-044: Signed, fail-closed remote releases with automatic rollback
+
+Do not grant the deployment user a shell-equivalent root command or require routine use of the
+provider console. A workstation release package contains a Git archive, a closed canonical
+manifest binding the exact commit, tree, previous commit, archive digest and read-only deployment
+profile, plus an SSH signature in the dedicated `rosetta-release-v1` namespace. The server's
+root-owned gate accepts only the fixed repository and profile, verifies that signature against a
+root-owned allowlist, rejects links, special files, path traversal, duplicate paths, expansion
+bombs and an unexpected current release, and stages the archive under its commit identifier.
+
+The unprivileged `rosetta` account may upload only to an incoming spool and start one fixed systemd
+unit. The unit cannot accept caller-supplied commands or paths. It builds the new immutable image
+before downtime, validates the rendered container boundary, stops the observer only for a
+consistent SQLite/evidence backup and atomic release switch, and then requires a fresh post-switch
+health record plus independent host/container/offline checks. Any activation or verification
+failure restores the prior symlink, image setting and service automatically. A release-drift
+warning is visible but does not fail a safety-safe read-only deployment. No production identity,
+public-write authority or self-evolution approval is conveyed by a release signature.

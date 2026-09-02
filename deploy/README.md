@@ -28,3 +28,10 @@ server. `rosetta-signer.production.service` is a disabled template that loads a 
 systemd credential into the networkless signer. None of these units authorize production key
 creation, public signing or publication; follow `docs/LAUNCH_RUNBOOK.md` and the separate key
 ceremony.
+
+`install-rosetta-upgrader.sh` performs the one-time installation of a root-owned signed-release
+gate. `rosetta-upgrade.service` accepts only three fixed spool files and can be started by the
+unprivileged deployment account through the narrow `rosetta-upgrade.sudoers` rule.
+`rosetta-upgrade-apply.sh` builds before downtime, backs up state, atomically activates the reviewed
+release, verifies a fresh zero-write observation and automatically restores the previous release on
+failure. See `docs/DEPLOYMENT.md`; release signing grants no public-write or identity authority.
