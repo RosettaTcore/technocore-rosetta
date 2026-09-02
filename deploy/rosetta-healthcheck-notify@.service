@@ -1,0 +1,27 @@
+[Unit]
+Description=Report Rosetta staging healthcheck result (%i)
+ConditionPathExists=/etc/rosetta/healthchecks.url
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/rosetta/current
+ExecStart=/usr/bin/python3 tools/healthchecks_notify.py --url-file %d/healthchecks.url --state %i
+LoadCredential=healthchecks.url:/etc/rosetta/healthchecks.url
+User=65532
+Group=65532
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+LockPersonality=true
+MemoryDenyWriteExecute=true

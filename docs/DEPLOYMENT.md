@@ -83,6 +83,11 @@ matching secret key. `rosetta-healthcheck.service` validates health/evidence/SQL
 its timer failure must be connected to an independently controlled external alert destination
 before public service intake. Exact setup and restore gates are in `LAUNCH_RUNBOOK.md`.
 
+The reviewed Healthchecks.io notifier is a separate least-privilege network process. It receives a
+single ping capability through a systemd credential and sends no health record, host data or log
+body. The fixed client accepts only one exact `hc-ping.com` check identifier and does not follow
+redirects. Alert delivery never changes the deterministic local health verdict.
+
 ## Operational access
 
 - Cloud firewall denies all unnecessary ingress.

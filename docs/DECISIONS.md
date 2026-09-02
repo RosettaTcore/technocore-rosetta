@@ -405,3 +405,18 @@ execute it inside the already-running observer container as explicit UID/GID 655
 exact container view of the mounted state and evidence, while retaining its read-only rootfs,
 dropped capabilities, `no-new-privileges` and network boundary. The upgrade and CI gates invoke the
 packaged checker with `--help` under the same numeric identity before any staging downtime.
+
+## ADR-047: Keep external alert delivery outside the local verdict boundary
+
+The offline staging validator remains networkless and authoritative. Attach systemd `OnSuccess`
+and `OnFailure` hooks to a separate notifier process that can send only an empty POST to one exact
+Healthchecks.io check. Load the check capability from a systemd credential rather than an argument,
+environment variable or repository file. Reject non-HTTPS schemes, every host except
+`hc-ping.com`, ports, user information, queries, fragments, redirects and malformed check IDs.
+
+The notifier receives no health JSON, evidence or database content and cannot modify local state.
+Notification failure is visible in its own unit but never rewrites a local health pass into a
+different deterministic verdict. A dead-man destination can therefore detect a silent host while
+remaining unable to control Rosetta. The one-time operations installer also validates and starts
+the encrypted backup before enabling either timer; off-device restore remains a separate Gate D
+requirement.

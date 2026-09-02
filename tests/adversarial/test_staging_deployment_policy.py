@@ -63,17 +63,29 @@ def test_systemd_supervises_the_whole_compose_boundary() -> None:
 def test_staging_health_and_backup_timers_are_local_and_fail_closed() -> None:
     health = (ROOT / "deploy/rosetta-healthcheck.service").read_text()
     backup = (ROOT / "deploy/rosetta-backup.service").read_text()
+    notifier = (ROOT / "deploy/rosetta-healthcheck-notify@.service").read_text()
+    installer = (ROOT / "deploy/install-rosetta-operations.sh").read_text()
     assert "tools/staging_status.py" in health
     assert "--expected-release v0.10.0" in health
     assert "ReadOnlyPaths=/var/lib/rosetta/state /var/lib/rosetta/evidence" in health
     assert "User=65532" in health
     assert "CapabilityBoundingSet=" in health
+    assert "OnSuccess=rosetta-healthcheck-notify@success.service" in health
+    assert "OnFailure=rosetta-healthcheck-notify@fail.service" in health
     assert "tools/export_encrypted_backup.sh" in backup
     assert "/etc/rosetta/backup-recipient.txt" in backup
     assert "ReadWritePaths=/var/backups/rosetta/encrypted" in backup
     assert "User=65532" in backup
     assert "CapabilityBoundingSet=" in backup
     assert "http" not in backup.lower()
+    assert "LoadCredential=healthchecks.url:" in notifier
+    assert "tools/healthchecks_notify.py" in notifier
+    assert "RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6" in notifier
+    assert "CapabilityBoundingSet=" in notifier
+    assert "Environment=" not in notifier
+    assert "command -v age" in installer
+    assert "systemctl enable --now rosetta-healthcheck.timer rosetta-backup.timer" in installer
+    assert "/opt/rosetta/current" in installer
 
 
 def test_production_signer_uses_encrypted_credential_and_no_network() -> None:
