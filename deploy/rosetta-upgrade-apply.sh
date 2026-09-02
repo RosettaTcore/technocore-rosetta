@@ -52,12 +52,23 @@ trap 'rollback $?' ERR
 trap 'rollback 143' TERM
 trap 'rollback 130' INT
 
-docker build --file "$release_dir/deploy/Dockerfile" --tag "rosetta/observer:${commit}" "$release_dir"
+# Signed releases are infrequent and correctness is more important than reusing an opaque host
+# cache. The incident produced an incomplete image despite a successful build result.
+docker build --no-cache --file "$release_dir/deploy/Dockerfile" \
+  --tag "rosetta/observer:${commit}" "$release_dir"
 new_image="$(docker image inspect "rosetta/observer:${commit}" --format '{{.Id}}')"
 case "$new_image" in
   sha256:[0-9a-f][0-9a-f]*) ;;
   *) echo "invalid built image ID" >&2; exit 1 ;;
 esac
+
+# Exercise the exact immutable image before stopping the known-good observer. Both commands run
+# under the same core isolation boundary as staging and must resolve the packaged entrypoints.
+for module in rosetta.egress rosetta.observer; do
+  docker run --rm --network none --read-only --user 65532:65532 \
+    --cap-drop ALL --security-opt no-new-privileges \
+    "$new_image" "$module" --help >/dev/null
+done
 
 ROSETTA_IMAGE="$new_image" \
 ROSETTA_CONFIG=/etc/rosetta/config.yaml \
@@ -157,6 +168,10 @@ for _attempt in $(seq 1 30); do
   sleep 10
 done
 if test "$verified" != "1"; then
+  if test -s "$backup_directory/live-verification.pending"; then
+    printf 'final live verification result: ' >&2
+    cat "$backup_directory/live-verification.pending" >&2
+  fi
   rollback 1
 fi
 

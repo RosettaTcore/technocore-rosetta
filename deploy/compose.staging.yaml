@@ -33,7 +33,7 @@ services:
         - CMD
         - python
         - -c
-        - "import http.client,sys; c=http.client.HTTPConnection('127.0.0.1',8081,2); c.request('GET','/__readiness__'); sys.exit(0 if c.getresponse().status == 404 else 1)"
+        - "import http.client,sys; c=http.client.HTTPConnection('127.0.0.1',8081,2); c.request('GET','/__readiness__'); r=c.getresponse(); r.read(); c.close(); sys.exit(0 if r.status == 404 else 1)"
       interval: 5s
       timeout: 3s
       retries: 12
