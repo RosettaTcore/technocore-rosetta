@@ -131,3 +131,22 @@ jobs:
               --cap-drop ALL --security-opt no-new-privileges \
               rosetta/observer:ci "$module" --help >/dev/null
           done
+
+      - name: Exercise the numeric verifier privilege drop
+        run: |
+          docker run --rm --network none --read-only --user 0:0 \
+            --cap-drop ALL --cap-add SETUID --cap-add SETGID \
+            --security-opt no-new-privileges --entrypoint python \
+            rosetta/observer:ci -c '
+          import subprocess
+          result = subprocess.run(
+              ["/usr/bin/id", "-u"],
+              check=True,
+              capture_output=True,
+              text=True,
+              user=65532,
+              group=65532,
+              extra_groups=(),
+          )
+          assert result.stdout.strip() == "65532"
+          '

@@ -378,3 +378,21 @@ directory traversal and only reviewed executable bits retained, and performs its
 only after switching to UID/GID 65532. CI now builds from a `git archive` tree extracted through
 the same bounded release extractor used by the server instead of building directly from the
 checkout. The final remote entrypoint checks remain the authoritative pre-downtime gate.
+
+## ADR-046: Drop verifier privileges without an external identity helper
+
+The first permission-normalized release passed its build-time UID 65532 import and both isolated
+final-image entrypoint checks. Activation then reached the offline host-state check, where the
+external `setpriv` command failed inside the hardened upgrade unit. The verifier reduced that
+failure to `command_failed:setpriv`, so it could not distinguish an identity-transition failure
+from a deterministic rejection reported by `staging_status.py`. Automatic rollback restored the
+known-good release and observer without a restart loop.
+
+Run the fixed offline status command as a child process using Python's numeric `user`, `group` and
+empty `extra_groups` parameters. This retains the UID/GID 65532 access check without a shell,
+account-name lookup or generic command surface. Accept only bounded JSON with the exact
+`rosetta.staging-status.v2` schema. A non-zero result remains fail-closed, but now exposes at most
+eight stable checker reasons; malformed, oversized, unavailable or empty failed output has a
+stable verifier reason of its own. CI exercises the numeric transition in the final release image
+with a read-only root filesystem, no network, `no-new-privileges` and only `SETUID`/`SETGID`
+capabilities.

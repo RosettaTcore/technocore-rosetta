@@ -117,6 +117,12 @@ def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:
     assert "--cap-drop ALL --security-opt no-new-privileges" in apply_script
     assert '"$new_image" "$module" --help >/dev/null' in apply_script
     assert 'cat "$backup_directory/live-verification.pending" >&2' in apply_script
+    live_verifier = (ROOT / "tools/verify_staging_live.py").read_text()
+    assert "user=RUNTIME_UID" in live_verifier
+    assert "group=RUNTIME_GID" in live_verifier
+    assert "extra_groups=()" in live_verifier
+    assert '"setpriv"' not in live_verifier
+    assert "offline_status_failed:" in live_verifier
     assert 'sqlite_source="$backup_directory/sqlite-source"' in apply_script
     assert "for suffix in -wal -shm" in apply_script
     assert 'test ! -L "$sidecar_source"' in apply_script
@@ -144,8 +150,7 @@ def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
     normalization = "RUN chmod -R u=rwX,go=rX src config adapters vendor"
     runtime_user = "USER 65532:65532"
     runtime_import = (
-        'RUN test "$(id -u)" = "65532" && '
-        'python -c "import rosetta.egress, rosetta.observer"'
+        'RUN test "$(id -u)" = "65532" && ' 'python -c "import rosetta.egress, rosetta.observer"'
     )
     assert normalization in dockerfile
     assert runtime_import in dockerfile
@@ -164,3 +169,5 @@ def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
     assert '--tag rosetta/observer:ci "$RUNNER_TEMP/release-tree"' in image_steps
     assert "for module in rosetta.egress rosetta.observer" in image_steps
     assert "--network none --read-only --user 65532:65532" in image_steps
+    assert "--cap-drop ALL --cap-add SETUID --cap-add SETGID" in image_steps
+    assert "result.stdout.strip()" in image_steps
