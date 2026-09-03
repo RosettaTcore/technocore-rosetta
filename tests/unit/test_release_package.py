@@ -1,5 +1,7 @@
 import io
 import json
+import os
+import stat
 import subprocess
 import tarfile
 from pathlib import Path
@@ -168,6 +170,24 @@ def test_archive_rejects_path_escape_and_non_regular_input(tmp_path: Path) -> No
     link.symlink_to(source)
     with pytest.raises(OSError):
         release_package.copy_regular(link, tmp_path / "copy", 100)
+
+
+def test_extract_archive_normalizes_runtime_modes_under_restrictive_umask(
+    tmp_path: Path,
+) -> None:
+    archive = tmp_path / "release.tar.gz"
+    _archive(archive)
+    destination = tmp_path / "release"
+    previous_umask = os.umask(0o077)
+    try:
+        release_package.extract_archive(archive, destination)
+    finally:
+        os.umask(previous_umask)
+
+    assert stat.S_IMODE(destination.stat().st_mode) == 0o755
+    assert stat.S_IMODE((destination / "deploy").stat().st_mode) == 0o755
+    assert stat.S_IMODE((destination / "deploy/rosetta-upgrade-apply.sh").stat().st_mode) == 0o755
+    assert stat.S_IMODE((destination / "deploy/compose.staging.yaml").stat().st_mode) == 0o644
 
 
 def test_stage_requires_signed_digest_and_exact_previous_commit(

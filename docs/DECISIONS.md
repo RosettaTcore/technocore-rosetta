@@ -420,3 +420,22 @@ different deterministic verdict. A dead-man destination can therefore detect a s
 remaining unable to control Rosetta. The one-time operations installer also validates and starts
 the encrypted backup before enabling either timer; off-device restore remains a separate Gate D
 requirement.
+
+## ADR-048: Normalize host release traversal and bind operations to a named locked identity
+
+The first live operations installation exposed three host assumptions that container-only checks
+did not cover. The upgrade service's `UMask=0077` made extracted release directories root-only even
+though archive member modes were safe; systemd could not start numeric UID/GID 65532 before that
+identity existed in the host user database; and the private root upgrade-backup parent prevented
+the same UID from reaching its separately owned encrypted-backup directory. Every failure was
+closed: no timer was enabled, no plaintext backup was retained and no public Technocore write was
+possible.
+
+Normalize extracted directories to `0755`, executable members to `0755` and non-executable members
+to `0644` after creation, independent of the service umask. Release trees contain public,
+signature-checked source only and remain root-owned and non-writable by the runtime. Create or
+strictly validate a locked, non-login `rosetta-runtime` account mapped to UID/GID 65532, use that
+name in host systemd units, and preflight its access to required release tools. Keep
+`/var/backups/rosetta` root-owned and non-listable at `0711`, while its `encrypted` child remains
+`0700` and owned by the runtime identity. This preserves root-only upgrade backups while allowing
+the isolated backup service to reach only its dedicated destination.
