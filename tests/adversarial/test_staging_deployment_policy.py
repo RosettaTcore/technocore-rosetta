@@ -68,14 +68,16 @@ def test_staging_health_and_backup_timers_are_local_and_fail_closed() -> None:
     assert "tools/staging_status.py" in health
     assert "--expected-release v0.10.0" in health
     assert "ReadOnlyPaths=/var/lib/rosetta/state /var/lib/rosetta/evidence" in health
-    assert "User=65532" in health
+    assert "User=rosetta-runtime" in health
+    assert "Group=rosetta-runtime" in health
     assert "CapabilityBoundingSet=" in health
     assert "OnSuccess=rosetta-healthcheck-notify@success.service" in health
     assert "OnFailure=rosetta-healthcheck-notify@fail.service" in health
     assert "tools/export_encrypted_backup.sh" in backup
     assert "/etc/rosetta/backup-recipient.txt" in backup
     assert "ReadWritePaths=/var/backups/rosetta/encrypted" in backup
-    assert "User=65532" in backup
+    assert "User=rosetta-runtime" in backup
+    assert "Group=rosetta-runtime" in backup
     assert "CapabilityBoundingSet=" in backup
     assert "http" not in backup.lower()
     assert "LoadCredential=healthchecks.url:" in notifier
@@ -84,6 +86,11 @@ def test_staging_health_and_backup_timers_are_local_and_fail_closed() -> None:
     assert "CapabilityBoundingSet=" in notifier
     assert "Environment=" not in notifier
     assert "command -v age" in installer
+    assert 'runtime_user="rosetta-runtime"' in installer
+    assert 'groupadd --system --gid "$runtime_gid" "$runtime_user"' in installer
+    assert 'useradd --system --uid "$runtime_uid"' in installer
+    assert 'runuser -u "$runtime_user" -- test -r' in installer
+    assert "-m 0711 /var/backups/rosetta" in installer
     assert "systemctl enable --now rosetta-healthcheck.timer rosetta-backup.timer" in installer
     assert "/opt/rosetta/current" in installer
 

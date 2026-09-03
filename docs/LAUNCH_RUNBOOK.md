@@ -107,14 +107,16 @@ API, refuses non-regular evidence files, pipes the snapshot directly into Age an
 plaintext snapshot. Copy encrypted archives to an independently controlled off-device destination;
 the server copy alone is not a backup.
 
-Both one-shot services run as numeric UID/GID 65532, not root. Before enabling either timer, install
-Age, create the destination with that ownership, and install only the public recipient (never its
+Both one-shot services run as the locked, non-login `rosetta-runtime` host account mapped to
+UID/GID 65532, not root. The installer creates or strictly validates that mapping, verifies that the
+account can read the immutable release, and gives it a private encrypted-backup directory. The
+shared parent is traverse-only (`0711`), so the runtime cannot list or read root-only upgrade
+backups. Before enabling either timer, install Age and supply only the public recipient (never its
 secret key):
 
 ```sh
 sudo apt-get install age
 sudo install -d -o root -g root -m 0755 /etc/rosetta
-sudo install -d -o 65532 -g 65532 -m 0700 /var/backups/rosetta/encrypted
 sudo install -o root -g root -m 0644 APPROVED_AGE_PUBLIC_RECIPIENT_FILE \
   /etc/rosetta/backup-recipient.txt
 ```
@@ -124,8 +126,8 @@ exercise the units with the reviewed one-time installer. Omit the third argument
 preparing Gate D; without it, local failures remain durable but no external alert is delivered.
 
 ```sh
-sudo deploy/install-rosetta-operations.sh \
-  "$(readlink -f /opt/rosetta/current)" \
+sudo /opt/rosetta/current/deploy/install-rosetta-operations.sh \
+  /opt/rosetta/current \
   APPROVED_AGE_PUBLIC_RECIPIENT_FILE \
   APPROVED_HEALTHCHECKS_URL_FILE
 ```

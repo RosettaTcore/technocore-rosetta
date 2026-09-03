@@ -32,7 +32,9 @@ ceremony.
 `rosetta-healthcheck-notify@.service` is an optional separate notifier for one exact
 Healthchecks.io check. It receives only a ping URL credential and emits only success/failure; the
 local validator itself remains networkless. `install-rosetta-operations.sh` installs, exercises and
-enables the health and encrypted-backup timers from the immutable current release.
+enables the health and encrypted-backup timers from the immutable current release. It also creates
+or validates the locked `rosetta-runtime` host identity at UID/GID 65532 and prepares a
+traverse-only backup parent with a private encrypted-output directory.
 
 `install-rosetta-upgrader.sh` performs the one-time installation of a root-owned signed-release
 gate. `rosetta-upgrade.service` accepts only three fixed spool files and can be started by the

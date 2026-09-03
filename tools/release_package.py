@@ -126,20 +126,32 @@ def validate_archive(path: Path) -> list[tarfile.TarInfo]:
 def extract_archive(path: Path, destination: Path) -> None:
     members = validate_archive(path)
     destination.mkdir(mode=0o755)
+    # The upgrade service deliberately runs with UMask=0077. Normalize every directory after
+    # creation so non-root host-side validators can traverse the immutable public release tree.
+    destination.chmod(0o755)
+
+    def ensure_directory(path: Path) -> None:
+        path.mkdir(mode=0o755, parents=True, exist_ok=True)
+        current = destination
+        current.chmod(0o755)
+        for part in path.relative_to(destination).parts:
+            current /= part
+            current.chmod(0o755)
+
     with tarfile.open(path, "r:gz") as archive:
         for member in members:
             pure = PurePosixPath(member.name)
             target = destination.joinpath(*pure.parts)
             if member.isdir():
-                target.mkdir(mode=member.mode & 0o755, parents=True, exist_ok=True)
+                ensure_directory(target)
                 continue
-            target.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+            ensure_directory(target.parent)
             source = archive.extractfile(member)
             if source is None:
                 raise ValueError("archive_member_unreadable")
             with source, target.open("xb") as output:
                 shutil.copyfileobj(source, output)
-            target.chmod(member.mode & 0o755)
+            target.chmod(0o755 if member.mode & 0o111 else 0o644)
 
 
 def verify_signature(
