@@ -15,11 +15,14 @@ Upstream releases and availability warnings did not restart that window. Gate B 
 read-only product to remain live and planning the controlled pilot; it does not authorize a
 production identity or a public write.
 
-The signed fixed-path gate is installed and the 3 September release activated reviewed commit
-`db810b15954cef1bbecfa8f25e4000ec40d16092`. It independently confirmed two healthy expected
-containers, a fresh `safe` observation and zero public writes. Upstream v0.11.3 was recorded as
-`release_drift`, as designed. The release completed through the narrow deployment account without
-provider-console work, and retained automatic rollback plus the prior immutable release.
+The signed fixed-path gate is installed and the 4 September release activated reviewed commit
+`b72da9f82b3461214e9b084da7aeca74644c2207`. It independently confirmed two healthy expected
+containers, a fresh `safe` observation and zero public writes. On 5 September the observer remained
+active and enabled with `safety_status: safe`, `public_writes: 0` and upstream v0.11.4 recorded as
+`release_drift`, as designed. The healthcheck and encrypted-backup timers are active and enabled,
+their most recent services succeeded, the external dead-man check is connected and the first
+off-device ciphertext passed a full restore drill. Release activation completed through the narrow
+deployment account and retained automatic rollback plus the prior immutable release.
 
 ## Launch gates
 
@@ -173,10 +176,9 @@ seed to service.
 
 ## Inputs still requiring the operator
 
-- approved branding/avatar and whether the Proton address is public;
-- Age public recipient and independent off-device backup destination;
-- external alert destination with no broad account permissions;
-- production key ceremony and recovery custodians;
-- static publisher domain/repository/bucket and single-destination credential;
+- production key ceremony, two independent identity-backup destinations and recovery custodians;
+- deployment and explicit activation of the reviewed production signer boundary;
+- DID-derived service room, public request mailbox and allowed discovery rooms;
+- recurring transfer of fresh application ciphertexts to the approved off-device destination;
 - exact first public payload and authorization for Technocore writes;
-- whether the private repository becomes public, which also changes ruleset enforcement.
+- bounded 14-day pilot approval and its daily/weekly operator review cadence.

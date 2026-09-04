@@ -439,3 +439,24 @@ name in host systemd units, and preflight its access to required release tools. 
 `/var/backups/rosetta` root-owned and non-listable at `0711`, while its `encrypted` child remains
 `0700` and owned by the runtime identity. This preserves root-only upgrade backups while allowing
 the isolated backup service to reach only its dedicated destination.
+
+## ADR-049: Run the production signer from a pinned, networkless OCI image
+
+Signed source releases intentionally do not contain a host virtual environment, so a systemd unit
+that invokes `/opt/rosetta/current/.venv/bin/rosetta-signer` cannot start on a clean host. Reusing
+mutable host packages or installing dependencies during identity activation would also make the
+reviewed signer boundary irreproducible.
+
+Install a root-owned supervisor and pin it to the exact local OCI image ID already built and
+accepted for the active release. Systemd decrypts the seed credential; the supervisor copies those
+32 bytes only into its `/run` tmpfs, owned by a dedicated locked UID/GID 65531 with mode `0400`.
+The actual signer runs as that UID in a read-only container with all capabilities dropped,
+`no-new-privileges`, bounded resources and `--network none`. The container receives only the signer
+runtime and nonce-state bind mounts, never the Docker socket. The root supervisor and Docker daemon
+remain trusted deployment components, but workers, observers and adapters cannot read the seed.
+
+Pin the signer image separately from normal observer upgrades so a release activation cannot
+silently change production signing code. Installing the boundary and provisioning the encrypted
+credential are separate, fail-closed operations; neither enables the signer or authorizes public
+writes. A later request-intake identity may receive only group access to the `0660` Unix socket,
+while the seed remains owner-read-only.

@@ -48,6 +48,31 @@ The checked-in production unit reads `%d/rosetta.seed` through `LoadCredentialEn
 not the secret, is passed to the signer. `SeedFileIdentity` rejects symlinks, non-regular files,
 wrong ownership, group/other permissions and any length other than 32 bytes.
 
+Before the offline ceremony, install but do not enable the reviewed signer boundary using the
+current immutable observer image ID from the root-owned staging environment:
+
+```sh
+sudo /opt/rosetta/current/deploy/install-rosetta-signer.sh \
+  /opt/rosetta/current /etc/rosetta/staging.env
+```
+
+The installer must report `signer_enabled=no` and `public_writes=0`. After the two encrypted
+off-device backups and the fresh-session recovery test pass, stream a Base64 transport envelope of
+the exact 32 raw seed bytes over an operator-controlled encrypted channel into the provisioner. The
+ASCII envelope avoids pseudo-terminal corruption and is decoded only in memory. Do not put either
+representation in a command, argument, environment variable, clipboard or persistent server file:
+
+```sh
+base64 < PRIVATE_MEMORY_SEED_FILE | \
+  ssh -T OPERATOR_APPROVED_DEPLOYMENT_ACCOUNT \
+    sudo /usr/local/libexec/provision-rosetta-signer-credential
+```
+
+Run that command manually outside Codex and any captured terminal. The provisioner refuses to
+overwrite an existing credential, decodes stdin directly into `systemd-creds`, decrypts only into a
+byte counter to confirm an exact 32-byte payload and retains no server-side plaintext file.
+Installing or provisioning the signer still does not enable it or authorize a public write.
+
 ## Recovery and rotation
 
 Restore only during an operator-declared incident or migration. Verify backup ciphertext hash before

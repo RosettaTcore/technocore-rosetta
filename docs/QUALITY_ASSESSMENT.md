@@ -1,10 +1,11 @@
 # Quality and effectiveness assessment
 
-Date: 1 September 2026
+Date: 5 September 2026
 
 ## Bottom line
 
-Rosetta is a strong local MVP and a credible foundation for a staged pilot. It is effective at its
+Rosetta is a strong local MVP and a live read-only product with a credible foundation for a bounded
+write-capable pilot. It is effective at its
 narrow job: detecting whether a signed Technocore mailbox workflow interoperates across materially
 different runtimes and producing evidence another operator can verify offline. It is not yet a
 production service and has not demonstrated longitudinal value on real release changes.
@@ -16,11 +17,11 @@ production service and has not demonstrated longitudinal value on real release c
 | Interoperability signal | 9.0/10 | Four cross-runtime cells, differential reads and real MCP now pass on a second protocol baseline. One primary scenario still limits breadth. |
 | Reliability | 8.6/10 | Restart, cursor, 429, uncertain writes, idempotency, crash-persistent controls, atomic evolution preflight/recovery, simultaneous four-runtime reads and a 20-iteration soak pass. This is not a long-duration load test. |
 | Reproducibility/auditability | 9.6/10 | Exact v0.10.0 tag/commit, archive and upstream lock, universal transitive hash locks, cross-platform OCI identities, vendored runtime subset, canonical artifacts, signed roots and evolution lineage. Local image IDs must still be rebuilt and recorded per architecture. |
-| Test quality | 9.6/10 | 194 tests, adversarial/property coverage, immutable-upstream checks, signature/backend parity, CI and authority constraints, 95.14% branch-aware coverage with a 90% ratchet, 99% observer coverage and 27 OCI checks. No full mutation-testing engine or high-volume stress campaign yet. |
-| Operations | 9.1/10 | Atomic quotas/budgets, persistent quarantine, bounded concurrency, separate safety/compatibility verdicts, encrypted-backup and health timer templates, safe defaults and cryptographically gated reversible promotion. An external alert destination and off-device backup are not yet configured. |
-| Production readiness | 7.6/10 | The public static product and dedicated zero-write host are live with no restarts or ingress. Upstream availability is currently warning-level; production identity, external alert/backup destinations, intake and public writes remain intentionally incomplete. |
+| Test quality | 9.6/10 | 237 tests, adversarial/property coverage, immutable-upstream checks, signature/backend parity, CI and authority constraints, 95.14% branch-aware coverage with a 90% ratchet, 99% observer coverage and 27 OCI checks. No full mutation-testing engine or high-volume stress campaign yet. |
+| Operations | 9.5/10 | Atomic quotas/budgets, persistent quarantine, bounded concurrency, separate safety/compatibility verdicts, active encrypted backups and health timer, external dead-man alert, successful off-device restore, safe defaults and cryptographically gated reversible promotion. Fresh off-device replication is not yet automated. |
+| Production readiness | 8.4/10 | The public static product and dedicated zero-write host passed the 72-hour gate, signed upgrades/rollback, monitoring and recovery drill. Production identity, signer activation, request rooms/intake and all Technocore writes remain intentionally absent. |
 
-Overall local-MVP quality: **9.4/10**. Current public-production readiness: **7.6/10**.
+Overall local-MVP quality: **9.5/10**. Current public-production readiness: **8.4/10**.
 
 ## Expected effectiveness
 

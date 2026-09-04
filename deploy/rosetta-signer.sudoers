@@ -1,0 +1,9 @@
+Cmnd_Alias ROSETTA_SIGNER_PROVISION = /usr/local/libexec/provision-rosetta-signer-credential
+Cmnd_Alias ROSETTA_SIGNER_CONTROL = /usr/bin/systemctl start rosetta-signer.production.service, \
+    /usr/bin/systemctl stop rosetta-signer.production.service, \
+    /usr/bin/systemctl is-active rosetta-signer.production.service, \
+    /usr/bin/systemctl is-enabled rosetta-signer.production.service, \
+    /usr/bin/systemctl --no-pager status rosetta-signer.production.service, \
+    /usr/bin/journalctl -u rosetta-signer.production.service -n 200 --no-pager
+
+rosetta ALL=(root) NOPASSWD: ROSETTA_SIGNER_PROVISION, ROSETTA_SIGNER_CONTROL

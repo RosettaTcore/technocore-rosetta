@@ -98,13 +98,51 @@ def test_staging_health_and_backup_timers_are_local_and_fail_closed() -> None:
 def test_production_signer_uses_encrypted_credential_and_no_network() -> None:
     unit = (ROOT / "deploy/rosetta-signer.production.service").read_text()
     assert "LoadCredentialEncrypted=rosetta.seed:" in unit
-    assert "--seed-file %d/rosetta.seed" in unit
+    assert "ExecStart=/usr/local/libexec/rosetta-production-signer" in unit
+    assert "Requires=docker.service" in unit
+    assert "User=root" in unit
     assert "PrivateNetwork=yes" in unit
     assert "RestrictAddressFamilies=AF_UNIX" in unit
-    assert "CapabilityBoundingSet=" in unit
+    assert "CapabilityBoundingSet=CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER" in unit
     assert "ProtectKernelTunables=yes" in unit
     assert "Environment=" not in unit
     assert "synthetic" not in unit.lower()
+
+
+def test_production_signer_container_and_credential_install_fail_closed() -> None:
+    runner = (ROOT / "deploy/run-rosetta-production-signer.sh").read_text()
+    installer = (ROOT / "deploy/install-rosetta-signer.sh").read_text()
+    provisioner = (ROOT / "deploy/provision-rosetta-signer-credential.sh").read_text()
+    sudoers = (ROOT / "deploy/rosetta-signer.sudoers").read_text()
+
+    assert "--network none" in runner
+    assert "--read-only" in runner
+    assert '--user "$signer_uid:$signer_gid"' in runner
+    assert "--cap-drop ALL" in runner
+    assert "--security-opt no-new-privileges" in runner
+    assert "--seed-file /run/rosetta-signer/rosetta.seed" in runner
+    assert "docker.sock" not in runner
+    assert "signer_uid=65531" in runner
+    assert 'install -o "$signer_uid" -g "$signer_gid" -m 0400' in runner
+    assert "sha256:[0-9a-f]{64}" in runner
+
+    assert "signer_uid=65531" in installer
+    assert "docker image inspect" in installer
+    assert "systemd-analyze verify" in installer
+    assert "visudo -cf" in installer
+    assert "systemctl enable" not in installer
+    assert "systemctl start" not in installer
+    assert "public_writes=0" in installer
+
+    assert "base64 --decode | systemd-creds encrypt --name=rosetta.seed -" in provisioner
+    assert "systemd-creds decrypt --name=rosetta.seed" in provisioner
+    assert "test ! -e" in provisioner
+    assert "32" in provisioner
+
+    assert "/usr/local/libexec/provision-rosetta-signer-credential" in sudoers
+    assert "/usr/bin/systemctl start rosetta-signer.production.service" in sudoers
+    assert "/usr/bin/systemctl enable" not in sudoers
+    assert "NOPASSWD: ALL" not in sudoers
 
 
 def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:

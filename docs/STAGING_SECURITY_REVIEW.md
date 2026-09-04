@@ -43,11 +43,12 @@ health plus compatibility records for host monitoring.
   allowlist is code-level, tested adversarially and must remain human-reviewed authority code.
 - The host Docker daemon is privileged. Rosetta containers receive no socket, while administrative
   Docker access remains limited to the hardened host account and root service manager.
-- Local evidence is not yet externally replicated. Provider backups protect the server; encrypted
-  off-device application backup remains a gate before public identity or writes.
-- An unsafe Docker container is visible but does not send an external alert by itself. During the
-  initial stage the operator must review service status and `health.json`; an alert destination
-  should be configured before the controlled public pilot.
+- The daily encrypted application backup and external dead-man alert are active. The first
+  ciphertext was copied off-device, its transport hash matched and a clean-machine restore verified
+  every manifest digest, SQLite integrity and all evidence JSON. Fresh ciphertext transfer remains
+  an operator task until a separately reviewed recurring pull is installed.
+- The external notifier receives only an empty success/failure ping and cannot alter the local
+  verdict. Loss of both the host and its alert provider remains a correlated operational risk.
 - Three metadata endpoints prove protocol visibility, not full live write interoperability. The
   complete four-runtime matrix remains offline until a separately approved public-write pilot.
 
@@ -82,6 +83,6 @@ window, require fresh safety-safe checks, zero public writes, zero unexplained r
 disk growth. Availability or release warnings stay visible and require compatibility review before
 execution promotion, but do not reset the read-only window. Any ambiguity about Rosetta's own
 safety boundary activates the kill switch and returns the server to the previous immutable release.
-Before a write-capable pilot, install and exercise the periodic healthcheck and encrypted-backup
-timers, test an independently controlled off-device restore, add an external alert destination,
-complete the production identity ceremony and obtain the remaining per-boundary approvals.
+The periodic healthcheck and encrypted-backup timers, external alert and independently controlled
+off-device restore now pass. Before a write-capable pilot, complete the production identity
+ceremony, arrange recurring off-device transfer and obtain the remaining per-boundary approvals.

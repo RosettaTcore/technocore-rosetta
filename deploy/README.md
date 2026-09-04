@@ -25,9 +25,13 @@ and contains no signer. `rosetta-observer.service` supervises both on the single
 `rosetta-healthcheck.service`/`.timer` validate the read-only state without network access.
 `rosetta-backup.service`/`.timer` create Age-encrypted snapshots using only a public recipient on the
 server. `rosetta-signer.production.service` is a disabled template that loads a machine-encrypted
-systemd credential into the networkless signer. None of these units authorize production key
-creation, public signing or publication; follow `docs/LAUNCH_RUNBOOK.md` and the separate key
-ceremony.
+systemd credential. The host supervisor copies the decrypted 32-byte credential only into `/run`,
+then starts the signer from one exact local OCI image ID as UID/GID 65531 with a read-only root,
+all capabilities dropped and `--network none`. The signer container never receives the Docker
+socket. Install the disabled boundary with `install-rosetta-signer.sh`; provision the credential
+separately through stdin with `provision-rosetta-signer-credential.sh`. Neither action enables the
+unit or authorizes production key creation, public signing or publication; follow
+`docs/LAUNCH_RUNBOOK.md` and the separate key ceremony.
 
 `rosetta-healthcheck-notify@.service` is an optional separate notifier for one exact
 Healthchecks.io check. It receives only a ping URL credential and emits only success/failure; the
