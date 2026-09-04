@@ -1,15 +1,16 @@
 [Unit]
 Description=Technocore Rosetta networkless production signer
-After=local-fs.target
+Requires=docker.service
+After=docker.service local-fs.target
 
 [Service]
 Type=simple
-User=rosetta-signer
-Group=rosetta-signer
-ExecStart=/opt/rosetta/current/.venv/bin/rosetta-signer --socket /run/rosetta-signer/signer.sock --state /var/lib/rosetta-signer/nonce.sqlite3 --seed-file %d/rosetta.seed
+User=root
+Group=root
+ExecStart=/usr/local/libexec/rosetta-production-signer
 LoadCredentialEncrypted=rosetta.seed:/etc/credstore.encrypted/rosetta.seed
 RuntimeDirectory=rosetta-signer
-RuntimeDirectoryMode=0700
+RuntimeDirectoryMode=0750
 StateDirectory=rosetta-signer
 StateDirectoryMode=0700
 PrivateNetwork=yes
@@ -27,10 +28,13 @@ RestrictAddressFamilies=AF_UNIX
 RestrictNamespaces=yes
 RestrictSUIDSGID=yes
 ReadWritePaths=/run/rosetta-signer /var/lib/rosetta-signer
-CapabilityBoundingSet=
+CapabilityBoundingSet=CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER
 LockPersonality=yes
 MemoryDenyWriteExecute=yes
 UMask=0077
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
 
 [Install]
 WantedBy=multi-user.target

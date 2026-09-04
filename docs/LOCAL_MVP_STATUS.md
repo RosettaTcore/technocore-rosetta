@@ -1,6 +1,6 @@
 # Local MVP status
 
-Date: 3 September 2026
+Date: 5 September 2026
 
 ## Outcome
 
@@ -53,12 +53,12 @@ window.
 
 ## Verified results
 
-- Pytest: 228/228 pass;
+- Pytest: 237/237 pass;
 - branch-aware Python coverage: 95.14%, enforced floor 90%; observer coverage: 99%;
 - Ruff lint/security: pass;
 - Mypy strict: pass for 31 source modules;
 - TypeScript strict check: pass;
-- secret scan: pass over 238 files;
+- secret scan: pass over 256 files;
 - fresh install from the development hash lock: pass; `pip check`: pass;
 - recorded runtime dependency OSV batch query: no known vulnerabilities;
 - official upstream matrix: 4/4 cells pass;
@@ -106,6 +106,14 @@ window.
   `db810b15954cef1bbecfa8f25e4000ec40d16092`, immutable image
   `sha256:d19fd4871c9c9ca0168e13b2e67b3dc8d60dd7a8f3c5e181494d6af5faa3dd00`, complete live verifier
   pass, two healthy expected containers, current safe observation and zero public writes;
+- current signed release on 5 September 2026: reviewed commit
+  `b72da9f82b3461214e9b084da7aeca74644c2207`; observer active/enabled, health `safe`, upstream
+  v0.11.4 isolated as `release_drift` and `public_writes: 0`;
+- periodic health and encrypted-backup timers: active/enabled with latest one-shot results
+  `success`; external dead-man notification connected;
+- encrypted application backup: off-device SHA-256 transport verification and full recovery drill
+  pass with 5/5 manifest files, SQLite `integrity_check: ok`, 3/3 evidence JSON files and 407
+  restored observations; plaintext and temporary recovery key removed after the drill;
 - GitHub Pages project-subpath QA: desktop and 390×844 mobile pass; all relative assets load and
   the one-click verifier validates the 15-file reference bundle;
 - public Pages deployment: success from reviewed `main` commit `8ddaee9` in workflow run
@@ -115,11 +123,12 @@ window.
 
 ## Remaining production-only work
 
-- installation and exercise of the periodic healthcheck and encrypted-backup timers;
 - production key-generation/recovery ceremony and secret-store provisioning;
 - operator approval-key ceremony and addition of its public DID to protected evolution policy;
-- external alert delivery and an independently controlled encrypted off-device backup destination;
-- public contact-surface approval, including whether the Proton address is published;
+- recurring transfer of fresh encrypted application backups to the approved off-device destination;
+- production signer boundary deployment and networkless synthetic host acceptance before real-key
+  provisioning;
+- DID-derived service room, public request mailbox and approved discovery-room configuration;
 - bounded public intake and exact first signed payload approvals;
 - production deployment of the reviewed, signed release after all applicable gates pass.
 
