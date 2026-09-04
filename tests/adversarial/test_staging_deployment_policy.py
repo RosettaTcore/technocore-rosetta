@@ -125,6 +125,8 @@ def test_production_signer_container_and_credential_install_fail_closed() -> Non
     assert "signer_uid=65531" in runner
     assert 'install -o "$signer_uid" -g "$signer_gid" -m 0400' in runner
     assert "sha256:[0-9a-f]{64}" in runner
+    assert "trap 'exit 0' TERM" in runner
+    assert "trap 'exit 143' TERM" not in runner
 
     assert "signer_uid=65531" in installer
     assert "docker image inspect" in installer

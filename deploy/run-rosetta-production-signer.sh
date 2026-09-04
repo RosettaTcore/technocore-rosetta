@@ -55,7 +55,11 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
-trap 'exit 143' TERM
+# A systemd stop sends TERM to this supervisor. Exit successfully so the unit becomes inactive,
+# while the EXIT cleanup still stops the networkless container and deletes the runtime seed copy.
+# An unexpected container exit remains non-zero through the wait path below and still triggers
+# Restart=on-failure.
+trap 'exit 0' TERM
 
 docker run --rm \
   --name "$container_name" \
