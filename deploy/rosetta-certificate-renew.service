@@ -1,0 +1,28 @@
+[Unit]
+Description=Renew the Technocore Rosetta short-lived IP certificate
+After=docker.service nginx.service network-online.target
+Wants=network-online.target
+OnFailure=rosetta-healthcheck-notify@fail.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/renew-rosetta-ip-certificate
+User=root
+Group=root
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+ReadWritePaths=/etc/letsencrypt /var/lib/rosetta/certbot /var/lib/rosetta/acme /var/log/rosetta-certbot /run /var/run/docker.sock

@@ -157,6 +157,13 @@ store an Age secret key on the Rosetta server.
 10. Enable one boundary at a time: signer, static publication, claimed room, request mailbox, then
     bounded intake. Verify after each boundary and stop on ambiguity.
 
+The selected no-domain publisher origin is the dedicated Hetzner IPv4 address over HTTPS. Follow
+the IP-certificate procedure in `DEPLOYMENT.md`. Its short-lived certificate must have automated
+renewal, at least 36 hours of remaining validity in the independent health gate and external
+failure notification before service documents are published. The GitHub Pages URL remains the
+human-facing canonical site. Neither origin selection nor TLS activation authorizes a Technocore
+write.
+
 ## Emergency stop and rollback
 
 The host kill switch is primary:

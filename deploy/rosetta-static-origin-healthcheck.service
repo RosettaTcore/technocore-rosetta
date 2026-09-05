@@ -1,0 +1,27 @@
+[Unit]
+Description=Validate the Technocore Rosetta static HTTPS origin
+After=nginx.service
+OnFailure=rosetta-healthcheck-notify@fail.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/check-rosetta-static-origin
+User=root
+Group=root
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+ReadOnlyPaths=/etc/letsencrypt /etc/rosetta/static-origin.ip /var/lib/rosetta/public
