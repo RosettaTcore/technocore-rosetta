@@ -40,6 +40,7 @@ done
 docker image inspect "$certbot_image" >/dev/null
 
 install -d -o root -g root -m 0755 /etc/rosetta
+install -d -o root -g root -m 0700 /etc/letsencrypt
 install -d -o root -g root -m 0755 /var/lib/rosetta/public
 install -d -o root -g root -m 0755 /var/lib/rosetta/acme
 install -d -o root -g root -m 0700 /var/lib/rosetta/certbot

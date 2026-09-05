@@ -8,9 +8,11 @@ def test_static_origin_exposes_only_closed_read_only_paths() -> None:
     nginx = (ROOT / "deploy/rosetta-static-origin-https.conf").read_text()
 
     assert "listen 80 default_server" in bootstrap
+    assert "[::]" not in bootstrap
     assert "location ^~ /.well-known/acme-challenge/" in bootstrap
     assert "location / {\n        return 404;" in bootstrap
     assert "__ROSETTA_PUBLIC_IP__" in nginx
+    assert "[::]" not in nginx
     assert "disable_symlinks on" in nginx
     assert "autoindex off" in nginx
     assert "limit_except GET HEAD { deny all; }" in nginx
@@ -45,6 +47,7 @@ def test_ip_certificate_is_pinned_renewed_and_monitored() -> None:
     assert '--ip-address "$public_ip"' in installer
     assert "--webroot-path /var/www/certbot" in installer
     assert "--cap-drop ALL" in installer
+    assert "install -d -o root -g root -m 0700 /etc/letsencrypt" in installer
     assert "--security-opt no-new-privileges:true" in installer
     assert "renew --no-random-sleep-on-renew" in renewer
     assert "openssl x509 -checkend 129600" in renewer
