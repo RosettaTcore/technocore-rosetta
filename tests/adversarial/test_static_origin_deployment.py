@@ -24,7 +24,7 @@ def test_static_origin_exposes_only_closed_read_only_paths() -> None:
     assert "location = /service-card.attestation.json" in nginx
     assert "location = /skill.md" in nginx
     assert "^/schemas/rosetta-(request|result)-v1\\.json$" in nginx
-    assert "^/reports/[0-9a-f]{64}/" in nginx
+    assert 'location ~ "^/reports/[0-9a-f]{64}/' in nginx
     assert "proxy_pass" not in nginx
     assert "fastcgi_pass" not in nginx
 
