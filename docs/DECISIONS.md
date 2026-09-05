@@ -460,3 +460,21 @@ silently change production signing code. Installing the boundary and provisionin
 credential are separate, fail-closed operations; neither enables the signer or authorizes public
 writes. A later request-intake identity may receive only group access to the `0660` Unix socket,
 while the seed remains owner-read-only.
+
+## ADR-050: Use a short-lived IP certificate for the no-domain static origin
+
+Keep the human-facing canonical site on GitHub Pages. Serve machine-readable production service
+documents and immutable reports from the existing dedicated Hetzner IPv4 address rather than buy a
+domain, add a second VM or put a GitHub write credential on the server. The IP origin exposes no
+dynamic Rosetta API: host nginx accepts only GET/HEAD for an exact service-document allowlist, a
+constant health record and closed content-addressed report filenames. Every other path is 404,
+directory listing and symlinks are disabled, and the ACME challenge is the only HTTP exception.
+
+Use Let's Encrypt's 160-hour IP certificates through Certbot 5.4, pinned to the reviewed Linux
+amd64 image digest. The container receives only the ACME webroot and Certbot state, never Rosetta
+state, evidence, signer material or the Docker socket. The TLS private key remains root-only on the
+host and is read only by nginx. A host wrapper renews every eight hours and reloads nginx only after
+successful validation; an independent six-hour check fails with at least 36 hours of certificate
+life remaining and uses the existing outbound-only alert capability. Opening TCP 80/443 and
+publishing service documents remain Gate D actions. Technocore room creation and messages remain a
+separate per-action Gate E approval.

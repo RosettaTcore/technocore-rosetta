@@ -68,6 +68,37 @@ Publisher is absent or disabled until separately approved. When enabled:
 
 Discovery does not require an inbound application service. Peers read static documents from the publisher and submit requests through Technocore. The discovery process receives no publisher credential and the publisher receives no Technocore signing seed.
 
+### No-domain static origin
+
+The initial production machine origin uses the dedicated server IPv4 address directly. The public
+presentation remains on GitHub Pages; the server origin exposes only the signed service documents,
+closed schemas and immutable report files described above. It is not a dynamic API and receives no
+request body.
+
+Install Debian nginx and pre-pull the reviewed Certbot image by digest. Open cloud-firewall TCP 80
+and 443 only after the HTTP-only configuration is ready. Then run the installer from the active
+immutable release:
+
+```sh
+sudo /opt/rosetta/current/deploy/install-rosetta-static-origin.sh \
+  /opt/rosetta/current PUBLIC_IPV4 ACME_ACCOUNT_EMAIL
+```
+
+The installer obtains a Let's Encrypt `shortlived` IP certificate through webroot validation,
+replaces the bootstrap configuration only after issuance, and enables independent renewal and
+health timers. The pinned Certbot container has no Rosetta mounts and the host TLS key is never
+mounted into an application container. Verify the local boundary before publishing any document:
+
+```sh
+sudo systemctl start rosetta-static-origin-healthcheck.service
+sudo systemctl --no-pager status rosetta-static-origin-healthcheck.service
+sudo systemctl list-timers 'rosetta-*certificate*' 'rosetta-*static-origin*'
+```
+
+Rollback disables both new timers, stops nginx and closes TCP 80/443. Preserve the ACME account and
+certificate directory root-only for incident review; deleting it is not required to remove the
+public surface. A TLS origin does not authorize the signer, discovery or request-intake units.
+
 ## Backups
 
 - Provider server backup.

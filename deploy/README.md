@@ -48,3 +48,12 @@ release, verifies a fresh zero-write observation and automatically restores the 
 failure. Its environment update can write only the existing root-owned file, never the surrounding
 configuration directory or signer allowlist. See `docs/DEPLOYMENT.md`; release signing grants no
 public-write or identity authority.
+
+`install-rosetta-static-origin.sh` provisions the separately approved, no-domain publication
+surface on the existing server. Host nginx exposes only ACME challenges, a constant health record,
+the signed service documents and a closed content-addressed report path. It has no proxy, dynamic
+application or directory listing. A pinned Certbot 5.4 container obtains and renews Let's Encrypt's
+short-lived IP certificate; the host keeps the TLS key outside all Rosetta containers. Renewal and
+certificate/route validation run on independent systemd timers and report failures through the
+existing least-privilege notifier. Installing this boundary requires the explicit publication gate
+and opening TCP 80/443; it does not authorize a Technocore write or public request intake.

@@ -1,0 +1,12 @@
+[Unit]
+Description=Renew the Technocore Rosetta IP certificate every eight hours
+
+[Timer]
+OnBootSec=20min
+OnUnitActiveSec=8h
+RandomizedDelaySec=20min
+AccuracySec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
