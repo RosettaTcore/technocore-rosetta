@@ -490,3 +490,16 @@ rules. Do not generalize this to arbitrary addresses, wildcard forms, IPv6 nginx
 configurable public port list. The verifier continues to fail closed on every other host listener;
 the static nginx configuration separately restricts methods and paths and publishes no container
 port or dynamic application.
+
+## ADR-052: Keep the static-origin healthcheck capability-free
+
+The static-origin healthcheck initially allowed `/var/log/nginx/error.log` through its otherwise
+read-only filesystem sandbox so `nginx -t` could validate the active configuration. The check still
+failed because its empty capability bounding set correctly removes `CAP_DAC_OVERRIDE`; UID 0 could
+therefore not open the `www-data:adm` log with mode `0640`.
+
+Do not grant the healthcheck a filesystem-bypass capability or change the production log's
+permissions. Direct nginx configuration-test diagnostics to the service's standard error with
+`nginx -t -e stderr` and remove the writable-path exception. Functional HTTPS, certificate,
+method, path and exact-payload checks remain unchanged, while the periodic validator returns to a
+fully read-only host filesystem view.

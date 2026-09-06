@@ -52,6 +52,7 @@ def test_ip_certificate_is_pinned_renewed_and_monitored() -> None:
     assert "renew --no-random-sleep-on-renew" in renewer
     assert "openssl x509 -checkend 129600" in renewer
     assert "openssl x509 -checkend 129600" in checker
+    assert "nginx -t -e stderr" in checker
     assert 'test -z "$(find /var/lib/rosetta/public -type l' in checker
     assert "https://$public_ip/healthz" in checker
     assert "OnFailure=rosetta-healthcheck-notify@fail.service" in renewal_unit
@@ -60,5 +61,5 @@ def test_ip_certificate_is_pinned_renewed_and_monitored() -> None:
     assert "OnUnitActiveSec=6h" in health_timer
     assert "ProtectSystem=strict" in renewal_unit
     assert "ProtectSystem=strict" in health_unit
-    assert "ReadWritePaths=/var/log/nginx/error.log" in health_unit
-    assert "ReadWritePaths=/var/log/nginx\n" not in health_unit
+    assert "CapabilityBoundingSet=\n" in health_unit
+    assert "ReadWritePaths=" not in health_unit
