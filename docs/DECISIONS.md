@@ -503,3 +503,21 @@ permissions. Direct nginx configuration-test diagnostics to the service's standa
 `nginx -t -e stderr` and remove the writable-path exception. Functional HTTPS, certificate,
 method, path and exact-payload checks remain unchanged, while the periodic validator returns to a
 fully read-only host filesystem view.
+
+This redirection did not override the explicit `error_log` directive loaded from nginx.conf; see
+ADR-053 for the resulting final boundary.
+
+## ADR-053: Test nginx syntax only at configuration activation boundaries
+
+Nginx still opens every explicitly configured error log while parsing its configuration, even when
+the command-line diagnostic log is set to standard error. A periodic `nginx -t` therefore requires
+either `CAP_DAC_OVERRIDE`, weaker log permissions or a writable production log. All three choices
+unnecessarily expand a read-only monitoring boundary.
+
+Remove `nginx -t` only from the capability-free periodic healthcheck. Keep syntax validation in the
+root-owned static-origin installer before initial activation and before its final reload, and in the
+certificate renewer before every reload. The periodic service continues to require active nginx, a
+valid certificate with at least 36 hours remaining, the exact health payload, a closed root path
+and rejected writes over real HTTPS. A latent invalid configuration will therefore fail and alert
+before any reload, while active serving failures remain detectable without filesystem-write or DAC
+bypass authority.

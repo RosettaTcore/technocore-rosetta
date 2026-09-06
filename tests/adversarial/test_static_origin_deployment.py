@@ -50,9 +50,11 @@ def test_ip_certificate_is_pinned_renewed_and_monitored() -> None:
     assert "install -d -o root -g root -m 0700 /etc/letsencrypt" in installer
     assert "--security-opt no-new-privileges:true" in installer
     assert "renew --no-random-sleep-on-renew" in renewer
+    assert "nginx -t" in renewer
+    assert installer.count("nginx -t") == 2
     assert "openssl x509 -checkend 129600" in renewer
     assert "openssl x509 -checkend 129600" in checker
-    assert "nginx -t -e stderr" in checker
+    assert "nginx -t" not in checker
     assert 'test -z "$(find /var/lib/rosetta/public -type l' in checker
     assert "https://$public_ip/healthz" in checker
     assert "OnFailure=rosetta-healthcheck-notify@fail.service" in renewal_unit
