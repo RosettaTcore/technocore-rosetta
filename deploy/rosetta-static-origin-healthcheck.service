@@ -25,3 +25,4 @@ CapabilityBoundingSet=
 LockPersonality=true
 MemoryDenyWriteExecute=true
 ReadOnlyPaths=/etc/letsencrypt /etc/rosetta/static-origin.ip /var/lib/rosetta/public
+ReadWritePaths=/var/log/nginx/error.log

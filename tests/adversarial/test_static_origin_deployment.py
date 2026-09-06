@@ -60,3 +60,5 @@ def test_ip_certificate_is_pinned_renewed_and_monitored() -> None:
     assert "OnUnitActiveSec=6h" in health_timer
     assert "ProtectSystem=strict" in renewal_unit
     assert "ProtectSystem=strict" in health_unit
+    assert "ReadWritePaths=/var/log/nginx/error.log" in health_unit
+    assert "ReadWritePaths=/var/log/nginx\n" not in health_unit
