@@ -7,7 +7,7 @@ One dedicated small EU cloud server/project with no other workloads or credentia
 - Debian stable or equivalent minimal host;
 - provider backup and explicit monthly alert;
 - SSH keys only and restricted administrative ingress;
-- no general public application endpoint;
+- no general public application endpoint; the optional static origin exposes exact read-only paths only;
 - controlled security updates and reboot policy;
 - no automatic resource scaling.
 
@@ -166,7 +166,8 @@ docker compose -f deploy/compose.staging.yaml config
 ```
 
 Run one foreground observation first, inspect its exit status and confirm that the only public
-listener on the host remains SSH. Then install and enable the service:
+listener on the host remains SSH before the optional static origin is installed. Then install and
+enable the service:
 
 ```sh
 install -o root -g root -m 0644 \
@@ -191,8 +192,10 @@ the switch exists. Removal is a manual incident-review decision. Rollback stops 
 the previous `/opt/rosetta/current` release and immutable image setting, then starts the unit again.
 
 Read-only staging acceptance requires continuous safety-safe operation with: service active, no
-non-SSH host listener, no public writes, no unexplained restarts, a fresh local heartbeat and
-bounded disk growth. Upstream availability and release drift are separate compatibility warnings;
+unexpected host listener, no public writes, no unexplained restarts, a fresh local heartbeat and
+bounded disk growth. After the approved static origin is installed, the only additional listeners
+are nginx on IPv4 TCP 80 and 443; IPv6 or any other non-SSH listener fails closed. Upstream
+availability and release drift are separate compatibility warnings;
 they do not reset the read-only safety window. A changed digest must be reviewed before it becomes
 an execution baseline. Public signing, discovery/service intake and publication each remain
 separate approval gates.

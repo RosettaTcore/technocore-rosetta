@@ -184,6 +184,8 @@ def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:
     assert '"/opt/rosetta/tools/staging_status.py",' in live_verifier
     assert '"setpriv"' not in live_verifier
     assert "offline_status_failed:" in live_verifier
+    assert 'frozenset({"0.0.0.0:80", "0.0.0.0:443"})' in live_verifier
+    assert '"[::]:443"' not in live_verifier
     assert 'sqlite_source="$backup_directory/sqlite-source"' in apply_script
     assert "for suffix in -wal -shm" in apply_script
     assert 'test ! -L "$sidecar_source"' in apply_script

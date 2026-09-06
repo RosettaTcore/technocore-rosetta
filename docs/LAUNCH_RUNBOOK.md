@@ -2,10 +2,12 @@
 
 ## Current state
 
-Rosetta is live as a static observatory and as a no-ingress, read-only observer on the dedicated
-Hetzner server. The 1 September 2026 check found zero public writes, zero service restarts, an
-SSH-only public listener and bounded disk, while all three watched upstream endpoints returned 503.
-That is a green safety boundary with an `unavailable` compatibility warning, not a safety failure.
+Rosetta is live as a static observatory and as a read-only observer on the dedicated Hetzner
+server. The 1 September 2026 check found zero public writes, zero service restarts, an SSH-only
+public listener and bounded disk, while all three watched upstream endpoints returned 503. The
+later approved no-domain static origin adds only IPv4 nginx listeners on TCP 80 and 443; it exposes
+no dynamic Rosetta application. That is a green safety boundary with an `unavailable`
+compatibility warning, not a safety failure.
 Scheduler, runners, signer, publisher and public request intake remain absent.
 
 The transitional safety review passed on 3 September 2026 after 73 hours and 34 minutes. It combined
@@ -29,7 +31,7 @@ deployment account and retained automatic rollback plus the prior immutable rele
 | Gate | Required evidence | Authority |
 |---|---|---|
 | A — local acceptance | full quality gate, official v0.10.0 matrix, soak, isolation and signed evidence pass | repository review |
-| B — read-only staging | continuous safety-safe operation; zero writes; no unexplained restart; SSH-only listener; bounded disk; compatibility warnings recorded | operator review |
+| B — read-only staging | continuous safety-safe operation; zero writes; no unexplained restart; only approved SSH and IPv4 static-origin listeners; bounded disk; compatibility warnings recorded | operator review |
 | C — identity readiness | production key ceremony, two recoverable encrypted backups, signer credential, DID/public fingerprint recorded, recovery drill | explicit operator approval |
 | D — publication readiness | approved static origin, immutable report path, service card, request/reply rooms, limits, alert destination and off-device backup | explicit operator approval |
 | E — first public action | exact signed payload preview, destination, budget and rollback reviewed | per-action operator approval |
