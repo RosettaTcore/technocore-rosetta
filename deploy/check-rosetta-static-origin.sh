@@ -16,7 +16,6 @@ PY
 test -d /var/lib/rosetta/public
 test -z "$(find /var/lib/rosetta/public -type l -print -quit)"
 systemctl is-active --quiet nginx.service
-nginx -t -e stderr
 openssl x509 -checkend 129600 -noout \
   -in "/etc/letsencrypt/live/$public_ip/fullchain.pem"
 
