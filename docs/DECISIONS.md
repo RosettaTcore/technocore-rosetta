@@ -478,3 +478,15 @@ successful validation; an independent six-hour check fails with at least 36 hour
 life remaining and uses the existing outbound-only alert capability. Opening TCP 80/443 and
 publishing service documents remain Gate D actions. Technocore room creation and messages remain a
 separate per-action Gate E approval.
+
+## ADR-051: Bind live verification to the exact approved static-origin listeners
+
+The first signed release after activating the no-domain origin built successfully but the live
+verifier rejected `0.0.0.0:443` under its earlier SSH-only host-listener policy. Automatic rollback
+restored the previous release and observer with zero public Technocore writes.
+
+Allow exactly `0.0.0.0:80` and `0.0.0.0:443` in addition to the existing SSH and IPv4-loopback
+rules. Do not generalize this to arbitrary addresses, wildcard forms, IPv6 nginx listeners or a
+configurable public port list. The verifier continues to fail closed on every other host listener;
+the static nginx configuration separately restricts methods and paths and publishes no container
+port or dynamic application.

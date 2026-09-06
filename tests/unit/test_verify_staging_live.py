@@ -18,6 +18,30 @@ def _result(status: str, *, reasons: list[str] | None = None) -> str:
     )
 
 
+@pytest.mark.parametrize(
+    "local_address",
+    [
+        "0.0.0.0:22",
+        "[::]:22",
+        "127.0.0.1:46843",
+        "0.0.0.0:80",
+        "0.0.0.0:443",
+    ],
+)
+def test_listener_policy_accepts_only_reviewed_host_surfaces(local_address: str) -> None:
+    assert verify_staging_live.listener_is_allowed(local_address)
+
+
+@pytest.mark.parametrize(
+    "local_address",
+    ["0.0.0.0:8080", "*:443", "[::]:80", "[::]:443", "192.0.2.1:443"],
+)
+def test_listener_policy_rejects_unreviewed_and_ipv6_static_origins(
+    local_address: str,
+) -> None:
+    assert not verify_staging_live.listener_is_allowed(local_address)
+
+
 def test_container_status_runs_inside_observer_as_numeric_runtime_identity() -> None:
     calls: list[tuple[list[str], dict[str, Any]]] = []
 

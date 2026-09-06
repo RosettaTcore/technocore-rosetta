@@ -13,6 +13,7 @@ from typing import Any
 PROJECT = "technocore-rosetta-staging"
 MAX_HEALTH_AGE_SECONDS = 660
 MAX_STATUS_OUTPUT_BYTES = 64 * 1024
+STATIC_ORIGIN_LISTENERS = frozenset({"0.0.0.0:80", "0.0.0.0:443"})
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -23,6 +24,15 @@ class VerificationError(RuntimeError):
 def require(condition: bool, reason: str) -> None:
     if not condition:
         raise VerificationError(reason)
+
+
+def listener_is_allowed(local_address: str) -> bool:
+    """Accept SSH, loopback services and the reviewed IPv4-only static origin."""
+    return (
+        local_address.endswith(":22")
+        or local_address.startswith("127.0.0.1:")
+        or local_address in STATIC_ORIGIN_LISTENERS
+    )
 
 
 def command(*parts: str) -> str:
@@ -153,7 +163,7 @@ def verify(
     for line in command("ss", "-H", "-lnt").splitlines():
         local_address = line.split()[3]
         require(
-            local_address.endswith(":22") or local_address.startswith("127.0.0.1:"),
+            listener_is_allowed(local_address),
             f"unexpected_listener:{local_address}",
         )
 
