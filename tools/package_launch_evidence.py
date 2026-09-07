@@ -10,8 +10,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "site/evidence/latest"
-TARGET = ROOT / "site/evidence/rosetta-v0.10.0-reference.zip"
-FIXED_TIME = (2026, 8, 31, 0, 0, 0)
+TARGET = ROOT / "site/evidence/rosetta-v0.13.0-reference.zip"
+FIXED_TIME = (2026, 9, 8, 0, 0, 0)
 
 
 def _archive_bytes() -> bytes:
@@ -23,7 +23,7 @@ def _archive_bytes() -> bytes:
             if not path.is_file():
                 continue
             relative = path.relative_to(SOURCE).as_posix()
-            info = zipfile.ZipInfo(f"rosetta-v0.10.0-reference/{relative}", FIXED_TIME)
+            info = zipfile.ZipInfo(f"rosetta-v0.13.0-reference/{relative}", FIXED_TIME)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.create_system = 3
             info.external_attr = 0o100644 << 16

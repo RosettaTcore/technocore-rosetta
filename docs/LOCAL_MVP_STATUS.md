@@ -1,13 +1,13 @@
 # Local MVP status
 
-Date: 5 September 2026
+Date: 8 September 2026
 
 ## Outcome
 
 Phases 0–3 plus the controlled evolution proposal lane are implemented. The authoritative local
-acceptance path runs the official Technocore `v0.10.0` image while preserving the original v0.7.0
-fixture and evidence for historical replay. No public Technocore write,
-production DID, publisher or public service intake was used. Source control uses a
+acceptance path runs the official Technocore `v0.13.0` image through four real isolated runtime
+paths while preserving the original v0.7.0 fixture and v0.10.0 evidence for historical replay. The
+active no-ingress pilot is complete but has not sent its exact two activation writes. Source control uses a
 dedicated public GitHub repository and identity, separate from the operator's other projects.
 The no-ingress read-only observer is running on its dedicated staging host. The 1 September check
 verified its zero-write safety boundary while upstream availability was degraded; safety and
@@ -18,12 +18,14 @@ window.
 
 - exact upstream source archive retained with a minimal vendored runtime subset, lock and OCI
   provenance;
-- four independent runtime paths: Node `http`, official MCP 0.10.0, Python `httpx`, and
+- four independent runtime paths: Node `http`, official MCP 0.13.0 over the real SDK stdio
+  handshake/tool-call path, Python `httpx`, and
   TypeScript/Node `fetch`;
-- direct signed HTTP boundary for MCP, matching the upstream MCP's deliberate no-private-key rule;
+- external-signer DID/signature/nonce forwarding through the official MCP `say_signed` tool, with
+  no private key in the MCP process;
 - separate disposable non-root/read-only containers for every matrix operation on an internal-only
   network, with no host ports, mounts, secrets or Docker socket;
-- official Ed25519 vectors imported from v0.7.0 and v0.10.0 and verified byte-for-byte across
+- official Ed25519 vectors imported from v0.7.0, v0.10.0 and v0.13.0 and verified byte-for-byte across
   Rosetta, the former OpenSSL verifier and current libsodium/PyNaCl verifier, including mutation
   rejection;
 - signed mailbox round-trip, cursor restart, exact correlation, deterministic 429 retry,
@@ -53,12 +55,12 @@ window.
 
 ## Verified results
 
-- Pytest: 237/237 pass;
-- branch-aware Python coverage: 95.14%, enforced floor 90%; observer coverage: 99%;
+- Pytest: 381/381 pass;
+- combined line/branch Python coverage: 94.75%, enforced floor 90%; observer coverage: 99%;
 - Ruff lint/security: pass;
-- Mypy strict: pass for 31 source modules;
+- Mypy strict: pass for 36 source modules;
 - TypeScript strict check: pass;
-- secret scan: pass over 256 files;
+- secret scan: pass over 303 files;
 - fresh install from the development hash lock: pass; `pip check`: pass;
 - recorded runtime dependency OSV batch query: no known vulnerabilities;
 - official upstream matrix: 4/4 cells pass;
@@ -71,11 +73,13 @@ window.
 - unexpected internal probe fault: process survives and recovers on the next cycle without restart,
   while the failed cycle remains durably unsafe as required;
 - signed upstream bundle verification: pass;
-- upstream v0.10.0 bundle root:
-  `sha256:0b3435df9b0f6eb8b1ac2eaab22120a0b14730764fceaa9d1a701860f43c1b9f`;
+- upstream v0.13.0 bundle root:
+  `sha256:909b5e93a995e43521cbc436d687b48d16cf44d67131d56571228070da004ad9`;
 - live OCI isolation: 27/27 checks pass;
-- launch-readiness runtime image:
-  `sha256:e45c4429997ea36a9bbeb2b0bd152ad50e8b9edc872bc29a30d79a3e8082fd6e`;
+- v0.2.0 runtime image:
+  `sha256:695749e7d66e2e0ff365d56951ccddace8bf00994144c85021e6fa8476851cf0`;
+- official MCP v0.13.0 adapter image:
+  `sha256:8ed6fefa1379b7e7f31e99c9840b33c2776106a2e13c2f7c0516c510254a2f90`;
 - launch-readiness Python adapter image:
   `sha256:a5e5592ae4213931d470d54e67642fff95d08e15d6430d491a3042670d1c7b15`;
 - local discovery/service/idempotency demo: pass with zero public writes;

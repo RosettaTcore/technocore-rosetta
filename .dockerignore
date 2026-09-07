@@ -3,6 +3,7 @@
 adapters/node_modules
 artifacts
 local
+work
 __pycache__
 *.pyc
 .pytest_cache
@@ -10,4 +11,4 @@ __pycache__
 .ruff_cache
 .hypothesis
 .env
-
+.coverage

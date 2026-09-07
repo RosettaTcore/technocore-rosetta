@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "technocore-rosetta"
-version = "0.1.0"
+version = "0.2.0"
 description = "Deterministic local Technocore interoperability observatory"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
@@ -30,6 +30,8 @@ rosetta-evolution = "rosetta.evolution_cli:main"
 rosetta-signer = "rosetta_signer.service:main"
 rosetta-observer = "rosetta.observer:main"
 rosetta-egress = "rosetta.egress:main"
+rosetta-pilot-egress = "rosetta.pilot_egress:main"
+rosetta-pilot = "rosetta.pilot:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

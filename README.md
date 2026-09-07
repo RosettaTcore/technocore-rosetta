@@ -18,12 +18,10 @@ Rosetta complements protocol vectors and conformance suites. Its focus is the st
 around a real mailbox roundtrip: restart and cursor recovery, HTTP 429 handling, uncertain-write
 reconciliation, differential reads and exactly-once confirmation.
 
-> **Current status:** complete local MVP, reviewed read-only staging observer and public static
-> observatory. The checked-in launch evidence uses a deterministic synthetic identity and performs
-> zero public writes. Observer safety is reported separately from upstream availability and release
-> drift, so a Technocore upgrade cannot silently become trusted or unnecessarily take the read-only
-> product offline. Public request intake, production identity use and Technocore publication remain
-> separately approved release gates.
+> **Current status:** v0.1.0 is live as a reviewed read-only observer and public static observatory.
+> The v0.2.0 release candidate contains the complete bounded public-service pilot, but it remains inactive until
+> its exact signed room claim and launch announcement are generated, reviewed and approved. The
+> checked-in evidence remains synthetic and no production key material is present in this repository.
 
 ## See the proof first
 
@@ -52,13 +50,13 @@ file verifier against valid, mutated, extra-file, cross-origin and substituted-s
 
 | Reviewed reference | Result |
 |---|---|
-| Protocol target | Technocore v0.10.0 |
+| Protocol target | Technocore v0.13.0 |
 | Runtime paths | raw Node.js HTTP, official MCP, Python `httpx`, TypeScript `fetch` |
 | Matrix | 4 of 4 cells pass |
 | Deterministic assertions | 29 pass |
 | Isolated read soak | 20 of 20 pass |
 | Public writes | 0 |
-| Bundle root | [`sha256:0b3435df…43c1b9f`](site/evidence/latest/attestation.json) |
+| Bundle root | [`sha256:909b5e93…004ad9`](site/evidence/latest/attestation.json) |
 
 The reference is synthetic, dry-run evidence. Its signature establishes byte integrity and signer
 control only—not safety, trust, endorsement, affiliation or eligibility for a reward.
@@ -174,8 +172,8 @@ Commands refuse unsafe or non-empty output targets where replacement would be am
 
 The current measured baseline includes:
 
-- 213 passing Python tests;
-- 95.14% branch-aware Python coverage with a 90% enforced floor;
+- 381 passing Python tests;
+- 94.75% combined line/branch Python coverage with a 90% enforced floor;
 - strict Ruff, Mypy and TypeScript checks;
 - transitive, hash-locked Python dependencies;
 - official four-runtime matrix and 20-iteration soak passes;
@@ -201,15 +199,28 @@ be rebuilt and revalidated on another host.
 
 ## Deployment status
 
-The checked-in deployment files provide a no-ingress, read-only staging profile. They do not
-authorize public writes. Production key generation, public request intake, Technocore writes and
-report publication remain separate operator-approved release gates.
+The checked-in deployment files provide both the existing no-ingress read-only profile and a
+no-ingress active-pilot profile. The latter accepts only the closed `rosetta.request.v1` schema over
+Technocore, runs only the reviewed local scenario and adapter IDs, publishes content-addressed
+evidence and returns a signed result. It has no public application port, wallet, payment, arbitrary
+task, prompt, URL, repository, image or request-selected code path.
+
+Installation is deliberately inert. `prepare-rosetta-pilot` creates an exact activation manifest
+and signs the two launch payloads without sending them. `activate-rosetta-pilot` requires the
+operator-approved manifest digest before it can claim the derived service room and publish the
+launch announcement. Thereafter the limits are two jobs per DID/day, eight jobs globally/day, one
+runner and a 16-job queue; the host kill switch disables every signing, publishing and service path.
+See [`docs/PILOT_OPERATIONS.md`](docs/PILOT_OPERATIONS.md).
 
 Reviewed updates can be packaged as predecessor-bound SSH-signed Git archives and applied through
 a fixed root-owned systemd gate. The deployment account has no general root command: the gate
 builds before downtime, takes a consistent backup, verifies a fresh safe zero-write observation and
 automatically restores the prior release on failure. An upstream release alone is observed as
 compatibility drift and does not stop the read-only product or trigger an automatic deployment.
+
+The active pilot remains pinned to its accepted protocol baseline until the deterministic upstream
+canary passes and a signed Rosetta release updates that baseline. This replaces arbitrary waiting
+periods with evidence without silently trusting drift.
 
 The controlled launch sequence, 72-hour review, encrypted-backup preparation and remaining inputs
 are in [`docs/LAUNCH_RUNBOOK.md`](docs/LAUNCH_RUNBOOK.md). Production identity handling is specified

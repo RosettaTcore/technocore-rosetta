@@ -1,23 +1,27 @@
-"""Adapter that calls the exact vendored Technocore MCP 0.10.0 implementation.
+"""Rosetta adapter over the exact official Technocore v0.13 MCP stdio server.
 
-The upstream MCP intentionally excludes the signed lane so private keys never enter model
-context. Rosetta therefore uses MCP for discovery/read/wait and its isolated signer output
-with a direct HTTP POST only for signed writes.
+The adapter is an MCP client, not a second implementation of the protocol. It starts the
+vendored official server over stdio, performs the MCP initialization handshake and invokes
+only a closed set of tools. Private key material is never passed to MCP: signed tools
+receive only the public DID, nonce and signature returned by Rosetta's isolated signer.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
 ADAPTER_ID = "official-mcp"
+VERSION = "0.13.0"
 ORIGIN = os.environ.get("ROSETTA_TARGET_ORIGIN", "http://technocore-upstream:8080").rstrip("/")
 _parsed = urlparse(ORIGIN)
 if _parsed.scheme not in {"http", "https"} or _parsed.hostname not in {
@@ -29,65 +33,60 @@ if _parsed.scheme not in {"http", "https"} or _parsed.hostname not in {
     raise RuntimeError("target origin is not an approved local Technocore endpoint")
 
 root = Path(__file__).resolve().parents[2]
-upstream = root / "vendor" / "technocore-chat-v0.10.0" / "mcp" / "src"
-if not upstream.exists():
-    upstream = Path("/opt/rosetta/vendor/technocore-chat-v0.10.0/mcp/src")
-sys.path.insert(0, str(upstream))
-os.environ["TECHNOCORE_URL"] = ORIGIN
-
-from technocore_mcp.server import VERSION, server  # noqa: E402
+vendored = root / "vendor" / "technocore-chat-v0.13.0" / "mcp" / "src"
+if not vendored.exists():
+    vendored = Path("/opt/rosetta/vendor/technocore-chat-v0.13.0/mcp/src")
 
 
-def _mcp(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
-    reply = server.handle(
-        {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "tools/call",
-            "params": {"name": name, "arguments": arguments},
-        }
-    )
-    if reply is None or "result" not in reply:
-        raise RuntimeError(f"MCP protocol failure: {reply}")
-    result = reply["result"]
-    content = result.get("content", [])
-    raw = content[0].get("text", "") if content else ""
-    return {"ok": not result.get("isError", False), "raw": raw, "mcp_reply": reply}
-
-
-def _signed_post(message: dict[str, Any]) -> dict[str, Any]:
-    body = json.dumps(
-        {
-            "did": message["did"],
-            "sig": message["signature"],
-            "nonce": str(message["nonce"]),
-            "text": message["text"],
-        }
-    ).encode()
-    request = urllib.request.Request(  # noqa: S310 - ORIGIN scheme/host checked above
-        f"{ORIGIN}/r/{message['room']}?format=json",
-        method="POST",
-        data=body,
-        headers={
-            "Content-Type": "application/json",
-            "User-Agent": f"rosetta-mcp/{VERSION}",
-            "X-Rosetta-Actor": str(message.get("actor", ADAPTER_ID)),
+def _server_parameters() -> StdioServerParameters:
+    path = os.pathsep.join((str(vendored), os.environ.get("PYTHONPATH", ""))).rstrip(os.pathsep)
+    return StdioServerParameters(
+        command=sys.executable,
+        args=["-c", "from technocore_mcp.server import main; main()"],
+        env={
+            "PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"),
+            "PYTHONPATH": path,
+            "PYTHONUNBUFFERED": "1",
+            "TECHNOCORE_URL": ORIGIN,
         },
     )
-    try:
-        with urllib.request.urlopen(request, timeout=5) as response:  # noqa: S310
-            raw = response.read().decode()
-            return {"ok": True, "status": response.status, "raw": raw, "data": json.loads(raw)}
-    except urllib.error.HTTPError as exc:
-        return {
-            "ok": False,
-            "status": exc.code,
-            "raw": exc.read().decode("utf-8", "replace"),
-            "retry_after": exc.headers.get("Retry-After"),
-        }
 
 
-def invoke(message: dict[str, Any]) -> dict[str, Any]:
+def _text(result: Any) -> str:
+    parts = [item.text for item in result.content if getattr(item, "type", None) == "text"]
+    return "\n".join(parts)
+
+
+async def _call(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    async with stdio_client(_server_parameters()) as (read, write):
+        async with ClientSession(read, write) as session:
+            initialized = await session.initialize()
+            if initialized.server_info.version != VERSION:
+                raise RuntimeError("official MCP server version mismatch")
+            result = await session.call_tool(name, arguments)
+    raw = _text(result)
+    failed = bool(getattr(result, "is_error", False))
+    output: dict[str, Any] = {"ok": not failed, "raw": raw}
+    if failed:
+        retry = re.search(r"retry(?: in| after)?\s+(\d+)", raw, re.IGNORECASE)
+        if retry:
+            output.update(status=429, retry_after=retry.group(1))
+    else:
+        output["status"] = 200
+    return output
+
+
+async def _tools() -> list[str]:
+    async with stdio_client(_server_parameters()) as (read, write):
+        async with ClientSession(read, write) as session:
+            initialized = await session.initialize()
+            if initialized.server_info.version != VERSION:
+                raise RuntimeError("official MCP server version mismatch")
+            listed = await session.list_tools()
+    return [tool.name for tool in listed.tools]
+
+
+async def _invoke(message: dict[str, Any]) -> dict[str, Any]:
     operation = message.get("operation")
     base: dict[str, Any] = {
         "schema": "rosetta.adapter-result.v1",
@@ -95,33 +94,49 @@ def invoke(message: dict[str, Any]) -> dict[str, Any]:
         "operation": operation,
     }
     if operation == "capabilities":
-        listed = server.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+        tools = await _tools()
+        required = {"read_room", "wait_for_message", "say_signed", "read_docs"}
+        if not required.issubset(tools):
+            raise RuntimeError("official MCP tool surface is incomplete")
         return {
             **base,
             "ok": True,
             "runtime": f"python-{sys.version_info.major}.{sys.version_info.minor}",
-            "transport": "official-mcp-0.10.0+signed-http-boundary",
+            "transport": "official-mcp-sdk-stdio-0.13.0",
             "upstream_version": VERSION,
-            "tools": [item["name"] for item in listed["result"]["tools"]],  # type: ignore[index]
+            "tools": tools,
             "operations": ["health", "read_room", "wait_room", "post_signed"],
         }
     if operation == "health":
-        result = _mcp("read_docs", {"page": "manual"})
+        result = await _call("read_docs", {"page": "manual"})
     elif operation in {"read_room", "wait_room"}:
         arguments = {"room": message["room"], "since": int(message.get("since", 0))}
         if operation == "read_room":
             arguments["limit"] = int(message.get("limit", 100))
-            result = _mcp("read_room", arguments)
+            result = await _call("read_room", arguments)
         else:
             arguments["seconds"] = float(message.get("wait", 0))
-            result = _mcp("wait_for_message", arguments)
+            result = await _call("wait_for_message", arguments)
         match = re.search(r"next: /r/[^?]+\?since=(\d+)", result["raw"])
         result["last_seq"] = int(match.group(1)) if match else None
     elif operation == "post_signed":
-        result = _signed_post(message)
+        result = await _call(
+            "say_signed",
+            {
+                "room": message["room"],
+                "text": message["text"],
+                "did": message["did"],
+                "sig": message["signature"],
+                "nonce": int(message["nonce"]),
+            },
+        )
     else:
         raise ValueError("unsupported closed adapter operation")
     return {**base, **result}
+
+
+def invoke(message: dict[str, Any]) -> dict[str, Any]:
+    return asyncio.run(_invoke(message))
 
 
 def main() -> None:

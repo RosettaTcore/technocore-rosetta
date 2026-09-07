@@ -1,0 +1,86 @@
+name: technocore-rosetta-pilot
+
+x-pilot-policy: &pilot-policy
+  image: ${ROSETTA_IMAGE:?set the reviewed immutable Rosetta image ID}
+  read_only: true
+  user: "65532:65532"
+  cap_drop: ["ALL"]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 96
+  restart: "no"
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,nodev,size=32m
+
+services:
+  technocore-egress:
+    <<: *pilot-policy
+    command:
+      - rosetta.pilot_egress
+      - --origin
+      - https://technocore.chat
+      - --writer-did
+      - ${ROSETTA_PUBLIC_DID:?set the one approved public DID}
+      - --service-room
+      - ${ROSETTA_SERVICE_ROOM:?set the derived service room}
+      - --request-mailbox
+      - ${ROSETTA_REQUEST_MAILBOX:?set the derived request mailbox}
+      - --discovery-room
+      - lobby
+      - --discovery-room
+      - meta
+      - --listen
+      - 0.0.0.0
+      - --port
+      - "8082"
+    mem_limit: 128m
+    cpus: 0.25
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket,sys; s=socket.socket(); s.settimeout(2); sys.exit(s.connect_ex(('127.0.0.1',8082)))"
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 2s
+    networks:
+      pilot-internal:
+        aliases: ["technocore-egress"]
+      egress: {}
+
+  pilot:
+    <<: *pilot-policy
+    command: ["rosetta.pilot", "--config", "/etc/rosetta/pilot.yaml", "serve"]
+    environment:
+      ROSETTA_PILOT_ENABLE: PUBLIC_WRITES_APPROVED
+    depends_on:
+      technocore-egress:
+        condition: service_healthy
+    group_add: ["65531"]
+    mem_limit: 512m
+    cpus: 1.0
+    volumes:
+      - ${ROSETTA_PILOT_CONFIG:?set the absolute pilot config path}:/etc/rosetta/pilot.yaml:ro
+      - /run/rosetta-signer:/run/rosetta-signer
+      - /var/lib/rosetta/pilot:/var/lib/rosetta/pilot
+      - /var/lib/rosetta/publish-spool:/var/lib/rosetta/publish-spool
+      - /var/lib/rosetta/public:/var/lib/rosetta/public
+      - /var/lib/rosetta/state:/var/lib/rosetta/state:ro
+    networks:
+      - pilot-internal
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import datetime,json,pathlib,sys; h=json.loads(pathlib.Path('/var/lib/rosetta/pilot/health.json').read_text()); age=(datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(h['checked_at'])).total_seconds(); sys.exit(0 if h.get('status') == 'healthy' and h.get('public_writes_enabled') is True and age < 120 else 1)"
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 45s
+
+networks:
+  pilot-internal:
+    internal: true
+  egress: {}

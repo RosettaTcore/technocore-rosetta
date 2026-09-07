@@ -19,3 +19,13 @@ artifacts/
 *.sqlite3-wal
 KILL_SWITCH
 .DS_Store
+work/mcp-test-venv/
+work/uv-tool/
+work/uv-cache/
+work/uv-python/
+work/upstream/review-v013/
+work/upstream/*.constraints
+work/upstream/*.json
+work/docker-mcp-context/
+work/docker-mcp-context.tar
+work/npm-cache/

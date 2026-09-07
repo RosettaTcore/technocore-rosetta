@@ -19,7 +19,8 @@ Before editing code, read in this order:
 7. `docs/SECURITY.md`
 8. `docs/API_COMPATIBILITY.md`
 9. `docs/ACCEPTANCE_TESTS.md`
-10. `TASKS.md`
+10. `docs/PILOT_OPERATIONS.md`
+11. `TASKS.md`
 
 ## Non-negotiable constraints
 

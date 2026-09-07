@@ -1,0 +1,27 @@
+[Unit]
+Description=Validate the active Technocore Rosetta service pilot
+After=rosetta-pilot.service
+OnFailure=rosetta-healthcheck-notify@fail.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/check-rosetta-pilot
+User=root
+Group=root
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+ReadOnlyPaths=/etc/rosetta /opt/rosetta /run/rosetta-signer /var/lib/rosetta/pilot

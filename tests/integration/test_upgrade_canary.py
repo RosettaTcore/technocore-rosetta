@@ -55,10 +55,10 @@ def test_observer_process_recovers_from_unexpected_probe_fault_without_restart(
 
     endpoint = EndpointEvidence("/healthz", "sha256:" + "1" * 64, 3, "text/plain")
     recovered = ProtocolObservation(
-        "0.10.0",
+        "0.13.0",
         "sha256:" + "2" * 64,
         (endpoint,),
-        "0.10.0",
+        "0.13.0",
         "compatible",
     )
 

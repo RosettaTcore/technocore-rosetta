@@ -60,7 +60,7 @@ class FixtureAdapter:
                 "discover",
                 "ok",
                 {
-                    "release": "v0.7.0",
+                    "release": str(capabilities.get("release", "unknown")),
                     "runtime": runtime["runtime"],
                     "transport": runtime["transport"],
                 },

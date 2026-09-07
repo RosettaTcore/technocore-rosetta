@@ -14,13 +14,14 @@ One dedicated small EU cloud server/project with no other workloads or credentia
 Do not provision until local acceptance passes and the operator approves paid infrastructure.
 
 The repository includes `deploy/Dockerfile`, the offline `deploy/compose.yaml`, the read-only
-`deploy/compose.staging.yaml`, hardened systemd units and a runner seccomp template. The Dockerfile
+`deploy/compose.staging.yaml`, the controlled `deploy/compose.pilot.yaml`, hardened systemd units
+and a runner seccomp template. The Dockerfile
 uses reviewed immutable defaults and permits overrides only with another reviewed
 `image@sha256:...` reference.
 
 Local Phase 3 validation used pinned Python 3.12.5 and Node 20.9.0 base digests, separate worker and
-adapter images, the official Technocore v0.10.0 OCI image, and an internal Docker network with no
-host port. The v0.7.0 fixture remains only for deterministic historical replay.
+adapter images, the official Technocore v0.13.0 OCI image, and an internal Docker network with no
+host port. The v0.7.0 fixture and v0.10.0 evidence remain only for deterministic historical replay.
 All containers were removed after evidence capture; the images remain local for reproducibility.
 
 ## Service layout
@@ -199,6 +200,29 @@ availability and release drift are separate compatibility warnings;
 they do not reset the read-only safety window. A changed digest must be reviewed before it becomes
 an execution baseline. Public signing, discovery/service intake and publication each remain
 separate approval gates.
+
+## Controlled active pilot on the same server
+
+The pilot adds no inbound application listener and does not require another VM. Its worker is on an
+internal Docker network; only the body-constrained `technocore-egress` sidecar has outbound access.
+The already isolated signer remains a separate networkless service. Installation, preparation and
+activation are three distinct steps, and only activation writes to Technocore.
+
+Follow [`PILOT_OPERATIONS.md`](PILOT_OPERATIONS.md). In summary:
+
+```sh
+sudo /opt/rosetta/current/deploy/install-rosetta-pilot.sh \
+  /opt/rosetta/current /etc/rosetta/staging.env /root/rosetta-pilot.yaml
+sudo /usr/local/libexec/prepare-rosetta-pilot
+# Review both activation-preview files and approve their exact digest.
+sudo /usr/local/libexec/activate-rosetta-pilot sha256:APPROVED_PREVIEW_DIGEST
+```
+
+The install step validates the immutable local image, public DID and derived room names and leaves
+the unit disabled with zero writes. The worker has no Docker socket and cannot reach the public
+network directly. Its only signer access is group permission on the Unix socket; the signer seed
+remains owner-only. The public report directory is readable by nginx, while pilot state and spool
+directories remain private to UID/GID 65532.
 
 ## Signed remote upgrades
 

@@ -40,11 +40,13 @@ def hardened_arguments() -> list[str]:
     ]
 
 
-def accept(image: str, node_image: str, output: Path) -> dict[str, Any]:
+def accept(image: str, node_image: str, official_mcp_image: str, output: Path) -> dict[str, Any]:
     if not image.startswith("sha256:") or len(image) != 71:
         raise ValueError("image must be an immutable sha256 image ID")
     if not node_image.startswith("sha256:") or len(node_image) != 71:
         raise ValueError("node image must be an immutable sha256 image ID")
+    if not official_mcp_image.startswith("sha256:") or len(official_mcp_image) != 71:
+        raise ValueError("official MCP image must be an immutable sha256 image ID")
     docker = shutil.which("docker")
     if docker is None:
         raise RuntimeError("Docker CLI is unavailable")
@@ -58,6 +60,7 @@ def accept(image: str, node_image: str, output: Path) -> dict[str, Any]:
         "schema": "rosetta.container-acceptance.v1",
         "image_id": image,
         "node_image_id": node_image,
+        "official_mcp_image_id": official_mcp_image,
         "checks": {},
     }
     checks = report["checks"]
@@ -112,7 +115,7 @@ def accept(image: str, node_image: str, output: Path) -> dict[str, Any]:
             ),
             (
                 "adapter_official_mcp",
-                image,
+                official_mcp_image,
                 "python",
                 ["/opt/rosetta/adapters/official_mcp/main.py"],
                 "official-mcp",
@@ -328,9 +331,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--image", required=True)
     parser.add_argument("--node-image", required=True)
+    parser.add_argument("--official-mcp-image", required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    report = accept(args.image, args.node_image, args.output)
+    report = accept(args.image, args.node_image, args.official_mcp_image, args.output)
     print(json.dumps(report, indent=2, sort_keys=True))
 
 

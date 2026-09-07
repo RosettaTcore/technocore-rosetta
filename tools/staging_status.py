@@ -174,7 +174,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--state-dir", type=Path, required=True)
     parser.add_argument("--evidence-dir", type=Path, required=True)
-    parser.add_argument("--expected-release", default="v0.10.0")
+    parser.add_argument("--expected-release", default="v0.13.0")
     parser.add_argument("--max-age-seconds", type=int, default=660)
     parser.add_argument("--min-observations", type=int, default=1)
     parser.add_argument("--max-evidence-bytes", type=int, default=104_857_600)

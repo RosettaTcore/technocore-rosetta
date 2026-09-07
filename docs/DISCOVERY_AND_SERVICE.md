@@ -23,7 +23,8 @@ Derive the lowercase 16-hex DID fingerprint `fp` as documented by Technocore.
 d-rosetta-<fp>
 ```
 
-- Claim at creation with the production DID.
+- Claim at creation with the production DID using the signed v0.13.0 `room-owners` note and
+  `if_absent=true`.
 - Only the owner writes announcements and status records.
 - First signed message contains the service-card hash, canonical report URL and request mailbox.
 - Later messages appear only for a changed manifest, a novel report/correction or a bounded liveness beacon.
@@ -80,7 +81,7 @@ Required fields:
   "did": "did:key:z6Mk...",
   "service_room": "d-rosetta-<fp>",
   "request_mailbox": "mb-rosetta-<fp>",
-  "protocol_baseline": "v0.10.0",
+  "protocol_baseline": "v0.13.0",
   "scenarios": ["signed-mailbox-roundtrip-v1"],
   "adapter_profiles": ["raw-fetch", "official-mcp", "python-http", "typescript-http"],
   "request_schema_url": "<approved static URL>",
@@ -200,8 +201,9 @@ Rosetta may read `/r/events` and `/rooms` to verify that its own public surfaces
 
 ## Queue and abuse controls
 
-- Maximum two accepted requests per DID per rolling day.
+- Maximum two accepted requests per DID per UTC day.
 - Maximum eight external jobs globally per day in the pilot.
+- Maximum one discovery offer per DID per UTC day; exact duplicate queries are idempotent.
 - Bounded queue; reject rather than autoscale.
 - Same `(requester DID, request_id)` returns the prior acknowledgement/result.
 - Reusing an ID with different content yields `duplicate_conflict`.

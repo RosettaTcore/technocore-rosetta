@@ -1,4 +1,4 @@
-"""Run the four-cell matrix against official Technocore v0.10.0 in isolated containers."""
+"""Run the four-cell matrix against official Technocore v0.13.0 in isolated containers."""
 
 from __future__ import annotations
 
@@ -27,9 +27,9 @@ from rosetta_signer.did import verify_signature
 ROOT = Path(__file__).resolve().parents[1]
 TARGET_IMAGE = (
     "ghcr.io/flop-labs/technocore-chat@"
-    "sha256:077d4cb94c8b516a590a404620ec304284525b91cad912a34229627ca98e606b"
+    "sha256:6d4736cf157af10e1dd775391eac7fa5a9773d7abdc26044f4d2c2c5df2fd86b"
 )
-TARGET_DIGEST = "sha256:077d4cb94c8b516a590a404620ec304284525b91cad912a34229627ca98e606b"
+TARGET_DIGEST = "sha256:6d4736cf157af10e1dd775391eac7fa5a9773d7abdc26044f4d2c2c5df2fd86b"
 
 
 def _docker(
@@ -475,7 +475,7 @@ async def accept(output: Path, soak_iterations: int) -> dict[str, Any]:
             run = RunRecord(
                 run_id=hashlib.sha256((registry.digest + TARGET_DIGEST).encode()).hexdigest()[:32],
                 trigger="official-upstream-local",
-                protocol_release="v0.10.0",
+                protocol_release="v0.13.0",
                 scenario="signed-mailbox-roundtrip-v1",
                 registry_sha256=registry.digest,
                 execution_images={
@@ -495,9 +495,9 @@ async def accept(output: Path, soak_iterations: int) -> dict[str, Any]:
             verified = verify_bundle(output / "bundle")
         report = {
             "schema": "rosetta.upstream-acceptance.v1",
-            "target_release": "v0.10.0",
+            "target_release": "v0.13.0",
             "target_oci_index_digest": TARGET_DIGEST,
-            "target_source_commit": "9c7df0e3616cf28d17e7c8ebeb0c05de6adf117c",
+            "target_source_commit": "45921c3e3699e01a55cde391674815367e0cff6b",
             "matrix_cells": len(results),
             "matrix_passed": all(r.outcome is Outcome.PASS for r in results),
             "adapter_capabilities": capabilities,

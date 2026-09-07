@@ -63,7 +63,8 @@ evolution-verify:
 container-acceptance:
 	test -n "$(IMAGE)"
 	test -n "$(NODE_IMAGE)"
-	$(PYTHON) tools/container_acceptance.py --image "$(IMAGE)" --node-image "$(NODE_IMAGE)" --output artifacts/container-acceptance.json
+	test -n "$(MCP_IMAGE)"
+	$(PYTHON) tools/container_acceptance.py --image "$(IMAGE)" --node-image "$(NODE_IMAGE)" --official-mcp-image "$(MCP_IMAGE)" --output artifacts/container-acceptance.json
 
 upstream-acceptance:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tools/upstream_acceptance.py --output artifacts/upstream-acceptance --soak-iterations 20

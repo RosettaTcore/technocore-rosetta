@@ -1,0 +1,19 @@
+[Unit]
+Description=Technocore Rosetta bounded public service pilot
+Requires=docker.service rosetta-signer.production.service
+After=docker.service rosetta-signer.production.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/rosetta/current
+EnvironmentFile=/etc/rosetta/pilot.env
+ExecStart=/usr/bin/docker compose -f deploy/compose.pilot.yaml up --abort-on-container-exit --remove-orphans
+ExecStop=/usr/bin/docker compose -f deploy/compose.pilot.yaml down --timeout 20
+Restart=on-failure
+RestartSec=15s
+TimeoutStartSec=90s
+TimeoutStopSec=45s
+
+[Install]
+WantedBy=multi-user.target

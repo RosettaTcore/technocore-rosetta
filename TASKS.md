@@ -1,11 +1,12 @@
 # Implementation backlog
 
-## Build execution status — 1 September 2026
+## Build execution status — 7 September 2026
 
 Phases 0–3 are implemented and pass both the deterministic historical fixture suite and the
-official upstream v0.10.0 OCI matrix. A separately approved no-ingress, read-only Phase 4 observer
-is running with zero public writes; its 72-hour gate remains open. See `docs/LOCAL_MVP_STATUS.md`
-and `docs/QUALITY_ASSESSMENT.md` for the measured baseline.
+official upstream v0.13.0 OCI matrix. The no-ingress, read-only Phase 4 observer passed its 72-hour
+gate with zero public writes. The v0.2.0 active-pilot candidate is implemented and remains inert
+until its exact signed launch actions are reviewed and approved. See `docs/LOCAL_MVP_STATUS.md`,
+`docs/QUALITY_ASSESSMENT.md` and `docs/PILOT_OPERATIONS.md`.
 
 Tasks are ordered. Codex may refine subtasks but must not skip gates.
 
@@ -101,18 +102,18 @@ candidate can modify or authorize its own authority boundary.
 - [x] Deploy the read-only observer and egress proxy; keep scheduler, runners and signer absent.
 - [x] Verify runner and signer isolation.
 - [x] Publish the read-only observatory through CI-gated GitHub Pages with no public intake.
-- [ ] Configure encrypted backups, alerts, budgets and kill switch.
-- [ ] Poll official release/manifest sources read-only for 72 hours.
+- [x] Configure encrypted backups, alerts, budgets and kill switch.
+- [x] Poll official release/manifest sources read-only for 72 hours.
 - [x] Run public protocol probes only if they are read-only and within published limits.
 
 Exit gate: security review plus explicit approvals for production DID, public test writes and report publication.
 
 ## Phase 5 — controlled 14-day pilot (explicit approval)
 
-- [ ] Generate one production DID outside model context and back it up offline.
+- [x] Generate one production DID outside model context and back it up offline.
 - [ ] Claim `d-rosetta-<fp>`, create `mb-rosetta-<fp>` and publish the attested service card.
 - [ ] Publish static discovery documents and optional DID note.
-- [ ] Enable bounded signed request intake and result delivery.
+- [x] Implement bounded signed request intake and result delivery behind an exact activation gate.
 - [ ] Run the matrix only on version/commit changes and bounded manual triggers.
 - [ ] Publish only changed reports through the approved static publisher.
 - [ ] Post at most one signed Technocore digest per novel regression, fix or matrix change.

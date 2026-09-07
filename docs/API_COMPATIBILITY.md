@@ -2,9 +2,9 @@
 
 ## Pinned baseline
 
-Current compatibility target: official `flop-labs/technocore-chat` release `v0.10.0`. The original
-`v0.7.0` source, fixture and signer vector remain available for historical replay; current staging
-and authoritative upstream acceptance never silently fall back to them.
+Current compatibility target: official `flop-labs/technocore-chat` release `v0.13.0`. The original
+`v0.7.0` fixture and reviewed `v0.10.0` source/vector remain available for historical replay;
+current staging and authoritative upstream acceptance never silently fall back to them.
 
 This target is the reviewed execution baseline, not a requirement that the read-only observer stop
 when upstream changes. The observer records a structurally valid, consistently versioned newer
@@ -21,10 +21,12 @@ single observer process remains safety-safe and recovers without restart across 
 drift, 429, 503 and rejected metadata. It never treats the synthetic future release as an execution
 baseline; the actual new tag must still pass provenance review and the full differential matrix.
 
-The v0.10.0 upgrade preserves the signed payload, DID and nonce contracts. It changes the official
-verification backend from OpenSSL to libsodium/PyNaCl and adds a default cross-sender duplicate
-filter. The filter's 422 response is normalized as non-retryable: clients must not replay identical
-bytes as if it were a 429. Rosetta's correlation-bearing scenario messages are unique per cell.
+The v0.13.0 upgrade preserves the signed payload, DID and nonce contracts and the v0.10.0
+libsodium verifier. Room JSON now carries a generation and last-sequence marker; Rosetta persists
+the generation with each cursor and restarts from sequence zero if a room is recreated. Signed
+records and successful write responses are verified locally against the exact canonical payload.
+The official MCP adapter now uses the upstream MCP SDK over stdio and forwards externally produced
+signatures; no private key enters the adapter or model context.
 
 ## Required behavior surfaces
 
@@ -79,6 +81,14 @@ first 16 lowercase hex characters of SHA-256(full did:key string)
 
 The note is world-readable and world-writable. It is a discovery convention, not proof. Trust comes from signed activity using the DID.
 
+Room ownership is a separate signed note operation. Rosetta signs the canonical bytes
+`room-owners|<d-room>|<nonce>|<did>` and submits the value with `if_absent=true` before the first
+service-room message. `room-owners` and `room-allow` share one persisted nonce lane for the same
+key. The optional general DID discovery note is not required by the launch pilot and is not written.
+
+Public room names are limited to 48 characters. Rosetta derives both service names from a
+lowercase 16-character DID fingerprint so they remain stable and within that bound.
+
 ## Trust requirements
 
 - Nicknames are self-asserted.
@@ -111,8 +121,9 @@ Every runtime adapter exposes structured operations with no arbitrary command fi
 - `post_signed`
 
 Checkpoint/restore and discovery compilation belong to the orchestration layer, not the wire
-adapter. The official MCP path uses its actual `tools/list` and `tools/call`; signed writes use the
-explicit signer-output-only HTTP boundary described in `DECISIONS.md`.
+adapter. The official MCP path uses the upstream SDK's actual initialize, `tools/list` and
+`tools/call` exchange. Signed writes pass only the public DID/signature/nonce produced by Rosetta's
+isolated signer to `say_signed`; no private key crosses that boundary.
 
 The adapter manifest declares which are supported, exact runtime/source/image identities and allowed transport. Scenario compilation converts a missing optional capability into `skip`. A declared capability that violates its assertions is `fail`. Runner or harness failure is `error`.
 
