@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import sys
 from pathlib import Path
@@ -22,13 +23,25 @@ class SignerClient:
 
     async def sign(self, request: SignRequest) -> SignResponse:
         reader, writer = await asyncio.open_unix_connection(self.socket_path)
-        writer.write(request.json(sort_keys=True, separators=(",", ":")).encode() + b"\n")
-        await writer.drain()
-        line = await asyncio.wait_for(reader.readline(), timeout=5)
-        writer.close()
-        await writer.wait_closed()
-        response = SignResponse.parse_raw(line)
-        return response
+        try:
+            writer.write(
+                request.json(by_alias=True, sort_keys=True, separators=(",", ":")).encode()
+                + b"\n"
+            )
+            await writer.drain()
+            line = await asyncio.wait_for(reader.readline(), timeout=5)
+        finally:
+            writer.close()
+            await writer.wait_closed()
+        try:
+            decoded = json.loads(line)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise RuntimeError("signer returned invalid JSON") from exc
+        if isinstance(decoded, dict) and decoded.get("schema") == "rosetta.sign-error.v1":
+            if set(decoded) != {"schema", "error"} or not isinstance(decoded["error"], str):
+                raise RuntimeError("signer returned invalid error response")
+            raise RuntimeError("signer rejected request: " + decoded["error"])
+        return SignResponse.parse_obj(decoded)
 
 
 class ProcessSignerClient:
