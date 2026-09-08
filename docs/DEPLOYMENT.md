@@ -54,6 +54,11 @@ Production runners must not share a writable filesystem or network namespace wit
 /var/lib/rosetta/upgrades/       fixed incoming spool and root-only verification work
 ```
 
+The production signer installer creates `/var/lib/rosetta-signer` for fixed UID/GID `65531`.
+The root-owned systemd supervisor deliberately does not use `StateDirectory=` because systemd
+would otherwise re-own the container user's persistent SQLite database during every service start.
+The unit exposes only that already-created directory through `ReadWritePaths=`.
+
 Mount each path only into the service that requires it. Runner containers receive none of them.
 
 ## Publisher boundary

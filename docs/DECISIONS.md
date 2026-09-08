@@ -579,3 +579,16 @@ This separation makes the agent immediately useful for closed-schema diagnostics
 the runner boundary. Adding request-triggered OCI execution would require a separate fixed-job
 executor and a new authority review; public content will not gain access to the Docker daemon by
 convenience.
+
+## ADR-058: Keep persistent signer state owned by the networkless container UID
+
+The production signer systemd supervisor must run as root to load the encrypted credential and
+control the Docker container, while the networkless container itself runs as fixed UID/GID 65531.
+Using systemd's `StateDirectory=rosetta-signer` under the root supervisor recursively changed the
+persisted SQLite database, WAL and shared-memory files to root ownership on restart. The signer
+could read the database but failed closed when recording a service-document signature.
+
+Create `/var/lib/rosetta-signer` with UID/GID 65531 in the signer installer and retain the existing
+explicit `ReadWritePaths=` sandbox allowance. Do not use `StateDirectory=` for this mixed host/
+container ownership boundary. This preserves the seed and DID, keeps the host supervisor's Docker
+authority unchanged and lets SQLite retain container-user ownership across reboots.
