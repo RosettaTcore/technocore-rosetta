@@ -25,7 +25,12 @@ class SignerClient:
         reader, writer = await asyncio.open_unix_connection(self.socket_path)
         try:
             writer.write(
-                request.json(by_alias=True, sort_keys=True, separators=(",", ":")).encode()
+                request.json(
+                    by_alias=True,
+                    exclude_none=True,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode()
                 + b"\n"
             )
             await writer.drain()
@@ -69,7 +74,13 @@ class ProcessSignerClient:
             env=self.environ,
         )
         stdout, stderr = await process.communicate(
-            request.json(by_alias=True, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+            request.json(
+                by_alias=True,
+                exclude_none=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+            + b"\n"
         )
         if process.returncode != 0:
             raise RuntimeError("signer child rejected request: " + stderr.decode()[:200])
