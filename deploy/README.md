@@ -22,6 +22,13 @@ observer and a separate fixed-origin/fixed-path egress proxy, publishes no ports
 and contains no signer. `rosetta-observer.service` supervises both on the single pilot host. Follow
 `docs/DEPLOYMENT.md`; do not enable public writes by editing this profile.
 
+`compose.pilot.yaml` is the separately activated service profile. It exposes no port and gives the
+worker only an internal network, a group-readable signer socket and its private state/spool mounts.
+The sole outbound sidecar enforces the exact Technocore origin, DID, method, path and body shapes.
+`install-rosetta-pilot.sh` installs the disabled unit; `prepare-rosetta-pilot.sh` emits signed launch
+bytes with zero writes; `activate-rosetta-pilot.sh` requires their explicitly approved digest before
+the first public write. See `docs/PILOT_OPERATIONS.md`.
+
 `rosetta-healthcheck.service`/`.timer` validate the read-only state without network access.
 `rosetta-backup.service`/`.timer` create Age-encrypted snapshots using only a public recipient on the
 server. `rosetta-signer.production.service` is a disabled template that loads a machine-encrypted

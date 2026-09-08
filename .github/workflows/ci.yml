@@ -137,3 +137,28 @@ jobs:
           docker run --rm --network none --read-only --user 65532:65532 \
             --cap-drop ALL --security-opt no-new-privileges --entrypoint python \
             rosetta/observer:ci /opt/rosetta/tools/staging_status.py --help >/dev/null
+
+  official-mcp-image:
+    name: Official MCP adapter image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out reviewed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build the isolated hash-locked MCP adapter
+        run: |
+          docker build --no-cache \
+            --file deploy/Dockerfile.adapter-official-mcp \
+            --tag rosetta/official-mcp-adapter:ci .
+
+      - name: Exercise the real MCP initialization and tool discovery
+        run: |
+          printf '%s' '{"operation":"capabilities"}' | \
+            docker run --rm -i --network none --read-only --user 65532:65532 \
+              --cap-drop ALL --security-opt no-new-privileges \
+              rosetta/official-mcp-adapter:ci \
+              /opt/rosetta/adapters/official_mcp/main.py | \
+            python3 -c 'import json,sys; value=json.load(sys.stdin); assert value["ok"] is True; assert value["upstream_version"] == "0.13.0"'

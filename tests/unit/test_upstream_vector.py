@@ -42,9 +42,9 @@ def _verify_vector(release: str) -> dict[str, str]:
     return vector
 
 
-def test_official_v070_and_v010_vectors_verify_across_backend_change() -> None:
+def test_official_vectors_verify_across_backend_and_mcp_changes() -> None:
     old = _verify_vector("v0.7.0")
-    current = _verify_vector("v0.10.0")
-    assert old["did"] == current["did"]
-    assert old["message_utf8"] == current["message_utf8"]
-    assert old["signature_base64url_unpadded"] == current["signature_base64url_unpadded"]
+    middle = _verify_vector("v0.10.0")
+    current = _verify_vector("v0.13.0")
+    for field in ("did", "message_utf8", "signature_base64url_unpadded"):
+        assert old[field] == middle[field] == current[field]

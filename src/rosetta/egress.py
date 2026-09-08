@@ -34,7 +34,7 @@ class ReadOnlyEgress:
             transport=transport,
             headers={
                 "Accept": "application/json, text/plain;q=0.9",
-                "User-Agent": "rosetta-egress/0.1",
+                "User-Agent": "rosetta-egress/0.2",
             },
         )
         self.max_response_bytes = max_response_bytes

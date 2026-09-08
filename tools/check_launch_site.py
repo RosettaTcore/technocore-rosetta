@@ -24,7 +24,7 @@ MARK = SITE / "assets/rosetta-mark.svg"
 PREVIEW = SITE / "assets/rosetta-observatory-preview.webp"
 SOCIAL_CARD = SITE / "assets/rosetta-social-card.jpg"
 PROFILE_AVATAR = SITE / "assets/rosetta-profile-avatar.png"
-REFERENCE_ROOT = "sha256:0b3435df9b0f6eb8b1ac2eaab22120a0b14730764fceaa9d1a701860f43c1b9f"
+REFERENCE_ROOT = "sha256:909b5e93a995e43521cbc436d687b48d16cf44d67131d56571228070da004ad9"
 PUBLIC_ORIGIN = "https://rosettatcore.github.io/technocore-rosetta/"
 PUBLIC_CARD = f"{PUBLIC_ORIGIN}assets/rosetta-social-card.jpg"
 PAGES_ACTIONS = {
@@ -219,7 +219,7 @@ def main() -> int:
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         "  <url>\n"
         f"    <loc>{PUBLIC_ORIGIN}</loc>\n"
-        "    <lastmod>2026-09-01</lastmod>\n"
+        "    <lastmod>2026-09-08</lastmod>\n"
         "  </url>\n"
         "</urlset>\n"
     )

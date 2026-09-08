@@ -60,13 +60,51 @@ def test_systemd_supervises_the_whole_compose_boundary() -> None:
     assert "deploy/compose.staging.yaml" in unit
 
 
+def test_active_pilot_has_one_narrow_egress_and_no_ingress_or_docker_socket() -> None:
+    compose = yaml.safe_load((ROOT / "deploy/compose.pilot.yaml").read_text())
+    services = compose["services"]
+    assert set(services) == {"technocore-egress", "pilot"}
+    assert compose["networks"]["pilot-internal"]["internal"] is True
+    for service in services.values():
+        assert "ports" not in service
+        assert "build" not in service
+        assert service["read_only"] is True
+        assert service["user"] == "65532:65532"
+        assert service["cap_drop"] == ["ALL"]
+        assert service["security_opt"] == ["no-new-privileges:true"]
+        assert "docker.sock" not in str(service)
+    assert set(services["technocore-egress"]["networks"]) == {
+        "pilot-internal",
+        "egress",
+    }
+    assert services["pilot"]["networks"] == ["pilot-internal"]
+    assert services["pilot"]["group_add"] == ["65531"]
+    assert "/run/rosetta-signer:/run/rosetta-signer" in services["pilot"]["volumes"]
+    assert "rosetta.pilot_egress" in services["technocore-egress"]["command"]
+    assert "https://technocore.chat" in services["technocore-egress"]["command"]
+    assert services["pilot"]["depends_on"]["technocore-egress"]["condition"] == "service_healthy"
+    assert "PUBLIC_WRITES_APPROVED" in services["pilot"]["environment"].values()
+
+    unit = (ROOT / "deploy/rosetta-pilot.service").read_text()
+    installer = (ROOT / "deploy/install-rosetta-pilot.sh").read_text()
+    activator = (ROOT / "deploy/activate-rosetta-pilot.sh").read_text()
+    assert "Requires=docker.service rosetta-signer.production.service" in unit
+    assert "--abort-on-container-exit" in unit
+    assert "systemctl enable" not in installer
+    assert "systemctl start" not in installer
+    assert "public_writes=0" in installer
+    assert "activation-preview.sha256" in activator
+    assert "activate --approved-digest" in activator
+    assert "systemctl enable --now rosetta-pilot.service" in activator
+
+
 def test_staging_health_and_backup_timers_are_local_and_fail_closed() -> None:
     health = (ROOT / "deploy/rosetta-healthcheck.service").read_text()
     backup = (ROOT / "deploy/rosetta-backup.service").read_text()
     notifier = (ROOT / "deploy/rosetta-healthcheck-notify@.service").read_text()
     installer = (ROOT / "deploy/install-rosetta-operations.sh").read_text()
     assert "tools/staging_status.py" in health
-    assert "--expected-release v0.10.0" in health
+    assert "--expected-release v0.13.0" in health
     assert "ReadOnlyPaths=/var/lib/rosetta/state /var/lib/rosetta/evidence" in health
     assert "User=rosetta-runtime" in health
     assert "Group=rosetta-runtime" in health
@@ -210,7 +248,7 @@ def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
     healthcheck = compose["services"]["egress-proxy"]["healthcheck"]["test"][-1]
     ci = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
 
-    normalization = "RUN chmod -R u=rwX,go=rX src config adapters tools vendor"
+    normalization = "RUN chmod -R u=rwX,go=rX src config adapters tools"
     runtime_user = "USER 65532:65532"
     runtime_import = (
         'RUN test "$(id -u)" = "65532" && ' 'python -c "import rosetta.egress, rosetta.observer"'
@@ -219,7 +257,12 @@ def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
     assert runtime_import in dockerfile
     assert dockerfile.index(normalization) < dockerfile.index(runtime_user)
     assert dockerfile.index(runtime_user) < dockerfile.index(runtime_import)
-    assert dockerfile.count("COPY --chown=0:0") == 6
+    assert dockerfile.count("COPY --chown=0:0") == 5
+    official_mcp = (ROOT / "deploy/Dockerfile.adapter-official-mcp").read_text()
+    assert "adapters/official_mcp/requirements.lock" in official_mcp
+    assert "--require-hashes" in official_mcp
+    assert "--no-deps ./vendor/technocore-chat-v0.13.0/mcp" in official_mcp
+    assert "USER 65532:65532" in official_mcp
     assert "COPY --chown=0:0 tools/staging_status.py ./tools/staging_status.py" in dockerfile
     assert "r=c.getresponse()" in healthcheck
     assert "r.read()" in healthcheck

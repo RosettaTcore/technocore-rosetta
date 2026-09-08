@@ -167,12 +167,21 @@ class EvidenceEvent(ClosedModel):
 
 class SignRequest(ClosedModel):
     schema_: Literal["rosetta.sign-request.v1"] = Field("rosetta.sign-request.v1", alias="schema")
-    action: Literal["technocore_message", "artifact_root", "service_document", "evolution_proposal"]
+    action: Literal[
+        "technocore_message",
+        "technocore_note",
+        "artifact_root",
+        "service_document",
+        "evolution_proposal",
+    ]
     scope: StrictStr
     nonce: StrictInt | None = None
     room: StrictStr | None = None
     text: StrictStr | None = None
     digest: StrictStr | None = None
+    namespace: StrictStr | None = None
+    key: StrictStr | None = None
+    value: StrictStr | None = None
 
 
 class SignResponse(ClosedModel):
@@ -200,7 +209,7 @@ class ServiceCard(ClosedModel):
     did: StrictStr
     service_room: StrictStr
     request_mailbox: StrictStr
-    protocol_baseline: Literal["v0.7.0", "v0.10.0"] = "v0.10.0"
+    protocol_baseline: Literal["v0.7.0", "v0.10.0", "v0.13.0"] = "v0.13.0"
     scenarios: list[Literal["signed-mailbox-roundtrip-v1"]]
     adapter_profiles: list[StrictStr]
     request_schema_url: AnyHttpUrl
@@ -299,6 +308,6 @@ def model_to_dict(model: BaseModel) -> dict[str, Any]:
 def validate_public_mailbox(value: str) -> str:
     if not value.startswith("mb-") or value.startswith("mb-p-"):
         raise ValueError("reply room must be a public signed mailbox")
-    if len(value) > 64 or not all(c.islower() or c.isdigit() or c == "-" for c in value):
+    if len(value) > 48 or not all(c.islower() or c.isdigit() or c == "-" for c in value):
         raise ValueError("invalid reply room")
     return value

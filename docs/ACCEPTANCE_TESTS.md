@@ -102,12 +102,23 @@
 - [x] Pinned official Technocore v0.7.0 runs from an immutable OCI index digest.
 - [x] Pinned official Technocore v0.10.0 runs from an immutable OCI index digest with exact source,
   lockfile, amd64 and arm64 provenance.
+- [x] Pinned official Technocore v0.13.0 runs from an immutable OCI index digest through all four
+  isolated paths, including the real MCP SDK stdio transport.
 - [x] Full four-cell demo runs without public network access.
 - [ ] No test contacts public Technocore unless explicitly marked and approved.
 - [ ] Backup/restore rehearsal succeeds with synthetic data.
 - [ ] Operator can activate kill switch without entering worker or runner.
-- [ ] No inbound public agent service exists.
+- [x] No inbound public application listener exists; pilot coordination uses only Technocore.
 
 ## Public-pilot gate
 
 The system is not ready for a production DID, public write or public report until every applicable item passes, a fresh novelty re-check is recorded and a human approves the exact external scopes.
+
+- [ ] Exact activation preview (authority, DID, rooms, payloads, signatures, nonces and limits) is
+  reviewed and its digest is approved immediately before the first write.
+- [ ] Pilot worker has no ingress, direct egress, Docker socket or signer seed; only its constrained
+  egress sidecar can reach the fixed Technocore authority.
+- [ ] Synthetic end-to-end pilot test publishes a verifiable bundle and two signed reply messages.
+- [ ] Prepared outbound bytes survive restart, 429 and uncertain-write reconciliation without a new
+  nonce or duplicate result.
+- [ ] Production health, encrypted backup and certificate-renewal alerts are green before intake.

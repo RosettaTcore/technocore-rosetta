@@ -27,9 +27,14 @@ class ProtocolRecord:
     nonce: int
     text: str
     signature: str
+    upstream_verified: bool = False
 
     @property
     def signed(self) -> bool:
+        # Never turn an upstream assertion into local trust. The v0.13 protocol returns
+        # the accepted signature with every new signed record, so Rosetta can verify the
+        # exact stored bytes itself. ``upstream_verified`` remains in the wire model only
+        # for backward-compatible fixture decoding; it deliberately has no authority.
         return verify_signature(
             self.did,
             signed_room_payload(self.room, self.nonce, self.text),

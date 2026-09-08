@@ -65,7 +65,7 @@ def container_status(
         "--evidence-dir",
         "/var/lib/rosetta/evidence",
         "--expected-release",
-        "v0.10.0",
+        "v0.13.0",
         "--max-age-seconds",
         str(MAX_HEALTH_AGE_SECONDS),
         "--min-observations",

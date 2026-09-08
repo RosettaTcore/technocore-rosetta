@@ -8,8 +8,6 @@ WORKDIR /opt/rosetta
 COPY requirements.lock ./
 RUN python -m pip install --no-cache-dir --require-hashes --requirement requirements.lock
 COPY adapters/python_http ./adapters/python_http
-COPY adapters/official_mcp ./adapters/official_mcp
-COPY vendor/technocore-chat-v0.10.0/mcp/src ./vendor/technocore-chat-v0.10.0/mcp/src
 COPY tools/upstream_fault_proxy.py ./tools/upstream_fault_proxy.py
 USER 65532:65532
 ENTRYPOINT ["python"]

@@ -15,7 +15,7 @@ globalThis.crypto ??= webcrypto;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const BUNDLE = path.join(ROOT, "site/evidence/latest");
-const EXPECTED_ROOT = "sha256:0b3435df9b0f6eb8b1ac2eaab22120a0b14730764fceaa9d1a701860f43c1b9f";
+const EXPECTED_ROOT = "sha256:909b5e93a995e43521cbc436d687b48d16cf44d67131d56571228070da004ad9";
 
 async function bundleFiles(directory, prefix = "") {
   const files = new Map();

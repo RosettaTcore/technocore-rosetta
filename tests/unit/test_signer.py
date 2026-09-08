@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from rosetta.contracts import SignRequest
 from rosetta.signer_client import ProcessSignerClient, SignerClient
-from rosetta_signer.canonical import signed_room_payload
+from rosetta_signer.canonical import signed_note_payload, signed_room_payload
 from rosetta_signer.did import (
     SeedFileIdentity,
     SyntheticIdentity,
@@ -59,6 +59,40 @@ def test_signature_domains_cannot_cross_verify(tmp_path: Path) -> None:
     assert not verify_signature(
         artifact.did, evolution_proposal_payload(digest), artifact.signature
     )
+    store.close()
+
+
+def test_signed_note_uses_one_nonce_lane_per_key(tmp_path: Path) -> None:
+    store = NonceStore(tmp_path / "nonce.sqlite3")
+    identity = SyntheticIdentity("synthetic-note-test")
+    protocol = SignerProtocol(identity, store)
+    owner = protocol.handle(
+        SignRequest(
+            action="technocore_note",
+            scope="claim",
+            namespace="room-owners",
+            key="d-rosetta-test",
+            value=identity.did,
+        )
+    )
+    allowed = protocol.handle(
+        SignRequest(
+            action="technocore_note",
+            scope="allow",
+            namespace="room-allow",
+            key="d-rosetta-test",
+            value=identity.did,
+        )
+    )
+    assert owner.nonce == 1
+    assert allowed.nonce == 2
+    assert verify_signature(
+        identity.did,
+        signed_note_payload("room-owners", "d-rosetta-test", 1, identity.did),
+        owner.signature,
+    )
+    with pytest.raises(ValueError, match="namespace"):
+        signed_note_payload("arbitrary", "d-rosetta-test", 3, identity.did)
     store.close()
 
 

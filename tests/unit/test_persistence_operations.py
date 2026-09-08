@@ -39,6 +39,59 @@ def test_transactional_request_idempotency_conflict_and_quota(tmp_path: Path) ->
     store.close()
 
 
+def test_pilot_cursors_jobs_deliveries_and_discovery_quota(tmp_path: Path) -> None:
+    store = StateStore(tmp_path / "state.sqlite3")
+    assert store.reserve_discovery_offer("did:a", "q1", "hash-a", NOW) == "accepted"
+    assert store.reserve_discovery_offer("did:a", "q1", "hash-a", NOW) == "duplicate"
+    assert store.reserve_discovery_offer("did:a", "q1", "hash-b", NOW) == "conflict"
+    assert store.reserve_discovery_offer("did:a", "q2", "hash-c", NOW) == "quota"
+
+    assert store.room_cursor("lobby") == 0
+    store.advance_room_cursor("lobby", 3)
+    store.advance_room_cursor("lobby", 3)
+    assert store.room_cursor("lobby") == 3
+    with pytest.raises(ValueError, match="backwards"):
+        store.advance_room_cursor("lobby", 2)
+
+    assert (
+        store.reserve_request(
+            "did:b", "r1", "request-hash", "ack", NOW, 2, 2, "{}", max_queue_depth=1
+        )
+        == "accepted"
+    )
+    assert store.pending_jobs() == [("did:b", "r1", "{}", "accepted")]
+    store.mark_job("did:b", "r1", "running", NOW)
+    with pytest.raises(ValueError, match="job state"):
+        store.mark_job("did:b", "r1", "unknown", NOW)
+    assert (
+        store.reserve_request(
+            "did:c", "r2", "request-hash-2", "ack", NOW, 2, 2, "{}", max_queue_depth=1
+        )
+        == "busy"
+    )
+    store.store_result("did:b", "r1", "result")
+    assert store.pending_jobs() == []
+
+    store.prepare_delivery("delivery", "actor", "room", "did:b", 1, "text", "sig")
+    assert store.delivery("delivery") == (
+        "actor",
+        "room",
+        "did:b",
+        1,
+        "text",
+        "sig",
+        "prepared",
+        None,
+    )
+    store.confirm_delivery("delivery", 7)
+    assert store.delivery("delivery")[-1] == 7  # type: ignore[index]
+    with pytest.raises(ValueError, match="unknown outbound"):
+        store.confirm_delivery("missing", 1)
+    with pytest.raises(ValueError, match="unknown service request"):
+        store.store_result("did:none", "missing", "result")
+    store.close()
+
+
 def test_kill_switch_and_redaction(tmp_path: Path) -> None:
     switch = tmp_path / "KILL_SWITCH"
     require_operational(switch)

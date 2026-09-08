@@ -39,7 +39,7 @@ def normalize_http_error(
 ) -> NormalizedAdapterError:
     """Map an HTTP failure to the closed Rosetta retry model.
 
-    Only 429 is retryable, and only with a positive bounded integer delay. Technocore v0.10.0's
+    Only 429 is retryable, and only with a positive bounded integer delay. Technocore v0.13.0's
     duplicate filter uses 422 specifically to prevent automatic replay of identical content.
     """
     if status == 400:

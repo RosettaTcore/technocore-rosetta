@@ -33,6 +33,16 @@ def signed_room_payload(room: str, nonce: int, text: str) -> bytes:
     return f"{room}|{nonce}|{sweep_text(text)}".encode()
 
 
+def signed_note_payload(namespace: str, key: str, nonce: int, value: str) -> bytes:
+    if namespace not in {"room-owners", "room-allow"}:
+        raise ValueError("signed note namespace is not allowed")
+    if not key or "|" in key:
+        raise ValueError("invalid note key")
+    if nonce < 1 or nonce > 9_999_999_999_999_999_999:
+        raise ValueError("nonce must contain 1-19 ASCII digits")
+    return f"{namespace}|{key}|{nonce}|{sweep_text(value, max_chars=8192)}".encode()
+
+
 def _json_default(value: Any) -> Any:
     if isinstance(value, datetime):
         if value.tzinfo is None:

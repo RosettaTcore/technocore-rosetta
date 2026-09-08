@@ -75,8 +75,44 @@ class StateStore:
                 reason TEXT,
                 public_writes INTEGER NOT NULL CHECK(public_writes = 0)
             );
+            CREATE TABLE IF NOT EXISTS room_cursors (
+                room TEXT PRIMARY KEY,
+                sequence INTEGER NOT NULL CHECK(sequence >= 0),
+                generation INTEGER CHECK(generation >= 0)
+            );
+            CREATE TABLE IF NOT EXISTS outbound_deliveries (
+                delivery_key TEXT PRIMARY KEY,
+                actor TEXT NOT NULL,
+                room TEXT NOT NULL,
+                did TEXT NOT NULL,
+                nonce INTEGER NOT NULL,
+                text TEXT NOT NULL,
+                signature TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('prepared', 'confirmed')),
+                sequence INTEGER
+            );
+            CREATE TABLE IF NOT EXISTS service_jobs (
+                requester_did TEXT NOT NULL,
+                request_id TEXT NOT NULL,
+                request_json TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('accepted', 'running', 'complete', 'failed')),
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY(requester_did, request_id)
+            );
+            CREATE TABLE IF NOT EXISTS discovery_offers (
+                requester_did TEXT NOT NULL,
+                request_id TEXT NOT NULL,
+                content_hash TEXT NOT NULL,
+                created_day TEXT NOT NULL,
+                PRIMARY KEY(requester_did, request_id)
+            );
             """
         )
+        cursor_columns = {
+            str(row[1]) for row in self.connection.execute("PRAGMA table_info(room_cursors)")
+        }
+        if "generation" not in cursor_columns:
+            self.connection.execute("ALTER TABLE room_cursors ADD COLUMN generation INTEGER")
 
     def register_trigger(self, key: str, now: datetime) -> bool:
         cursor = self.connection.execute(
@@ -84,6 +120,43 @@ class StateStore:
             (key, now.astimezone(timezone.utc).isoformat()),
         )
         return cursor.rowcount == 1
+
+    def reserve_discovery_offer(
+        self,
+        requester: str,
+        request_id: str,
+        content_hash: str,
+        now: datetime,
+        per_did_limit: int = 1,
+    ) -> str:
+        """Reserve one bounded discovery reply; exact duplicates stay idempotent."""
+        day = now.astimezone(timezone.utc).date().isoformat()
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            existing = self.connection.execute(
+                "SELECT content_hash FROM discovery_offers "
+                "WHERE requester_did=? AND request_id=?",
+                (requester, request_id),
+            ).fetchone()
+            if existing:
+                self.connection.execute("ROLLBACK")
+                return "duplicate" if existing[0] == content_hash else "conflict"
+            count = self.connection.execute(
+                "SELECT COUNT(*) FROM discovery_offers " "WHERE requester_did=? AND created_day=?",
+                (requester, day),
+            ).fetchone()
+            if int(count[0]) >= per_did_limit:
+                self.connection.execute("ROLLBACK")
+                return "quota"
+            self.connection.execute(
+                "INSERT INTO discovery_offers VALUES (?, ?, ?, ?)",
+                (requester, request_id, content_hash, day),
+            )
+            self.connection.execute("COMMIT")
+            return "accepted"
+        except Exception:
+            self.connection.execute("ROLLBACK")
+            raise
 
     def request_status(self, requester: str, request_id: str) -> tuple[str, str, str | None] | None:
         row = self.connection.execute(
@@ -102,6 +175,8 @@ class StateStore:
         now: datetime,
         per_did_limit: int,
         global_limit: int,
+        request_json: str | None = None,
+        max_queue_depth: int | None = None,
     ) -> str:
         day = now.astimezone(timezone.utc).date().isoformat()
         self.connection.execute("BEGIN IMMEDIATE")
@@ -126,10 +201,27 @@ class StateStore:
             if did_count >= per_did_limit or global_count >= global_limit:
                 self.connection.execute("ROLLBACK")
                 return "quota"
+            if max_queue_depth is not None:
+                queued = self.connection.execute(
+                    "SELECT COUNT(*) FROM service_jobs WHERE status IN ('accepted', 'running')"
+                ).fetchone()
+                if int(queued[0]) >= max_queue_depth:
+                    self.connection.execute("ROLLBACK")
+                    return "busy"
             self.connection.execute(
                 "INSERT INTO service_requests VALUES (?, ?, ?, ?, NULL, ?)",
                 (requester, request_id, content_hash, acknowledgement, day),
             )
+            if request_json is not None:
+                self.connection.execute(
+                    "INSERT INTO service_jobs VALUES (?, ?, ?, 'accepted', ?)",
+                    (
+                        requester,
+                        request_id,
+                        request_json,
+                        now.astimezone(timezone.utc).isoformat(),
+                    ),
+                )
             self.connection.execute(
                 "INSERT INTO request_quotas VALUES (?, ?, 1) "
                 "ON CONFLICT(quota_day, requester_did) DO UPDATE SET accepted=accepted+1",
@@ -147,10 +239,117 @@ class StateStore:
             raise
 
     def store_result(self, requester: str, request_id: str, result: str) -> None:
-        self.connection.execute(
-            "UPDATE service_requests SET result=? WHERE requester_did=? AND request_id=?",
-            (result, requester, request_id),
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            cursor = self.connection.execute(
+                "UPDATE service_requests SET result=? WHERE requester_did=? AND request_id=?",
+                (result, requester, request_id),
+            )
+            if cursor.rowcount != 1:
+                raise ValueError("unknown service request")
+            self.connection.execute(
+                "UPDATE service_jobs SET status='complete', updated_at=? "
+                "WHERE requester_did=? AND request_id=?",
+                (datetime.now(timezone.utc).isoformat(), requester, request_id),
+            )
+            self.connection.execute("COMMIT")
+        except Exception:
+            self.connection.execute("ROLLBACK")
+            raise
+
+    def mark_job(self, requester: str, request_id: str, status: str, now: datetime) -> None:
+        if status not in {"accepted", "running", "complete", "failed"}:
+            raise ValueError("invalid service job state")
+        cursor = self.connection.execute(
+            "UPDATE service_jobs SET status=?, updated_at=? "
+            "WHERE requester_did=? AND request_id=?",
+            (status, now.astimezone(timezone.utc).isoformat(), requester, request_id),
         )
+        if cursor.rowcount != 1:
+            raise ValueError("unknown service job")
+
+    def pending_jobs(self) -> list[tuple[str, str, str, str]]:
+        rows = self.connection.execute(
+            "SELECT requester_did, request_id, request_json, status FROM service_jobs "
+            "WHERE status IN ('accepted', 'running') ORDER BY updated_at, requester_did, request_id"
+        ).fetchall()
+        return [(str(a), str(b), str(c), str(d)) for a, b, c, d in rows]
+
+    def room_cursor(self, room: str) -> int:
+        row = self.connection.execute(
+            "SELECT sequence FROM room_cursors WHERE room=?", (room,)
+        ).fetchone()
+        return int(row[0]) if row else 0
+
+    def room_checkpoint(self, room: str) -> tuple[int, int | None]:
+        row = self.connection.execute(
+            "SELECT sequence, generation FROM room_cursors WHERE room=?", (room,)
+        ).fetchone()
+        return (0, None) if row is None else (int(row[0]), None if row[1] is None else int(row[1]))
+
+    def set_room_generation(self, room: str, generation: int, *, reset: bool = False) -> None:
+        if generation < 0:
+            raise ValueError("room generation cannot be negative")
+        sequence = 0 if reset else self.room_cursor(room)
+        self.connection.execute(
+            "INSERT INTO room_cursors(room, sequence, generation) VALUES (?, ?, ?) "
+            "ON CONFLICT(room) DO UPDATE SET sequence=excluded.sequence, "
+            "generation=excluded.generation",
+            (room, sequence, generation),
+        )
+
+    def advance_room_cursor(self, room: str, sequence: int) -> None:
+        if sequence < self.room_cursor(room):
+            raise ValueError("room cursor cannot move backwards")
+        self.connection.execute(
+            "INSERT INTO room_cursors(room, sequence) VALUES (?, ?) "
+            "ON CONFLICT(room) DO UPDATE SET sequence=MAX(sequence, excluded.sequence)",
+            (room, sequence),
+        )
+
+    def delivery(
+        self, delivery_key: str
+    ) -> tuple[str, str, str, int, str, str, str, int | None] | None:
+        row = self.connection.execute(
+            "SELECT actor, room, did, nonce, text, signature, status, sequence "
+            "FROM outbound_deliveries WHERE delivery_key=?",
+            (delivery_key,),
+        ).fetchone()
+        if row is None:
+            return None
+        return (
+            str(row[0]),
+            str(row[1]),
+            str(row[2]),
+            int(row[3]),
+            str(row[4]),
+            str(row[5]),
+            str(row[6]),
+            int(row[7]) if row[7] is not None else None,
+        )
+
+    def prepare_delivery(
+        self,
+        delivery_key: str,
+        actor: str,
+        room: str,
+        did: str,
+        nonce: int,
+        text: str,
+        signature: str,
+    ) -> None:
+        self.connection.execute(
+            "INSERT INTO outbound_deliveries VALUES (?, ?, ?, ?, ?, ?, ?, 'prepared', NULL)",
+            (delivery_key, actor, room, did, nonce, text, signature),
+        )
+
+    def confirm_delivery(self, delivery_key: str, sequence: int) -> None:
+        cursor = self.connection.execute(
+            "UPDATE outbound_deliveries SET status='confirmed', sequence=? WHERE delivery_key=?",
+            (sequence, delivery_key),
+        )
+        if cursor.rowcount != 1:
+            raise ValueError("unknown outbound delivery")
 
     def record_infrastructure_error(self, category: str, now: datetime) -> None:
         self.connection.execute(

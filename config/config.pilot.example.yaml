@@ -1,0 +1,34 @@
+schema: rosetta.pilot-config.v1
+mode: pilot
+
+technocore:
+  authority_origin: "https://technocore.chat"
+  fetch_origin: "http://technocore-egress:8082"
+  pinned_release: "v0.13.0"
+  discovery_rooms: ["lobby", "meta"]
+  request_timeout_seconds: 20
+  max_response_bytes: 1048576
+
+identity:
+  # Inert synthetic example only. Replace with the one approved public DID during deployment.
+  # Never place a seed, key file, or credential here.
+  public_did: "did:key:z6MkqF736S32saPTuLDZueAyZnU6KdsKpRJZJVojJgBQEE11"
+  signer_socket: "/run/rosetta-signer/signer.sock"
+
+service:
+  # Changing this alone is insufficient: runtime activation also requires the explicit
+  # ROSETTA_PILOT_ENABLE token and a reviewed activation manifest.
+  enabled: false
+  public_base_url: "https://192.0.2.1"
+  state_directory: "/var/lib/rosetta/pilot"
+  spool_directory: "/var/lib/rosetta/publish-spool"
+  static_root: "/var/lib/rosetta/public"
+  kill_switch_file: "/var/lib/rosetta/state/KILL_SWITCH"
+  poll_seconds: 10
+  max_requests_per_did_per_day: 2
+  max_external_jobs_per_day: 8
+  max_queue_depth: 16
+  max_parallel_runners: 1
+  monthly_budget_cents: 4000
+
+model_provider: disabled

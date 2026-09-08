@@ -23,7 +23,8 @@ from rosetta.contracts import (
     SignRequest,
     validate_public_mailbox,
 )
-from rosetta.local_protocol import LocalTechnocore, ProtocolRecord
+from rosetta.delivery import ReliableMessenger
+from rosetta.local_protocol import ProtocolRecord, TechnocoreTarget
 from rosetta.operations import OperationalGate
 from rosetta.persistence import StateStore
 from rosetta.registry import AdapterRegistry
@@ -49,7 +50,7 @@ async def build_service_card(
     registry: AdapterRegistry,
     signer: Signer,
     base_url: str,
-    protocol_baseline: Literal["v0.7.0", "v0.10.0"],
+    protocol_baseline: Literal["v0.7.0", "v0.10.0", "v0.13.0"],
     now: datetime,
     output_dir: Path,
 ) -> tuple[ServiceCard, dict[str, Any]]:
@@ -71,7 +72,7 @@ async def build_service_card(
             "limits": ServiceLimits(per_did_per_day=2, global_per_day=8).dict(),
             "status": "available",
             "updated_at": now,
-            "valid_until": now + timedelta(days=7),
+            "valid_until": now + timedelta(days=14),
         }
     )
     card_bytes = canonical_json(card.dict())
@@ -131,7 +132,7 @@ def verify_service_card(card: ServiceCard, attestation: dict[str, Any], now: dat
 
 
 async def signed_post(
-    target: LocalTechnocore,
+    target: TechnocoreTarget,
     signer: Signer,
     actor: str,
     room: str,
@@ -149,7 +150,7 @@ async def signed_post(
 class DiscoveryGateway:
     def __init__(
         self,
-        target: LocalTechnocore,
+        target: TechnocoreTarget,
         signer: Signer,
         registry: AdapterRegistry,
         store: StateStore,
@@ -158,6 +159,9 @@ class DiscoveryGateway:
         base_url: str,
         kill_switch: Path,
         gate: OperationalGate,
+        *,
+        max_queue_depth: int = 16,
+        messenger: ReliableMessenger | None = None,
     ) -> None:
         self.target = target
         self.signer = signer
@@ -168,6 +172,8 @@ class DiscoveryGateway:
         self.base_url = base_url.rstrip("/")
         self.kill_switch = kill_switch
         self.gate = gate
+        self.max_queue_depth = max_queue_depth
+        self.messenger = messenger or ReliableMessenger(target, signer, store, gate)
         self.runner_starts = 0
 
     def _require_operational(self) -> None:
@@ -184,8 +190,11 @@ class DiscoveryGateway:
             "service_card_url": self.base_url + "/service-card.json",
             "service_card_sha256": self.card_attestation["service_card_sha256"],
         }
-        return await signed_post(
-            self.target, self.signer, "rosetta-discovery", self.card.service_room, announcement
+        return await self.messenger.send(
+            "announcement:" + str(self.card_attestation["service_card_sha256"]),
+            "rosetta-discovery",
+            self.card.service_room,
+            announcement,
         )
 
     async def handle_discovery(
@@ -201,6 +210,12 @@ class DiscoveryGateway:
             validate_public_mailbox(query.reply_room)
         except (ValidationError, ValueError, KeyError):
             return None
+        query_hash = hashlib.sha256(canonical_json(query.dict())).hexdigest()
+        reservation = self.store.reserve_discovery_offer(
+            record.did, query.request_id, query_hash, now
+        )
+        if reservation in {"quota", "conflict"}:
+            return None
         offer = DiscoveryOffer.parse_obj(
             {
                 "request_id": query.request_id,
@@ -211,28 +226,27 @@ class DiscoveryGateway:
                 "valid_until": self.card.valid_until,
             }
         )
-        await signed_post(
-            self.target, self.signer, "rosetta-discovery", query.reply_room, offer.dict()
+        await self.messenger.send(
+            f"offer:{record.did}:{query.request_id}",
+            "rosetta-discovery",
+            query.reply_room,
+            offer.dict(),
         )
         return offer
 
-    async def handle_request(
-        self,
-        record: ProtocolRecord,
-        now: datetime,
-        bundle_root: str,
-        outcome: Outcome = Outcome.PASS,
-    ) -> tuple[Acknowledgement | None, ServiceResult | None]:
+    async def accept_request(
+        self, record: ProtocolRecord, now: datetime
+    ) -> tuple[ServiceRequest | None, Acknowledgement | None, str]:
         self._require_operational()
         if not record.signed:
-            return None, None
+            return None, None, "unsigned"
         try:
             request = ServiceRequest.parse_raw(record.text)
             request.validate_expiry(now)
             self.registry.require(request.producer)
             self.registry.require(request.consumer)
         except (ValidationError, ValueError):
-            return None, None
+            return None, None, "invalid"
         canonical = canonical_json(request.dict())
         content_hash = hashlib.sha256(canonical).hexdigest()
         job_id = hashlib.sha256((record.did + request.request_id).encode()).hexdigest()[:24]
@@ -248,54 +262,95 @@ class DiscoveryGateway:
             content_hash,
             canonical_json(ack.dict()).decode(),
             now,
-            2,
-            8,
+            self.card.limits.per_did_per_day,
+            self.card.limits.global_per_day,
+            canonical.decode(),
+            self.max_queue_depth,
         )
         if status == "duplicate":
             prior = self.store.request_status(record.did, request.request_id)
             if prior is None:
                 raise RuntimeError("idempotency state disappeared")
-            prior_ack = Acknowledgement.parse_raw(prior[1])
-            prior_result = ServiceResult.parse_raw(prior[2]) if prior[2] else None
-            return prior_ack, prior_result
-        if status == "conflict":
-            conflict = Acknowledgement(
+            return (
+                request,
+                Acknowledgement.parse_raw(prior[1]),
+                ("duplicate_complete" if prior[2] else "duplicate_pending"),
+            )
+        rejection_reason = {
+            "conflict": ReasonCode.DUPLICATE_CONFLICT,
+            "quota": ReasonCode.QUOTA_EXCEEDED,
+            "busy": ReasonCode.BUSY,
+        }.get(status)
+        if rejection_reason is not None:
+            rejected = Acknowledgement(
                 request_id=request.request_id,
                 status="rejected",
-                reason=ReasonCode.DUPLICATE_CONFLICT,
+                reason=rejection_reason,
             )
-            await signed_post(
-                self.target, self.signer, "rosetta-service", request.reply_room, conflict.dict()
+            await self.messenger.send(
+                f"rejection:{record.did}:{request.request_id}:{rejection_reason.value}",
+                "rosetta-service",
+                request.reply_room,
+                rejected.dict(),
             )
-            return conflict, None
-        if status == "quota":
-            quota = Acknowledgement(
-                request_id=request.request_id,
-                status="rejected",
-                reason=ReasonCode.QUOTA_EXCEEDED,
-            )
-            await signed_post(
-                self.target, self.signer, "rosetta-service", request.reply_room, quota.dict()
-            )
-            return quota, None
+            return request, rejected, status
         self.runner_starts += 1
-        await signed_post(
-            self.target, self.signer, "rosetta-service", request.reply_room, ack.dict()
+        await self.messenger.send(
+            f"ack:{record.did}:{request.request_id}",
+            "rosetta-service",
+            request.reply_room,
+            ack.dict(),
         )
+        return request, ack, "accepted"
+
+    async def complete_request(
+        self,
+        requester_did: str,
+        request: ServiceRequest,
+        acknowledgement: Acknowledgement,
+        now: datetime,
+        bundle_root: str,
+        outcome: Outcome,
+    ) -> ServiceResult:
+        if acknowledgement.job_id is None:
+            raise ValueError("accepted acknowledgement omitted job id")
         result = ServiceResult.parse_obj(
             {
                 "request_id": request.request_id,
-                "job_id": job_id,
+                "job_id": acknowledgement.job_id,
                 "outcome": outcome,
                 "bundle_root": bundle_root,
                 "report_url": (f"{self.base_url}/reports/{bundle_root.removeprefix('sha256:')}/"),
                 "completed_at": now,
             }
         )
-        await signed_post(
-            self.target, self.signer, "rosetta-service", request.reply_room, result.dict()
+        await self.messenger.send(
+            f"result:{requester_did}:{request.request_id}:{bundle_root}",
+            "rosetta-service",
+            request.reply_room,
+            result.dict(),
         )
         self.store.store_result(
-            record.did, request.request_id, canonical_json(result.dict()).decode()
+            requester_did, request.request_id, canonical_json(result.dict()).decode()
         )
+        return result
+
+    async def handle_request(
+        self,
+        record: ProtocolRecord,
+        now: datetime,
+        bundle_root: str,
+        outcome: Outcome = Outcome.PASS,
+    ) -> tuple[Acknowledgement | None, ServiceResult | None]:
+        request, ack, status = await self.accept_request(record, now)
+        if request is None or ack is None:
+            return None, None
+        if status == "duplicate_complete":
+            prior = self.store.request_status(record.did, request.request_id)
+            if prior is None:
+                raise RuntimeError("idempotency state disappeared")
+            return ack, ServiceResult.parse_raw(prior[2]) if prior[2] else None
+        if ack.status == "rejected":
+            return ack, None
+        result = await self.complete_request(record.did, request, ack, now, bundle_root, outcome)
         return ack, result

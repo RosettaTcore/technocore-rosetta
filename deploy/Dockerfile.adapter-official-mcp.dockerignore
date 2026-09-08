@@ -1,0 +1,7 @@
+**
+!adapters/
+!adapters/official_mcp/
+!adapters/official_mcp/**
+!vendor/
+!vendor/technocore-chat-v0.13.0/
+!vendor/technocore-chat-v0.13.0/**

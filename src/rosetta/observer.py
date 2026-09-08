@@ -108,7 +108,7 @@ class ReadOnlyProbeClient:
             transport=transport,
             headers={
                 "Accept": "application/json, text/plain;q=0.9",
-                "User-Agent": "rosetta-observer/0.1",
+                "User-Agent": "rosetta-observer/0.2",
             },
         )
 

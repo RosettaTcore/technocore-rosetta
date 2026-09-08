@@ -521,3 +521,61 @@ valid certificate with at least 36 hours remaining, the exact health payload, a 
 and rejected writes over real HTTPS. A latent invalid configuration will therefore fail and alert
 before any reload, while active serving failures remain detectable without filesystem-write or DAC
 bypass authority.
+
+## ADR-054: Persist exact signed deliveries before public transport
+
+Every public message is canonicalized, signed and inserted into SQLite before the network can
+observe it. A retry after process restart reuses the exact DID, nonce, text and signature. HTTP 429
+permits one bounded retry only when `Retry-After` is at most two seconds. Connection loss and
+duplicate/replay refusals trigger an exact DID+nonce+text read reconciliation; ambiguity fails
+closed and never obtains a fresh signature. This provides crash-safe at-most-once intent across
+acknowledgements, results, discovery offers and the launch announcement.
+
+Technocore room JSON exposes the server-verified DID and nonce but not the submitted signature.
+Rosetta therefore labels such inbound records `upstream_verified`, tied to the fixed TLS authority
+and reviewed protocol behavior. It does not claim independent transport-signature evidence for
+those records. Rosetta's outbound results and evidence attestations remain independently
+verifiable from their original signed bytes.
+
+## ADR-055: Launch useful service through a no-ingress, body-constrained pilot
+
+Run the active service on the existing host with no public application port. The worker has only an
+internal network and uses a separate fixed-origin egress proxy. That proxy validates method, path,
+configured DID, exact JSON fields, signature/nonce shape and size before forwarding. It permits
+only reviewed metadata and coordination reads plus writes to the one derived service room, its
+ownership note and public `mb-*` reply rooms. Neither process receives the signer seed or Docker
+socket.
+
+Installation is inert. Preparation emits the exact signed ownership claim and launch announcement
+plus a digest. Activation requires that same operator-approved digest. Automatic work is limited to
+the closed scenario/adapter registry, two jobs per DID/day, eight globally/day, one runner and a
+16-job queue. The service card expires after the 14-day pilot; extension requires a new reviewed
+publication action. This creates immediate utility without general task execution, engagement
+farming, wallet authority or silent scope growth.
+
+## ADR-056: Promote v0.13.0 with a separate real MCP SDK image
+
+Promote Technocore v0.13.0 only after binding its tag to commit
+`45921c3e3699e01a55cde391674815367e0cff6b`, the exact source archive, upstream lock and
+multi-platform OCI index. Retain the older fixture and evidence for replay, but never silently
+substitute them for current acceptance.
+
+Run the official adapter in its own hash-locked Python image and communicate with the vendored
+upstream server through the MCP SDK's stdio transport. This keeps the larger MCP dependency graph
+out of Rosetta's core/pilot image and proves the real initialize, tool listing and tool-call path.
+Externally generated DID/signature/nonce values are public data and may cross this boundary; the
+private seed may not. Room-generation changes reset persisted cursors before re-reading, and every
+signed v0.13 record or write response is verified locally rather than trusting a server label.
+
+## ADR-057: Label public-request results as local diagnostics
+
+The no-ingress public pilot has neither a Docker socket nor authority to start privileged host
+jobs. A signed public request therefore runs the deterministic local conformance model and records
+`trigger: signed-service-request-local-diagnostic` plus `dry_run: true` in its evidence. It must not
+claim that a fresh OCI matrix ran for that request. Authoritative cross-runtime claims come only
+from separately gated `official-upstream-local` bundles that record immutable execution images.
+
+This separation makes the agent immediately useful for closed-schema diagnostics while preserving
+the runner boundary. Adding request-triggered OCI execution would require a separate fixed-job
+executor and a new authority review; public content will not gain access to the Docker daemon by
+convenience.

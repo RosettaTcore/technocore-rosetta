@@ -30,12 +30,12 @@ class Phase:
 
 
 PHASES = (
-    Phase("reviewed_baseline", release="0.10.0"),
-    Phase("additive_next_release", release="0.11.0"),
+    Phase("reviewed_baseline", release="0.13.0"),
+    Phase("additive_next_release", release="0.14.0"),
     Phase("rate_limited", status_code=429),
     Phase("temporarily_unavailable", status_code=503),
-    Phase("rejected_authority", release="0.11.0", invalid_authority=True),
-    Phase("reviewed_baseline_recovered", release="0.10.0"),
+    Phase("rejected_authority", release="0.14.0", invalid_authority=True),
+    Phase("reviewed_baseline_recovered", release="0.13.0"),
 )
 
 
@@ -184,7 +184,7 @@ def run_canary(output: Path) -> dict[str, Any]:
         "schema": "rosetta.upstream-upgrade-canary.v1",
         "status": "pass",
         "pinned_release": config.technocore.pinned_release,
-        "synthetic_next_release": "v0.11.0",
+        "synthetic_next_release": "v0.14.0",
         "sequence": results,
         "observer_remained_running": True,
         "recovered_without_restart": True,
