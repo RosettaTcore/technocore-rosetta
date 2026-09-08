@@ -27,6 +27,23 @@ deterministic and no model participates.
 
 ## Install without writing publicly
 
+On the existing no-domain HTTPS host, the recommended first installation is the fixed, no-argument
+bootstrap. It reads the already approved public IPv4 address, asks the active networkless signer
+for only its public DID, renders the closed configuration, installs the disabled unit and prepares
+the exact launch bytes:
+
+```sh
+sudo /opt/rosetta/current/deploy/bootstrap-rosetta-pilot.sh
+```
+
+The bootstrap refuses an existing config, preview, active service or enabled service. Its final
+lines must be `pilot_bootstrap=pass`, `pilot_enabled=no` and `public_writes=0`. It never prints or
+copies the seed and does not activate the pilot. Preserve the displayed preview and digest for the
+separate approval step below.
+
+The manual alternative is useful when the report origin or approved runtime paths differ from the
+standard single-server deployment.
+
 Create `/root/rosetta-pilot.yaml` from `config/config.pilot.example.yaml`. Set only the public DID,
 the existing HTTPS IPv4 origin and approved runtime paths. Set `service.enabled: true`; the runtime
 still cannot start without the explicit activation token and approved preview digest. Never place a
