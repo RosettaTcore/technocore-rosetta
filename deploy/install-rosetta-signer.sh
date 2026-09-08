@@ -76,6 +76,7 @@ docker run --rm --network none --read-only --user "$signer_uid:$signer_gid" \
   "$image" rosetta_signer.service --help >/dev/null
 
 install -d -o root -g root -m 0755 /usr/local/libexec /etc/rosetta
+install -d -o "$signer_uid" -g "$signer_gid" -m 0700 /var/lib/rosetta-signer
 install -o root -g root -m 0555 \
   "$source_root/deploy/run-rosetta-production-signer.sh" \
   /usr/local/libexec/rosetta-production-signer

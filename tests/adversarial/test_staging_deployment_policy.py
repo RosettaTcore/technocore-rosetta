@@ -158,6 +158,8 @@ def test_production_signer_uses_encrypted_credential_and_no_network() -> None:
     assert "RestrictAddressFamilies=AF_UNIX" in unit
     assert "CapabilityBoundingSet=CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER" in unit
     assert "ProtectKernelTunables=yes" in unit
+    assert not any(line.startswith("StateDirectory=") for line in unit.splitlines())
+    assert "ReadWritePaths=/run/rosetta-signer /var/lib/rosetta-signer" in unit
     assert "Environment=" not in unit
     assert "synthetic" not in unit.lower()
 
@@ -182,6 +184,9 @@ def test_production_signer_container_and_credential_install_fail_closed() -> Non
     assert "trap 'exit 143' TERM" not in runner
 
     assert "signer_uid=65531" in installer
+    assert (
+        'install -d -o "$signer_uid" -g "$signer_gid" -m 0700 /var/lib/rosetta-signer' in installer
+    )
     assert "docker image inspect" in installer
     assert "systemd-analyze verify" in installer
     assert "visudo -cf" in installer
