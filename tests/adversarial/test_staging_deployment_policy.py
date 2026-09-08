@@ -87,12 +87,27 @@ def test_active_pilot_has_one_narrow_egress_and_no_ingress_or_docker_socket() ->
 
     unit = (ROOT / "deploy/rosetta-pilot.service").read_text()
     installer = (ROOT / "deploy/install-rosetta-pilot.sh").read_text()
+    bootstrap = (ROOT / "deploy/bootstrap-rosetta-pilot.sh").read_text()
     activator = (ROOT / "deploy/activate-rosetta-pilot.sh").read_text()
     assert "Requires=docker.service rosetta-signer.production.service" in unit
     assert "--abort-on-container-exit" in unit
     assert "systemctl enable" not in installer
     assert "systemctl start" not in installer
     assert "public_writes=0" in installer
+    assert 'test "$#" = "0"' in bootstrap
+    assert "/etc/rosetta/static-origin.ip" in bootstrap
+    assert "--network none" in bootstrap
+    assert "--read-only" in bootstrap
+    assert "--group-add 65531" in bootstrap
+    assert 'digest = "sha256:" + hashlib.sha256' in bootstrap
+    assert "rosetta-signer.production.service" in bootstrap
+    assert "install-rosetta-pilot.sh" in bootstrap
+    assert "/usr/local/libexec/prepare-rosetta-pilot" in bootstrap
+    assert "activate-rosetta-pilot" not in bootstrap
+    assert "systemctl enable" not in bootstrap
+    assert "systemctl start" not in bootstrap
+    assert "public_writes=0" in bootstrap
+    assert "/etc/credstore" not in bootstrap
     assert "activation-preview.sha256" in activator
     assert "activate --approved-digest" in activator
     assert "systemctl enable --now rosetta-pilot.service" in activator
