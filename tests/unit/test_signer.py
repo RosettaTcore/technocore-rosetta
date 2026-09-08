@@ -192,6 +192,7 @@ def test_unix_signer_client_roundtrip_is_framed(monkeypatch: pytest.MonkeyPatch)
     request = json.loads(writer.data)
     assert request["schema"] == "rosetta.sign-request.v1"
     assert "schema_" not in request
+    assert set(request) == {"schema", "action", "scope", "digest"}
     assert writer.closed
 
 
@@ -229,11 +230,7 @@ def test_unix_signer_client_surfaces_closed_error_response(
     client = SignerClient("/tmp/signer.sock")  # noqa: S108 - inert test path
     with pytest.raises(RuntimeError, match=message):
         asyncio.run(
-            client.sign(
-                SignRequest(
-                    action="artifact_root", scope="x", digest="sha256:" + "a" * 64
-                )
-            )
+            client.sign(SignRequest(action="artifact_root", scope="x", digest="sha256:" + "a" * 64))
         )
 
 
@@ -262,9 +259,7 @@ def test_unix_signer_client_rejects_invalid_json(monkeypatch: pytest.MonkeyPatch
     with pytest.raises(RuntimeError, match="invalid JSON"):
         asyncio.run(
             SignerClient("/tmp/signer.sock").sign(  # noqa: S108 - inert test path
-                SignRequest(
-                    action="artifact_root", scope="x", digest="sha256:" + "a" * 64
-                )
+                SignRequest(action="artifact_root", scope="x", digest="sha256:" + "a" * 64)
             )
         )
 
@@ -277,6 +272,8 @@ def test_process_signer_client_surfaces_child_failure(
 
         async def communicate(self, data: bytes):  # type: ignore[no-untyped-def]
             assert data.endswith(b"\n")
+            request = json.loads(data)
+            assert set(request) == {"schema", "action", "scope", "digest"}
             return b"", b"rejected fixture"
 
     async def create(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
