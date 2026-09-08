@@ -189,7 +189,84 @@ def test_unix_signer_client_roundtrip_is_framed(monkeypatch: pytest.MonkeyPatch)
     )
     assert result.did == EXPECTED_DID
     assert writer.data.endswith(b"\n")
+    request = json.loads(writer.data)
+    assert request["schema"] == "rosetta.sign-request.v1"
+    assert "schema_" not in request
     assert writer.closed
+
+
+@pytest.mark.parametrize(
+    ("response", "message"),
+    [
+        ({"schema": "rosetta.sign-error.v1", "error": "ValueError"}, "ValueError"),
+        ({"schema": "rosetta.sign-error.v1", "error": 1}, "invalid error response"),
+    ],
+)
+def test_unix_signer_client_surfaces_closed_error_response(
+    monkeypatch: pytest.MonkeyPatch, response: dict[str, object], message: str
+) -> None:
+    class Reader:
+        async def readline(self) -> bytes:
+            return json.dumps(response).encode() + b"\n"
+
+    class Writer:
+        def write(self, _data: bytes) -> None:
+            return None
+
+        async def drain(self) -> None:
+            return None
+
+        def close(self) -> None:
+            return None
+
+        async def wait_closed(self) -> None:
+            return None
+
+    async def connect(_path: str):  # type: ignore[no-untyped-def]
+        return Reader(), Writer()
+
+    monkeypatch.setattr(asyncio, "open_unix_connection", connect)
+    client = SignerClient("/tmp/signer.sock")  # noqa: S108 - inert test path
+    with pytest.raises(RuntimeError, match=message):
+        asyncio.run(
+            client.sign(
+                SignRequest(
+                    action="artifact_root", scope="x", digest="sha256:" + "a" * 64
+                )
+            )
+        )
+
+
+def test_unix_signer_client_rejects_invalid_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Reader:
+        async def readline(self) -> bytes:
+            return b"not-json\n"
+
+    class Writer:
+        def write(self, _data: bytes) -> None:
+            return None
+
+        async def drain(self) -> None:
+            return None
+
+        def close(self) -> None:
+            return None
+
+        async def wait_closed(self) -> None:
+            return None
+
+    async def connect(_path: str):  # type: ignore[no-untyped-def]
+        return Reader(), Writer()
+
+    monkeypatch.setattr(asyncio, "open_unix_connection", connect)
+    with pytest.raises(RuntimeError, match="invalid JSON"):
+        asyncio.run(
+            SignerClient("/tmp/signer.sock").sign(  # noqa: S108 - inert test path
+                SignRequest(
+                    action="artifact_root", scope="x", digest="sha256:" + "a" * 64
+                )
+            )
+        )
 
 
 def test_process_signer_client_surfaces_child_failure(
