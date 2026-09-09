@@ -514,13 +514,13 @@ the command-line diagnostic log is set to standard error. A periodic `nginx -t` 
 either `CAP_DAC_OVERRIDE`, weaker log permissions or a writable production log. All three choices
 unnecessarily expand a read-only monitoring boundary.
 
-Remove `nginx -t` only from the capability-free periodic healthcheck. Keep syntax validation in the
-root-owned static-origin installer before initial activation and before its final reload, and in the
-certificate renewer before every reload. The periodic service continues to require active nginx, a
-valid certificate with at least 36 hours remaining, the exact health payload, a closed root path
-and rejected writes over real HTTPS. A latent invalid configuration will therefore fail and alert
-before any reload, while active serving failures remain detectable without filesystem-write or DAC
-bypass authority.
+Keep syntax validation in the root-owned static-origin installer before initial activation and
+before its final reload. The capability-free certificate renewer reloads that unchanged
+configuration, compares the on-disk and live-served certificate fingerprints, and then runs the
+same end-to-end HTTPS gate. The periodic service continues to require active nginx, a valid
+certificate with at least 36 hours remaining, the exact health payload, a closed root path and
+rejected writes over real HTTPS. A failed reload or stale served certificate therefore fails and
+alerts without filesystem-write or DAC-bypass authority.
 
 ## ADR-054: Persist exact signed deliveries before public transport
 
@@ -608,3 +608,17 @@ announcement bytes. Ownership and allow-list notes share the signer's monotonic 
 Reject the old preview schema and require a fresh operator-approved digest. A restart or partial
 write succeeds only when the exact approved note value or exact announcement is visible upstream;
 all ambiguity still fails closed.
+
+## ADR-060: Verify the live renewed certificate without broadening the sandbox
+
+The short-lived IP certificate renewer successfully replaced the certificate files, but its
+post-renewal `nginx -t` could not open Debian's `www-data:adm` logs or bind privileged ports inside
+the capability-free systemd sandbox. Granting log access or DAC/network capabilities solely to run
+the redundant parse check would broaden a sensitive root-owned boundary.
+
+Keep `ProtectSystem=strict`, the empty capability bounding set and the existing narrow writable
+paths. The installer remains the configuration-validation boundary. Renewal reloads the unchanged
+configuration, compares the SHA-256 fingerprint of the on-disk leaf certificate with the leaf
+served over real HTTPS using a bounded retry, and runs the complete static-origin health gate. A
+failed reload, stale certificate, invalid TLS endpoint or unsafe HTTP behavior fails and alerts;
+the renewal service receives no production-log access or additional Linux capability.
