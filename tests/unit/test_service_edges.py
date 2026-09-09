@@ -133,6 +133,18 @@ def test_discovery_and_request_rejection_conflict_and_quota(
         assert await gateway.handle_discovery(unsigned, NOW) is None
         assert await gateway.handle_request(unsigned, NOW, BUNDLE) == (None, None)
 
+        malformed_envelope = ProtocolRecord(
+            2,
+            "room",
+            peer.did,
+            10_000_000_000_000_000_000,
+            "{}",
+            "",
+        )
+        assert malformed_envelope.signed is False
+        assert await gateway.handle_discovery(malformed_envelope, NOW) is None
+        assert await gateway.handle_request(malformed_envelope, NOW, BUNDLE) == (None, None)
+
         expired_query = DiscoveryQuery(
             schema="rosetta.discover.v1",
             request_id="1" * 32,

@@ -622,3 +622,17 @@ configuration, compares the SHA-256 fingerprint of the on-disk leaf certificate 
 served over real HTTPS using a bounded retry, and runs the complete static-origin health gate. A
 failed reload, stale certificate, invalid TLS endpoint or unsafe HTTP behavior fails and alerts;
 the renewal service receives no production-log access or additional Linux capability.
+
+## ADR-061: Treat public records as data and keep the pilot supervisor alive
+
+Every trust predicate over a public Technocore record is total: malformed room, nonce, text, DID
+or signature data returns `false` and never raises into the polling loop. The cursor advances past
+such an untrusted record only after deterministic rejection, so one hostile message cannot be
+retried forever or deny service to later valid requests.
+
+The long-running pilot catches failures at the poll boundary, emits only a bounded error class
+instead of upstream-controlled exception text, and atomically marks health `degraded`. It retries
+from the last committed cursor after the configured delay while health monitoring continues to
+fail closed. Successful polling replaces degraded health with `healthy`. This separates process
+liveness from readiness without relaxing signature checks, write reconciliation, quotas or the
+operator kill switch.

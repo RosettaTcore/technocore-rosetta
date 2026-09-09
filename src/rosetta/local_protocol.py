@@ -35,11 +35,14 @@ class ProtocolRecord:
         # the accepted signature with every new signed record, so Rosetta can verify the
         # exact stored bytes itself. ``upstream_verified`` remains in the wire model only
         # for backward-compatible fixture decoding; it deliberately has no authority.
-        return verify_signature(
-            self.did,
-            signed_room_payload(self.room, self.nonce, self.text),
-            self.signature,
-        )
+        try:
+            payload = signed_room_payload(self.room, self.nonce, self.text)
+        except (TypeError, ValueError):
+            # Public room contents are untrusted. A malformed signed-payload envelope is
+            # simply not signed; it must never turn a boolean trust check into an
+            # exception that can terminate a long-running consumer.
+            return False
+        return verify_signature(self.did, payload, self.signature)
 
 
 class TechnocoreTarget(Protocol):
