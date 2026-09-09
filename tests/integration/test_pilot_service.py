@@ -7,10 +7,11 @@ from pathlib import Path
 
 from rosetta.contracts import ServiceRequest
 from rosetta.evidence import verify_bundle
-from rosetta.local_protocol import LocalTechnocore
+from rosetta.local_protocol import LocalTechnocore, ProtocolRecord
 from rosetta.pilot import PilotRuntime
 from rosetta.pilot_config import PilotConfig
 from rosetta.service import service_names, signed_post
+from rosetta.technocore_client import TechnocoreRefusal
 from rosetta_signer.canonical import signed_note_payload
 from rosetta_signer.did import verify_signature
 from tests.unit.test_service_edges import AsyncSigner
@@ -42,12 +43,27 @@ class PilotFixtureTarget(LocalTechnocore):
         assert verify_signature(did, signed_note_payload(namespace, key, nonce, value), signature)
         location = (namespace, key)
         if if_absent and location in self.notes:
-            raise RuntimeError("already claimed")
+            raise TechnocoreRefusal(409, "already_claimed")
         self.notes[location] = value
         return {"stored": True}
 
     def read_note(self, namespace: str, key: str) -> str | None:
         return self.notes.get((namespace, key))
+
+    def post_signed(
+        self,
+        actor: str,
+        room: str,
+        did: str,
+        nonce: int,
+        text: str,
+        signature: str,
+    ) -> ProtocolRecord:
+        owner = self.notes.get(("room-owners", room))
+        allowed = self.notes.get(("room-allow", room), "").split()
+        if owner is not None and did not in allowed:
+            raise TechnocoreRefusal(400, "owner_allow_list_required")
+        return super().post_signed(actor, room, did, nonce, text, signature)
 
 
 def test_complete_active_pilot_request_to_signed_published_result(tmp_path: Path) -> None:
@@ -82,9 +98,11 @@ def test_complete_active_pilot_request_to_signed_published_result(tmp_path: Path
         runtime = PilotRuntime(config, signer=rosetta, target=target, clock=lambda: NOW)
         preview, digest = await runtime.prepare(NOW)
         assert preview["service_room"] == service_room
-        assert len(preview["writes"]) == 2
+        assert len(preview["writes"]) == 3
         activated = await runtime.activate(digest, NOW)
         assert activated["request_mailbox"] == request_mailbox
+        assert target.notes[("room-owners", service_room)] == rosetta.did
+        assert target.notes[("room-allow", service_room)] == rosetta.did
         reply = "mb-synthetic-peer"
         target.create_room(reply)
         request = ServiceRequest(
