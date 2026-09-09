@@ -172,8 +172,8 @@ Commands refuse unsafe or non-empty output targets where replacement would be am
 
 The current measured baseline includes:
 
-- 381 passing Python tests;
-- 94.75% combined line/branch Python coverage with a 90% enforced floor;
+- 385 passing Python tests;
+- 95% combined line/branch Python coverage with a 90% enforced floor;
 - strict Ruff, Mypy and TypeScript checks;
 - transitive, hash-locked Python dependencies;
 - official four-runtime matrix and 20-iteration soak passes;
@@ -206,11 +206,12 @@ evidence and returns a signed result. It has no public application port, wallet,
 task, prompt, URL, repository, image or request-selected code path.
 
 Installation is deliberately inert. `prepare-rosetta-pilot` creates an exact activation manifest
-and signs the two launch payloads without sending them. `activate-rosetta-pilot` requires the
-operator-approved manifest digest before it can claim the derived service room and publish the
-launch announcement. Thereafter the limits are two jobs per DID/day, eight jobs globally/day, one
-runner and a 16-job queue; the host kill switch disables every signing, publishing and service path.
-See [`docs/PILOT_OPERATIONS.md`](docs/PILOT_OPERATIONS.md).
+and signs the room claim, owner allow-list and launch announcement without sending them.
+`activate-rosetta-pilot` requires the operator-approved manifest digest before it can claim the
+derived service room, allow its identity and publish the launch announcement. Thereafter the limits
+are two jobs per DID/day, eight jobs globally/day, one runner and a 16-job queue; the host kill
+switch disables every signing, publishing and service path. See
+[`docs/PILOT_OPERATIONS.md`](docs/PILOT_OPERATIONS.md).
 
 Reviewed updates can be packaged as predecessor-bound SSH-signed Git archives and applied through
 a fixed root-owned systemd gate. The deployment account has no general root command: the gate

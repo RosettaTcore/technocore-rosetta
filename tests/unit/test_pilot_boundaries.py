@@ -223,6 +223,7 @@ def test_pilot_egress_rejects_open_proxy_behavior() -> None:
     )
     try:
         assert egress.forward("GET", "/r/lobby?format=json&since=0&limit=2")[0] == 200
+        assert egress.forward("GET", "/kv/room-allow/d-rosetta-test")[0] == 200
         assert egress.forward("GET", "/r/private?format=json")[0] == 403
         assert egress.forward("GET", "/r/lobby?bad=query")[0] == 403
         assert egress.forward("GET", "https://evil.invalid/r/lobby?format=json")[0] == 400
@@ -235,6 +236,24 @@ def test_pilot_egress_rejects_open_proxy_behavior() -> None:
             }
         ).encode()
         assert egress.forward("POST", "/r/mb-peer?format=json", body)[0] == 200
+        allow_body = json.dumps(
+            {
+                "did": identity.did,
+                "sig": identity.sign(
+                    signed_note_payload("room-allow", "d-rosetta-test", 2, identity.did)
+                ),
+                "nonce": "2",
+                "value": identity.did,
+            }
+        ).encode()
+        assert (
+            egress.forward("POST", "/kv/room-allow/d-rosetta-test?format=json", allow_body)[0]
+            == 200
+        )
+        assert (
+            egress.forward("POST", "/kv/room-allow/d-rosetta-other?format=json", allow_body)[0]
+            == 403
+        )
         bad = json.dumps(
             {
                 "did": SyntheticIdentity("synthetic-other").did,
@@ -248,7 +267,7 @@ def test_pilot_egress_rejects_open_proxy_behavior() -> None:
         assert egress.forward("POST", "/r/mb-peer?format=json", bad)[0] == 403
     finally:
         egress.close()
-    assert len(seen) == 2
+    assert len(seen) == 4
 
 
 def test_pilot_config_is_closed_disabled_by_default_and_requires_activation(tmp_path: Path) -> None:

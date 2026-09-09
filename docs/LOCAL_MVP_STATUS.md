@@ -1,14 +1,16 @@
 # Local MVP status
 
-Date: 8 September 2026
+Date: 9 September 2026
 
 ## Outcome
 
 Phases 0–3 plus the controlled evolution proposal lane are implemented. The authoritative local
 acceptance path runs the official Technocore `v0.13.0` image through four real isolated runtime
 paths while preserving the original v0.7.0 fixture and v0.10.0 evidence for historical replay. The
-active no-ingress pilot is complete but has not sent its exact two activation writes. Source control uses a
-dedicated public GitHub repository and identity, separate from the operator's other projects.
+active no-ingress pilot is complete but has not completed its exact three-step activation. The room
+claim from the first attempt was reconciled; the owner allow-list and announcement remain pending a
+fresh preview and approval. Source control uses a dedicated public GitHub repository and identity,
+separate from the operator's other projects.
 The no-ingress read-only observer is running on its dedicated staging host. The 1 September check
 verified its zero-write safety boundary while upstream availability was degraded; safety and
 compatibility are now independent verdicts, so external release churn does not reset the safety
@@ -55,12 +57,12 @@ window.
 
 ## Verified results
 
-- Pytest: 381/381 pass;
-- combined line/branch Python coverage: 94.75%, enforced floor 90%; observer coverage: 99%;
+- Pytest: 385/385 pass;
+- combined line/branch Python coverage: 95%, enforced floor 90%; observer coverage: 99%;
 - Ruff lint/security: pass;
 - Mypy strict: pass for 36 source modules;
 - TypeScript strict check: pass;
-- secret scan: pass over 303 files;
+- secret scan: pass over 304 files;
 - fresh install from the development hash lock: pass; `pip check`: pass;
 - recorded runtime dependency OSV batch query: no known vulnerabilities;
 - official upstream matrix: 4/4 cells pass;

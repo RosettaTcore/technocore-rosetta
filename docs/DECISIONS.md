@@ -543,15 +543,15 @@ Run the active service on the existing host with no public application port. The
 internal network and uses a separate fixed-origin egress proxy. That proxy validates method, path,
 configured DID, exact JSON fields, signature/nonce shape and size before forwarding. It permits
 only reviewed metadata and coordination reads plus writes to the one derived service room, its
-ownership note and public `mb-*` reply rooms. Neither process receives the signer seed or Docker
-socket.
+ownership and owner allow-list notes, and public `mb-*` reply rooms. Neither process receives the
+signer seed or Docker socket.
 
-Installation is inert. Preparation emits the exact signed ownership claim and launch announcement
-plus a digest. Activation requires that same operator-approved digest. Automatic work is limited to
-the closed scenario/adapter registry, two jobs per DID/day, eight globally/day, one runner and a
-16-job queue. The service card expires after the 14-day pilot; extension requires a new reviewed
-publication action. This creates immediate utility without general task execution, engagement
-farming, wallet authority or silent scope growth.
+Installation is inert. Preparation emits the exact signed ownership claim, owner allow-list and
+launch announcement plus a digest. Activation requires that same operator-approved digest.
+Automatic work is limited to the closed scenario/adapter registry, two jobs per DID/day, eight
+globally/day, one runner and a 16-job queue. The service card expires after the 14-day pilot;
+extension requires a new reviewed publication action. This creates immediate utility without
+general task execution, engagement farming, wallet authority or silent scope growth.
 
 ## ADR-056: Promote v0.13.0 with a separate real MCP SDK image
 
@@ -592,3 +592,19 @@ Create `/var/lib/rosetta-signer` with UID/GID 65531 in the signer installer and 
 explicit `ReadWritePaths=` sandbox allowance. Do not use `StateDirectory=` for this mixed host/
 container ownership boundary. This preserves the seed and DID, keeps the host supervisor's Docker
 authority unchanged and lets SQLite retain container-user ownership across reboots.
+
+## ADR-059: Allow the service identity before announcing in its owned room
+
+Technocore room ownership and room authorization are separate signed notes. Claiming a `d-*` room
+does not implicitly permit its owner to post there: the owner must publish a `room-allow` value
+before the first signed room message. The first production activation correctly claimed Rosetta's
+derived room but received HTTP 400 for the announcement because the two-write preview omitted this
+protocol step. The room remained empty, the pilot stayed disabled and no activation record was
+created.
+
+Use a versioned three-write activation preview: create-or-reconcile the exact room owner, set-or-
+reconcile an allow-list containing only Rosetta's DID, then deliver the already persisted
+announcement bytes. Ownership and allow-list notes share the signer's monotonic nonce lane.
+Reject the old preview schema and require a fresh operator-approved digest. A restart or partial
+write succeeds only when the exact approved note value or exact announcement is visible upstream;
+all ambiguity still fails closed.

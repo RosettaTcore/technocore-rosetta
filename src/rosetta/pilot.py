@@ -33,7 +33,7 @@ from rosetta.contracts import (
 )
 from rosetta.delivery import ReliableMessenger
 from rosetta.evidence import build_bundle, verify_bundle
-from rosetta.local_protocol import LocalTechnocore, ProtocolRecord
+from rosetta.local_protocol import LocalTechnocore, ProtocolRecord, UncertainWrite
 from rosetta.operations import OperationalGate
 from rosetta.persistence import StateStore
 from rosetta.pilot_config import PilotConfig, load_pilot_config
@@ -42,7 +42,7 @@ from rosetta.registry import AdapterRegistry
 from rosetta.scenario import ScenarioResult, run_roundtrip
 from rosetta.service import DiscoveryGateway, build_service_card, verify_service_card
 from rosetta.signer_client import GuardedSigner, Signer, SignerClient
-from rosetta.technocore_client import TechnocoreHttpClient
+from rosetta.technocore_client import TechnocoreHttpClient, TechnocoreRefusal
 from rosetta_signer.canonical import canonical_json
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -163,6 +163,17 @@ class PilotRuntime:
         )
         if claim.did != card.did or claim.nonce is None:
             raise RuntimeError("signer returned an invalid ownership claim")
+        allowed = await self.signer.sign(
+            SignRequest(
+                action="technocore_note",
+                scope="service-room-allow",
+                namespace="room-allow",
+                key=card.service_room,
+                value=card.did,
+            )
+        )
+        if allowed.did != card.did or allowed.nonce is None:
+            raise RuntimeError("signer returned an invalid room allow-list")
         announcement = {
             "schema": "rosetta.service-announcement.v1",
             "did": card.did,
@@ -197,7 +208,7 @@ class PilotRuntime:
         if prepared is None:
             raise RuntimeError("announcement preparation disappeared")
         preview: dict[str, object] = {
-            "schema": "rosetta.pilot-activation-preview.v1",
+            "schema": "rosetta.pilot-activation-preview.v2",
             "authority": self.config.technocore.authority_origin,
             "public_base_url": self.config.service.public_base_url,
             "service_card_sha256": attestation["service_card_sha256"],
@@ -215,6 +226,17 @@ class PilotRuntime:
                         "nonce": str(claim.nonce),
                         "value": card.did,
                         "if_absent": True,
+                    },
+                },
+                {
+                    "purpose": "allow_service_identity",
+                    "method": "POST",
+                    "path": f"/kv/room-allow/{card.service_room}?format=json",
+                    "body": {
+                        "did": allowed.did,
+                        "sig": allowed.signature,
+                        "nonce": str(allowed.nonce),
+                        "value": card.did,
                     },
                 },
                 {
@@ -248,9 +270,40 @@ class PilotRuntime:
 
     def _load_prepared(self) -> tuple[dict[str, object], str]:
         value = json.loads(self.preview_path.read_bytes())
-        if not isinstance(value, dict):
+        if (
+            not isinstance(value, dict)
+            or value.get("schema") != "rosetta.pilot-activation-preview.v2"
+        ):
             raise ValueError("invalid activation preview")
         return value, _digest(value)
+
+    def _apply_note(
+        self,
+        namespace: str,
+        key: str,
+        body: dict[str, object],
+        *,
+        if_absent: bool,
+    ) -> None:
+        try:
+            self.target.post_signed_note(
+                namespace,
+                key,
+                str(body["did"]),
+                int(str(body["nonce"])),
+                str(body["value"]),
+                str(body["sig"]),
+                if_absent=if_absent,
+            )
+        except (TechnocoreRefusal, UncertainWrite) as exc:
+            # The exact approved note value is the only safe reconciliation result for
+            # both create-only ownership and overwrite-style allow-list writes.
+            try:
+                current = self.target.read_note(namespace, key)
+            except Exception as reconciliation_error:
+                raise exc from reconciliation_error
+            if current != str(body["value"]):
+                raise exc
 
     def _load_card(self, now: datetime) -> tuple[ServiceCard, dict[str, Any]]:
         card = ServiceCard.parse_raw((self.service_documents / "service-card.json").read_bytes())
@@ -263,6 +316,41 @@ class PilotRuntime:
             raise RuntimeError("service card identity mismatch")
         return card, attestation
 
+    @staticmethod
+    def _validated_note_entry(
+        entry: object,
+        *,
+        purpose: str,
+        namespace: str,
+        card: ServiceCard,
+        if_absent: bool,
+    ) -> dict[str, object]:
+        if not isinstance(entry, dict) or set(entry) != {"purpose", "method", "path", "body"}:
+            raise ValueError(f"invalid {purpose} preview")
+        if (
+            entry["purpose"] != purpose
+            or entry["method"] != "POST"
+            or entry["path"] != f"/kv/{namespace}/{card.service_room}?format=json"
+        ):
+            raise ValueError(f"invalid {purpose} preview")
+        body = entry["body"]
+        expected_keys = {"did", "sig", "nonce", "value"}
+        if if_absent:
+            expected_keys.add("if_absent")
+        if (
+            not isinstance(body, dict)
+            or set(body) != expected_keys
+            or body.get("did") != card.did
+            or body.get("value") != card.did
+            or (if_absent and body.get("if_absent") is not True)
+            or not isinstance(body.get("sig"), str)
+            or not isinstance(body.get("nonce"), str)
+            or not str(body["nonce"]).isdigit()
+            or int(str(body["nonce"])) < 1
+        ):
+            raise ValueError(f"invalid {purpose} preview")
+        return body
+
     async def activate(
         self, approved_digest: str, now: datetime | None = None
     ) -> dict[str, object]:
@@ -273,36 +361,81 @@ class PilotRuntime:
         preview, preview_digest = self._load_prepared()
         if approved_digest != preview_digest:
             raise RuntimeError("activation approval digest mismatch")
-        card, _ = self._load_card(current)
+        card, attestation = self._load_card(current)
         self.target.capabilities()
+        writes = preview.get("writes")
+        if not isinstance(writes, list) or len(writes) != 3:
+            raise ValueError("activation preview write set changed")
+        expected_top_level = {
+            "schema",
+            "authority",
+            "public_base_url",
+            "service_card_sha256",
+            "service_room",
+            "request_mailbox",
+            "limits",
+            "writes",
+            "automatic_behavior_after_activation",
+        }
+        expected_automatic = {
+            "poll_rooms": [card.request_mailbox, *self.config.technocore.discovery_rooms],
+            "accept_only": "rosetta.request.v1",
+            "max_requests_per_did_per_day": card.limits.per_did_per_day,
+            "max_global_requests_per_day": card.limits.global_per_day,
+            "cold_outreach": False,
+            "natural_language_replies": False,
+            "llm_verdicts": False,
+        }
+        if (
+            set(preview) != expected_top_level
+            or preview["authority"] != self.config.technocore.authority_origin
+            or preview["public_base_url"] != self.config.service.public_base_url
+            or preview["service_card_sha256"] != attestation["service_card_sha256"]
+            or preview["service_room"] != card.service_room
+            or preview["request_mailbox"] != card.request_mailbox
+            or preview["limits"] != card.limits.dict()
+            or preview["automatic_behavior_after_activation"] != expected_automatic
+        ):
+            raise ValueError("activation preview metadata changed")
+        claim_body = self._validated_note_entry(
+            writes[0],
+            purpose="claim_service_room",
+            namespace="room-owners",
+            card=card,
+            if_absent=True,
+        )
+        allow_body = self._validated_note_entry(
+            writes[1],
+            purpose="allow_service_identity",
+            namespace="room-allow",
+            card=card,
+            if_absent=False,
+        )
+        announcement = writes[2]
+        announcement_key = "announcement:" + str(attestation["service_card_sha256"])
+        prepared = self.store.delivery(announcement_key)
+        expected_announcement = (
+            None
+            if prepared is None
+            else {
+                "purpose": "announce_service",
+                "method": "POST",
+                "path": f"/r/{card.service_room}?format=json",
+                "body": {
+                    "did": prepared[2],
+                    "sig": prepared[5],
+                    "nonce": str(prepared[3]),
+                    "text": prepared[4],
+                },
+            }
+        )
+        if announcement != expected_announcement:
+            raise ValueError("invalid announcement preview")
         ServiceDocumentPublisher(True, self.spool_dir, self.static_root, self.gate).publish(
             self.service_documents, current
         )
-        writes = preview.get("writes")
-        if not isinstance(writes, list) or len(writes) != 2:
-            raise ValueError("activation preview write set changed")
-        claim = writes[0]
-        if not isinstance(claim, dict) or not isinstance(claim.get("body"), dict):
-            raise ValueError("invalid claim preview")
-        body = claim["body"]
-        try:
-            self.target.post_signed_note(
-                "room-owners",
-                card.service_room,
-                str(body["did"]),
-                int(str(body["nonce"])),
-                str(body["value"]),
-                str(body["sig"]),
-                if_absent=True,
-            )
-        except Exception as exc:
-            # The only safe uncertain/restart reconciliation is the exact claimed owner.
-            try:
-                owner = self.target.read_note("room-owners", card.service_room)
-            except Exception as reconciliation_error:
-                raise exc from reconciliation_error
-            if owner != card.did:
-                raise exc
+        self._apply_note("room-owners", card.service_room, claim_body, if_absent=True)
+        self._apply_note("room-allow", card.service_room, allow_body, if_absent=False)
         gateway = self._gateway(card)
         announcement_record = await gateway.announce()
         activated = {

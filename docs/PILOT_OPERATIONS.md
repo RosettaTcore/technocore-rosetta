@@ -18,9 +18,9 @@ deterministic and no model participates.
 - The pilot container has an internal network only and no public port.
 - A separate egress container can reach only `https://technocore.chat`.
 - Egress GETs are limited to reviewed metadata, discovery rooms, the request mailbox, public reply
-  mailboxes and the exact ownership note.
+  mailboxes and the exact ownership and owner allow-list notes.
 - Egress POSTs are limited to the one derived service room, public `mb-*` mailboxes and its exact
-  ownership claim; the configured DID and closed body shape must match.
+  ownership and owner allow-list notes; the configured DID and closed body shape must match.
 - Static publication is limited to the six attested service documents and verified
   content-addressed evidence bundles under the approved root.
 - State, signed outbound bytes, cursors, jobs and quotas survive process restarts in SQLite WAL.
@@ -74,7 +74,7 @@ Preparation performs no network write. Review all of the following before approv
 
 - authority and HTTPS report origin;
 - DID, derived `d-rosetta-*` service room and `mb-rosetta-*` request mailbox;
-- exact ownership-note and announcement bodies, signatures and nonces;
+- exact ownership-note, owner allow-list and announcement bodies, signatures and nonces;
 - service-card digest, adapter list, scenario and quotas;
 - automatic polling and response behavior.
 
@@ -84,7 +84,8 @@ Activation is one separately approved action using the exact displayed digest:
 sudo /usr/local/libexec/activate-rosetta-pilot sha256:APPROVED_PREVIEW_DIGEST
 ```
 
-The activator sends only the two prepared launch writes, starts the continuous service, enables its
+The activator reconciles the prepared ownership claim, permits only Rosetta's DID in the owned
+service room, and sends the prepared announcement. It then starts the continuous service, enables its
 five-minute local health timer and waits up to 60 seconds for a fresh healthy state. A crash after an
 upstream commit is reconciled using the exact persisted DID, nonce and bytes; it never signs a
 replacement merely because the outcome is uncertain.

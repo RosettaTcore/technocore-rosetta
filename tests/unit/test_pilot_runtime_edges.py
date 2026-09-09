@@ -150,11 +150,35 @@ def test_runtime_activation_digest_card_and_write_set_fail_closed(tmp_path: Path
         with pytest.raises(ValueError, match="write set"):
             await runtime.activate(changed_digest, NOW)
 
-        preview["writes"] = ["bad", {}]
+        preview["writes"] = ["bad", {}, {}]
         _atomic_json(runtime.preview_path, preview)
         changed_digest = pilot_module._digest(preview)
-        with pytest.raises(ValueError, match="claim preview"):
+        with pytest.raises(ValueError, match="claim_service_room preview"):
             await runtime.activate(changed_digest, NOW)
+
+        preview, _ = await runtime.prepare(NOW)
+        writes = preview["writes"]
+        assert isinstance(writes, list)
+        writes[1] = "bad"
+        _atomic_json(runtime.preview_path, preview)
+        changed_digest = pilot_module._digest(preview)
+        with pytest.raises(ValueError, match="allow_service_identity preview"):
+            await runtime.activate(changed_digest, NOW)
+
+        preview, _ = await runtime.prepare(NOW)
+        writes = preview["writes"]
+        assert isinstance(writes, list)
+        writes[2] = "bad"
+        _atomic_json(runtime.preview_path, preview)
+        changed_digest = pilot_module._digest(preview)
+        with pytest.raises(ValueError, match="announcement preview"):
+            await runtime.activate(changed_digest, NOW)
+
+        preview, _ = await runtime.prepare(NOW)
+        preview["service_room"] = "d-rosetta-wrong"
+        _atomic_json(runtime.preview_path, preview)
+        with pytest.raises(ValueError, match="metadata changed"):
+            await runtime.activate(pilot_module._digest(preview), NOW)
         runtime.close()
         signer.close()
 
@@ -167,12 +191,14 @@ class _UncertainClaimTarget(PilotFixtureTarget):
         self.owner = owner
 
     def post_signed_note(self, *args: object, **kwargs: object) -> dict[str, bool]:
-        del args, kwargs
-        raise UncertainWrite("synthetic uncertain room claim")
+        if args[0] == "room-owners":
+            raise UncertainWrite("synthetic uncertain room claim")
+        return super().post_signed_note(*args, **kwargs)
 
     def read_note(self, namespace: str, key: str) -> str | None:
-        del namespace, key
-        return self.owner
+        if namespace == "room-owners":
+            return self.owner
+        return super().read_note(namespace, key)
 
 
 def test_activation_reconciles_only_the_exact_room_owner(tmp_path: Path) -> None:
@@ -194,6 +220,50 @@ def test_activation_reconciles_only_the_exact_room_owner(tmp_path: Path) -> None
                 assert activated["schema"] == "rosetta.pilot-activation.v1"
             else:
                 with pytest.raises(UncertainWrite, match="uncertain room claim"):
+                    await runtime.activate(digest, NOW)
+            runtime.close()
+            signer.close()
+
+    asyncio.run(exercise())
+
+
+class _UncertainAllowTarget(PilotFixtureTarget):
+    def __init__(self, allowed: str | None) -> None:
+        super().__init__()
+        self.allowed = allowed
+
+    def post_signed_note(self, *args: object, **kwargs: object) -> dict[str, bool]:
+        if args[0] == "room-allow":
+            if self.allowed is not None:
+                self.notes[("room-allow", str(args[1]))] = self.allowed
+            raise UncertainWrite("synthetic uncertain allow-list")
+        return super().post_signed_note(*args, **kwargs)
+
+    def read_note(self, namespace: str, key: str) -> str | None:
+        if namespace == "room-allow":
+            return self.allowed
+        return super().read_note(namespace, key)
+
+
+def test_activation_reconciles_only_the_exact_room_allow_list(tmp_path: Path) -> None:
+    async def exercise() -> None:
+        for suffix, exact_value in [("recover", True), ("wrong", False)]:
+            root = tmp_path / suffix
+            root.mkdir()
+            signer = AsyncSigner(root / "signer.sqlite3", f"synthetic-allow-{suffix}")
+            target = _UncertainAllowTarget(signer.did if exact_value else "not-allowed")
+            runtime = PilotRuntime(
+                _config(root, signer.did, enabled=True),
+                signer=signer,
+                target=target,
+                clock=lambda: NOW,
+            )
+            _, digest = await runtime.prepare(NOW)
+            if exact_value:
+                activated = await runtime.activate(digest, NOW)
+                assert activated["schema"] == "rosetta.pilot-activation.v1"
+            else:
+                with pytest.raises(UncertainWrite, match="uncertain allow-list"):
                     await runtime.activate(digest, NOW)
             runtime.close()
             signer.close()

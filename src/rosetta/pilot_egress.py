@@ -70,7 +70,10 @@ class PilotEgress:
     def _read_allowed(self, path: str, query: str) -> bool:
         if path in WATCHED_PATHS:
             return not query
-        if path == f"/kv/room-owners/{self.service_room}":
+        if path in {
+            f"/kv/room-owners/{self.service_room}",
+            f"/kv/room-allow/{self.service_room}",
+        }:
             return not query
         room = self._room_path(path)
         if room is None or (room not in self.read_rooms and not room.startswith("mb-")):
@@ -97,7 +100,15 @@ class PilotEgress:
         if parse_qs(query, keep_blank_values=True) != {"format": ["json"]}:
             return False
         room = self._room_path(path)
-        is_note = path == f"/kv/room-owners/{self.service_room}"
+        note_namespace = next(
+            (
+                namespace
+                for namespace in ("room-owners", "room-allow")
+                if path == f"/kv/{namespace}/{self.service_room}"
+            ),
+            None,
+        )
+        is_note = note_namespace is not None
         if room is None and not is_note:
             return False
         if room is not None and room != self.service_room and not room.startswith("mb-"):
@@ -109,7 +120,7 @@ class PilotEgress:
         if not isinstance(payload, dict) or payload.get("did") != self.writer_did:
             return False
         required = {"did", "sig", "nonce", "value" if is_note else "text"}
-        optional = {"if_absent"} if is_note else set()
+        optional = {"if_absent"} if note_namespace == "room-owners" else set()
         if not required <= set(payload) or set(payload) - required - optional:
             return False
         signature = payload.get("sig")
@@ -124,11 +135,13 @@ class PilotEgress:
             return False
         if is_note and content != self.writer_did:
             return False
-        if payload.get("if_absent") not in ({None, True} if is_note else {None}):
+        if payload.get("if_absent") not in (
+            {None, True} if note_namespace == "room-owners" else {None}
+        ):
             return False
         nonce_value = int(nonce)
         signed_payload = (
-            signed_note_payload("room-owners", self.service_room, nonce_value, content)
+            signed_note_payload(str(note_namespace), self.service_room, nonce_value, content)
             if is_note
             else signed_room_payload(str(room), nonce_value, content)
         )

@@ -1,6 +1,6 @@
 # Quality and effectiveness assessment
 
-Date: 5 September 2026
+Date: 9 September 2026
 
 ## Bottom line
 
@@ -17,9 +17,9 @@ production service and has not demonstrated longitudinal value on real release c
 | Interoperability signal | 9.0/10 | Four cross-runtime cells, differential reads and real MCP now pass on a second protocol baseline. One primary scenario still limits breadth. |
 | Reliability | 8.6/10 | Restart, cursor, 429, uncertain writes, idempotency, crash-persistent controls, atomic evolution preflight/recovery, simultaneous four-runtime reads and a 20-iteration soak pass. This is not a long-duration load test. |
 | Reproducibility/auditability | 9.7/10 | Exact v0.13.0 tag/commit, archive and upstream lock, universal transitive hash locks, cross-platform OCI identities, separate real MCP SDK image, canonical artifacts, signed roots and evolution lineage. |
-| Test quality | 9.7/10 | 381 tests, adversarial/property coverage, immutable-upstream checks, signature/backend parity, CI and authority constraints, 94.75% combined line/branch coverage with a 90% ratchet, 99% observer coverage and 27 OCI checks. No full mutation-testing engine or high-volume stress campaign yet. |
+| Test quality | 9.7/10 | 385 tests, adversarial/property coverage, immutable-upstream checks, signature/backend parity, CI and authority constraints, 95% combined line/branch coverage with a 90% ratchet, 99% observer coverage and 27 OCI checks. No full mutation-testing engine or high-volume stress campaign yet. |
 | Operations | 9.5/10 | Atomic quotas/budgets, persistent quarantine, bounded concurrency, separate safety/compatibility verdicts, active encrypted backups and health timer, external dead-man alert, successful off-device restore, safe defaults and cryptographically gated reversible promotion. Fresh off-device replication is not yet automated. |
-| Production readiness | 9.0/10 | The public static product and dedicated zero-write host passed the 72-hour gate, signed upgrades/rollback, monitoring and recovery drill. The no-ingress active pilot, isolated production signer and exact two-write activation gate are implemented; activation still requires review of the generated production preview. |
+| Production readiness | 9.0/10 | The public static product and dedicated zero-write host passed the 72-hour gate, signed upgrades/rollback, monitoring and recovery drill. The no-ingress active pilot, isolated production signer and exact three-step activation gate are implemented; activation still requires review of a fresh production preview. |
 
 Overall local-MVP quality: **9.5/10**. Current public-production readiness: **8.4/10**.
 
