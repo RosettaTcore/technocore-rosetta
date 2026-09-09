@@ -50,7 +50,7 @@ def test_ip_certificate_is_pinned_renewed_and_monitored() -> None:
     assert "install -d -o root -g root -m 0700 /etc/letsencrypt" in installer
     assert "--security-opt no-new-privileges:true" in installer
     assert "renew --no-random-sleep-on-renew" in renewer
-    assert "nginx -t" in renewer
+    assert "nginx -t" not in renewer
     assert installer.count("nginx -t") == 2
     assert "openssl x509 -checkend 129600" in renewer
     assert "openssl x509 -checkend 129600" in checker
@@ -62,6 +62,12 @@ def test_ip_certificate_is_pinned_renewed_and_monitored() -> None:
     assert "OnUnitActiveSec=8h" in renewal_timer
     assert "OnUnitActiveSec=6h" in health_timer
     assert "ProtectSystem=strict" in renewal_unit
+    assert "/var/log/nginx" not in renewal_unit
+    assert "SupplementaryGroups=" not in renewal_unit
+    assert "CapabilityBoundingSet=\n" in renewal_unit
+    assert 'disk_fingerprint="$(openssl x509 -sha256' in renewer
+    assert 'served_fingerprint" = "$disk_fingerprint"' in renewer
+    assert "/usr/local/libexec/check-rosetta-static-origin" in renewer
     assert "ProtectSystem=strict" in health_unit
     assert "CapabilityBoundingSet=\n" in health_unit
     assert "ReadWritePaths=" not in health_unit

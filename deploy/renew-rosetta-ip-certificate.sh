@@ -37,7 +37,22 @@ flock /run/rosetta-certbot.lock docker run --rm \
   --mount type=bind,src=/var/lib/rosetta/acme,dst=/var/www/certbot \
   "$certbot_image" renew --no-random-sleep-on-renew
 
-nginx -t
+certificate_path="/etc/letsencrypt/live/$public_ip/fullchain.pem"
+disk_fingerprint="$(openssl x509 -sha256 -noout -fingerprint -in "$certificate_path")"
 systemctl reload nginx.service
+served_fingerprint=""
+for _ in {1..10}; do
+  served_fingerprint="$(
+    openssl s_client -connect "$public_ip:443" -servername "$public_ip" </dev/null 2>/dev/null \
+      | openssl x509 -sha256 -noout -fingerprint 2>/dev/null || true
+  )"
+  if [[ "$served_fingerprint" == "$disk_fingerprint" ]]; then
+    break
+  fi
+  sleep 1
+done
+test -n "$served_fingerprint"
+test "$served_fingerprint" = "$disk_fingerprint"
+/usr/local/libexec/check-rosetta-static-origin
 openssl x509 -checkend 129600 -noout \
-  -in "/etc/letsencrypt/live/$public_ip/fullchain.pem"
+  -in "$certificate_path"
