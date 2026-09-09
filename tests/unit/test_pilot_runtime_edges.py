@@ -495,6 +495,61 @@ def test_poll_counts_discovery_rejections_and_requires_job_id(tmp_path: Path) ->
     asyncio.run(exercise())
 
 
+def test_serve_survives_poll_failure_with_fail_closed_health(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    async def exercise() -> None:
+        signer = AsyncSigner(tmp_path / "signer.sqlite3", "synthetic-poll-recovery")
+        runtime = PilotRuntime(
+            _config(tmp_path, signer.did, enabled=True),
+            signer=signer,
+            target=PilotFixtureTarget(),
+            clock=lambda: NOW,
+        )
+        calls = 0
+        health_transitions: list[str] = []
+        write_health = runtime._write_health
+
+        def record_health(status: str, *args: object, **kwargs: object) -> None:
+            health_transitions.append(status)
+            write_health(status, *args, **kwargs)  # type: ignore[arg-type]
+
+        runtime._write_health = record_health  # type: ignore[method-assign]
+
+        async def poll() -> dict[str, int]:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise ValueError("untrusted public value must not be logged")
+            runtime._write_health(
+                "healthy",
+                NOW,
+                {"discovery": 0, "requests": 0, "rejected": 0},
+            )
+            runtime.stop_requested = True
+            return {}
+
+        async def no_wait(_seconds: float) -> None:
+            return None
+
+        runtime.poll_once = poll  # type: ignore[method-assign]
+        monkeypatch.setattr(pilot_module.asyncio, "sleep", no_wait)
+        await runtime.serve()
+        assert calls == 2
+        assert health_transitions == ["degraded", "healthy"]
+        health = json.loads((tmp_path / "state/health.json").read_bytes())
+        assert health["status"] == "healthy"
+        assert "error_code" not in health
+        assert "error_type" not in health
+        runtime.close()
+        signer.close()
+
+    asyncio.run(exercise())
+    error_output = capsys.readouterr().err
+    assert '"event": "poll_failed"' in error_output
+    assert "untrusted public value" not in error_output
+
+
 def test_generation_change_resets_cursor_before_processing_recreated_room(
     tmp_path: Path,
 ) -> None:

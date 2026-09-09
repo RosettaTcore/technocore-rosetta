@@ -103,6 +103,13 @@ Healthy means: both containers are running, signer socket exists, health is youn
 seconds, activation matches the current service room/mailbox and public writes are explicitly
 enabled. Operational logs must not contain request bodies, signatures, headers or secrets.
 
+Malformed public records are rejected and their cursors advance without terminating the pilot.
+A transient poll or compatibility failure keeps the supervised process alive but atomically marks
+health `degraded`; monitoring therefore continues to fail closed while the next configured poll
+retries from the last committed cursor. A later successful poll restores `healthy`. Treat an
+active-but-degraded service as unavailable, inspect the bounded `error_type`, and never copy public
+message content into operational logs.
+
 The service card is valid for the complete 14-day pilot. Before extending service beyond that
 window, prepare and approve a refreshed card and digest announcement as a new release action.
 

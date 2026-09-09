@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import signal
+import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,7 +41,7 @@ from rosetta.pilot_config import PilotConfig, load_pilot_config
 from rosetta.publishing import ServiceDocumentPublisher, StaticPublisher
 from rosetta.registry import AdapterRegistry
 from rosetta.scenario import ScenarioResult, run_roundtrip
-from rosetta.service import DiscoveryGateway, build_service_card, verify_service_card
+from rosetta.service import DiscoveryGateway, build_service_card, service_names, verify_service_card
 from rosetta.signer_client import GuardedSigner, Signer, SignerClient
 from rosetta.technocore_client import TechnocoreHttpClient, TechnocoreRefusal
 from rosetta_signer.canonical import canonical_json
@@ -626,19 +627,58 @@ class PilotRuntime:
             elif status not in {"unsigned", "invalid"}:
                 counts["rejected"] += 1
             self.store.advance_room_cursor(room, record.sequence)
-        _atomic_json(
-            self.state_dir / "health.json",
-            {
-                "schema": "rosetta.pilot-health.v1",
-                "status": "healthy",
-                "checked_at": current,
-                "public_writes_enabled": True,
-                "service_room": card.service_room,
-                "request_mailbox": card.request_mailbox,
-                "counts": counts,
-            },
-        )
+        self._write_health("healthy", current, counts)
         return counts
+
+    def _write_health(
+        self,
+        status: str,
+        checked_at: datetime,
+        counts: dict[str, int],
+        *,
+        error_code: str | None = None,
+        error_type: str | None = None,
+    ) -> None:
+        service_room, request_mailbox = service_names(self.config.identity.public_did)
+        health: dict[str, object] = {
+            "schema": "rosetta.pilot-health.v1",
+            "status": status,
+            "checked_at": checked_at,
+            "public_writes_enabled": True,
+            "service_room": service_room,
+            "request_mailbox": request_mailbox,
+            "counts": counts,
+        }
+        if error_code is not None:
+            health["error_code"] = error_code
+        if error_type is not None:
+            health["error_type"] = error_type
+        _atomic_json(self.state_dir / "health.json", health)
+
+    def _record_poll_failure(self, exc: Exception) -> None:
+        current = self.clock()
+        error_type = type(exc).__name__
+        self.store.record_infrastructure_error("pilot_poll", current)
+        self._write_health(
+            "degraded",
+            current,
+            {"discovery": 0, "requests": 0, "rejected": 0},
+            error_code="pilot_poll_failed",
+            error_type=error_type,
+        )
+        # Never print exception text: upstream-controlled values and URLs may be present.
+        print(
+            json.dumps(
+                {
+                    "schema": "rosetta.pilot-runtime-event.v1",
+                    "event": "poll_failed",
+                    "error_type": error_type,
+                },
+                sort_keys=True,
+            ),
+            file=sys.stderr,
+            flush=True,
+        )
 
     def _read_generation_safe(self, room: str) -> list[ProtocolRecord]:
         """Read without silently carrying a cursor into a recreated v0.13 room."""
@@ -656,9 +696,18 @@ class PilotRuntime:
         return records
 
     async def serve(self) -> None:
-        self.target.capabilities()
+        capabilities_confirmed = False
         while not self.stop_requested:
-            await self.poll_once()
+            try:
+                if not capabilities_confirmed:
+                    self.target.capabilities()
+                    capabilities_confirmed = True
+                await self.poll_once()
+            except Exception as exc:  # noqa: BLE001 - keep the supervised service alive
+                # The health endpoint remains fail-closed while the process survives a
+                # malformed public record, transient transport failure, or release drift.
+                # The next bounded poll retries from the last committed room cursor.
+                self._record_poll_failure(exc)
             for _ in range(self.config.service.poll_seconds * 10):
                 if self.stop_requested:
                     return
