@@ -85,6 +85,9 @@
 - [ ] Replayed identical request returns prior state; same ID with changed content yields `duplicate_conflict`.
 - [ ] Request cannot force metadata refresh, dependency download or mutable build.
 - [ ] Liveness beacon is not emitted before the configured silence threshold.
+- [ ] A reaped empty service-room generation receives exactly one recoverable announcement.
+- [ ] A single-message room receives one six-hour anchor and an established room no more than one
+  liveness beacon per five days.
 - [ ] `/r/events` discoveries never cause unsolicited outreach.
 - [ ] Kill switch stops intake, acknowledgement, execution, beacons and result publication.
 

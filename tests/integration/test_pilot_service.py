@@ -99,6 +99,20 @@ def test_complete_active_pilot_request_to_signed_published_result(tmp_path: Path
         preview, digest = await runtime.prepare(NOW)
         assert preview["service_room"] == service_room
         assert len(preview["writes"]) == 3
+        assert preview["automatic_behavior_after_activation"] == {
+            "poll_rooms": [request_mailbox, "lobby"],
+            "accept_only": "rosetta.request.v1",
+            "max_requests_per_did_per_day": 2,
+            "max_global_requests_per_day": 8,
+            "maintain_service_room": service_room,
+            "restore_empty_service_room": True,
+            "single_message_anchor_after_seconds": 21_600,
+            "liveness_after_seconds": 432_000,
+            "max_presence_writes_per_poll": 1,
+            "cold_outreach": False,
+            "natural_language_replies": False,
+            "llm_verdicts": False,
+        }
         activated = await runtime.activate(digest, NOW)
         assert activated["request_mailbox"] == request_mailbox
         assert target.notes[("room-owners", service_room)] == rosetta.did

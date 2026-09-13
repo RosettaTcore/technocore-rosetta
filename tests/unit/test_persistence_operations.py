@@ -108,6 +108,18 @@ def test_kill_switch_and_redaction(tmp_path: Path) -> None:
 
 def test_persistence_indexes_health_and_usage_edges(tmp_path: Path) -> None:
     store = StateStore(tmp_path / "state.sqlite3")
+    assert store.service_presence("d-rosetta-test") is None
+    store.record_service_presence("d-rosetta-test", NOW, "announcement", None)
+    assert store.service_presence("d-rosetta-test") == (NOW, "announcement", None)
+    later = NOW.replace(hour=1)
+    store.record_service_presence("d-rosetta-test", later, "liveness", 3)
+    assert store.service_presence("d-rosetta-test") == (later, "liveness", 3)
+    with pytest.raises(ValueError, match="timezone-aware"):
+        store.record_service_presence("d-rosetta-test", datetime(2026, 9, 7), "liveness", 3)
+    with pytest.raises(ValueError, match="presence kind"):
+        store.record_service_presence("d-rosetta-test", NOW, "unknown", 3)
+    with pytest.raises(ValueError, match="generation"):
+        store.record_service_presence("d-rosetta-test", NOW, "liveness", -1)
     assert store.request_status("did:a", "missing") is None
     assert store.reserve_request("did:a", "1", "hash", "ack", NOW, 2, 2) == "accepted"
     assert store.request_status("did:a", "1") == ("hash", "ack", None)

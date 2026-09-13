@@ -32,6 +32,7 @@ rosetta-observer = "rosetta.observer:main"
 rosetta-egress = "rosetta.egress:main"
 rosetta-pilot-egress = "rosetta.pilot_egress:main"
 rosetta-pilot = "rosetta.pilot:main"
+rosetta-public-pilot-probe = "rosetta.public_pilot_probe:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

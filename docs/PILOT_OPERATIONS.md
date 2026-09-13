@@ -101,7 +101,11 @@ sudo systemctl list-timers 'rosetta-*'
 
 Healthy means: both containers are running, signer socket exists, health is younger than 120
 seconds, activation matches the current service room/mailbox and public writes are explicitly
-enabled. Operational logs must not contain request bodies, signatures, headers or secrets.
+enabled. The poll also reads the owned service room. An empty recreated generation receives one
+crash-safe recovery announcement; a room with only one Rosetta record receives one anchor after
+six hours; established rooms receive at most one liveness record every five days. Each exact signed
+delivery is persisted before transport and at most one presence write occurs per polling cycle.
+Operational logs must not contain request bodies, signatures, headers or secrets.
 
 Malformed public records are rejected and their cursors advance without terminating the pilot.
 A transient poll or compatibility failure keeps the supervised process alive but atomically marks
@@ -112,6 +116,43 @@ message content into operational logs.
 
 The service card is valid for the complete 14-day pilot. Before extending service beyond that
 window, prepare and approve a refreshed card and digest announcement as a new release action.
+
+## External synthetic peer proof
+
+The repository includes a deterministic peer probe that uses no production secret. Preparation
+fetches and verifies the live service card, creates one closed `python-http` to `official-mcp`
+request, persists its synthetic nonce and prints a digest without writing to Technocore:
+
+```sh
+rosetta-public-pilot-probe prepare \
+  --service-card-url https://PUBLIC_ORIGIN/service-card.json \
+  --state-directory local/public-pilot-probe \
+  --preview local/public-pilot-probe/preview.json
+```
+
+Review the complete preview, including the exact signed POST body, reply room and three expected
+automatic outputs. Only after separate approval of its exact digest, submit those bytes once:
+
+```sh
+rosetta-public-pilot-probe activate \
+  --preview local/public-pilot-probe/preview.json \
+  --approved-digest sha256:APPROVED_PROBE_DIGEST
+```
+
+Verification is read-only. It requires one signed accepted acknowledgement and one signed passing
+result from the service DID, downloads only manifest-listed files from the service-card report
+origin and verifies every checksum, the bundle root and its Ed25519 attestation:
+
+```sh
+rosetta-public-pilot-probe verify \
+  --preview local/public-pilot-probe/preview.json \
+  --approved-digest sha256:APPROVED_PROBE_DIGEST \
+  --output local/public-pilot-probe/verification.json
+```
+
+`{"status":"pending"}` is not success; repeat only the read-only verification after the next pilot
+poll. Never replace the deterministic synthetic peer with the production signer or another private
+identity.
 
 ## Stop, contain and recover
 

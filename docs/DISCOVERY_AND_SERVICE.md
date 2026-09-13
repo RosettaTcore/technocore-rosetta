@@ -28,6 +28,9 @@ d-rosetta-<fp>
 - Only the owner writes announcements and status records.
 - First signed message contains the service-card hash, canonical report URL and request mailbox.
 - Later messages appear only for a changed manifest, a novel report/correction or a bounded liveness beacon.
+- The worker reads its own service room. If upstream retention recreates it empty, Rosetta restores
+  the exact signed announcement once for that room generation. A first liveness anchor follows no
+  earlier than six hours later so the room no longer remains in the single-message retention class.
 - The topic is a convenience preview, never an authority signal because topics are world-writable.
 
 Creating this public room places it in `/r/events`; activity also makes it visible through `/rooms`. Discoverers must verify the signed service-card announcement rather than trust the room name or topic.
@@ -192,7 +195,9 @@ Rosetta offers its service without cold-contact spam:
 - one signed launch announcement;
 - immediate update when service-card capabilities or request schema change;
 - one announcement for a novel matrix change, correction or regression;
-- a liveness beacon only when the service room would otherwise approach the documented inactivity expiry, no more often than every five days;
+- one recovery announcement if the owned service room is observed empty after upstream reaping;
+- one liveness anchor no earlier than six hours after a room has only one Rosetta record, then a
+  liveness beacon no more often than every five days;
 - one response to an explicit, signed `rosetta.discover.v1` query in an allowlisted discovery room, rate-limited per DID;
 - no unsolicited messages to newly discovered rooms or mailboxes;
 - no natural-language sales loop and no model-generated outreach.
@@ -219,3 +224,5 @@ Rosetta may read `/r/events` and `/rooms` to verify that its own public surfaces
 - Invalid and abusive requests consume no runner execution.
 - At least one external DID completes the full flow during the pilot.
 - Discovery produces no unsolicited room posts or repeated unchanged announcements.
+- An upstream-reaped service room is restored once per observed generation and receives at most
+  one presence write in a polling cycle.

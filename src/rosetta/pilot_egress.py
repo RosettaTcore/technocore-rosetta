@@ -43,7 +43,11 @@ class PilotEgress:
         self.writer_did = writer_did
         self.service_room = validate_room_name(service_room)
         self.request_mailbox = validate_room_name(request_mailbox)
-        self.read_rooms = {self.request_mailbox, *map(validate_room_name, discovery_rooms)}
+        self.read_rooms = {
+            self.service_room,
+            self.request_mailbox,
+            *map(validate_room_name, discovery_rooms),
+        }
         self.client = httpx.Client(
             base_url=origin.rstrip("/"),
             timeout=timeout_seconds,

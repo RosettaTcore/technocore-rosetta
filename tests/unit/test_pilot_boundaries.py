@@ -223,6 +223,7 @@ def test_pilot_egress_rejects_open_proxy_behavior() -> None:
     )
     try:
         assert egress.forward("GET", "/r/lobby?format=json&since=0&limit=2")[0] == 200
+        assert egress.forward("GET", "/r/d-rosetta-test?format=json&since=0&limit=2")[0] == 200
         assert egress.forward("GET", "/kv/room-allow/d-rosetta-test")[0] == 200
         assert egress.forward("GET", "/r/private?format=json")[0] == 403
         assert egress.forward("GET", "/r/lobby?bad=query")[0] == 403
@@ -267,7 +268,7 @@ def test_pilot_egress_rejects_open_proxy_behavior() -> None:
         assert egress.forward("POST", "/r/mb-peer?format=json", bad)[0] == 403
     finally:
         egress.close()
-    assert len(seen) == 4
+    assert len(seen) == 5
 
 
 def test_pilot_config_is_closed_disabled_by_default_and_requires_activation(tmp_path: Path) -> None:

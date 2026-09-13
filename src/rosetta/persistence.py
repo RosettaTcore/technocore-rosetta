@@ -106,6 +106,14 @@ class StateStore:
                 created_day TEXT NOT NULL,
                 PRIMARY KEY(requester_did, request_id)
             );
+            CREATE TABLE IF NOT EXISTS service_presence (
+                service_room TEXT PRIMARY KEY,
+                last_sent_at TEXT NOT NULL,
+                last_kind TEXT NOT NULL CHECK(
+                    last_kind IN ('announcement', 'recovery', 'anchor', 'liveness')
+                ),
+                room_generation INTEGER CHECK(room_generation >= 0)
+            );
             """
         )
         cursor_columns = {
@@ -305,6 +313,46 @@ class StateStore:
             "INSERT INTO room_cursors(room, sequence) VALUES (?, ?) "
             "ON CONFLICT(room) DO UPDATE SET sequence=MAX(sequence, excluded.sequence)",
             (room, sequence),
+        )
+
+    def service_presence(self, service_room: str) -> tuple[datetime, str, int | None] | None:
+        row = self.connection.execute(
+            "SELECT last_sent_at, last_kind, room_generation FROM service_presence "
+            "WHERE service_room=?",
+            (service_room,),
+        ).fetchone()
+        if row is None:
+            return None
+        sent_at = datetime.fromisoformat(str(row[0]))
+        if sent_at.tzinfo is None:
+            raise ValueError("service presence timestamp must be timezone-aware")
+        generation = None if row[2] is None else int(row[2])
+        return sent_at.astimezone(timezone.utc), str(row[1]), generation
+
+    def record_service_presence(
+        self,
+        service_room: str,
+        sent_at: datetime,
+        kind: str,
+        room_generation: int | None,
+    ) -> None:
+        if sent_at.tzinfo is None:
+            raise ValueError("service presence timestamp must be timezone-aware")
+        if kind not in {"announcement", "recovery", "anchor", "liveness"}:
+            raise ValueError("invalid service presence kind")
+        if room_generation is not None and room_generation < 0:
+            raise ValueError("room generation cannot be negative")
+        self.connection.execute(
+            "INSERT INTO service_presence VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(service_room) DO UPDATE SET "
+            "last_sent_at=excluded.last_sent_at, last_kind=excluded.last_kind, "
+            "room_generation=excluded.room_generation",
+            (
+                service_room,
+                sent_at.astimezone(timezone.utc).isoformat(),
+                kind,
+                room_generation,
+            ),
         )
 
     def delivery(

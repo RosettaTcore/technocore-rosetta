@@ -636,3 +636,20 @@ from the last committed cursor after the configured delay while health monitorin
 fail closed. Successful polling replaces degraded health with `healthy`. This separates process
 liveness from readiness without relaxing signature checks, write reconciliation, quotas or the
 operator kill switch.
+
+## ADR-062: Maintain service-room presence across bounded upstream retention
+
+The first production announcement left the owned service room with one message. The current public
+Technocore deployment removes rooms that remain on a single message after roughly twelve hours,
+while the earlier Rosetta policy scheduled liveness only near the seven-day inactivity boundary.
+The ownership and allow-list notes survived, but the signed announcement did not; process health
+alone therefore overstated public discoverability.
+
+The pilot now reads only its own derived service room in addition to the previously allowlisted
+mailbox and discovery rooms. An empty room generation receives one crash-safe recovery announcement
+whose exact signed bytes are persisted before transport. Six hours after a room has only one
+Rosetta record, one presence anchor moves it out of the single-message retention class. Established
+rooms receive at most one liveness record every five days. Delivery keys bind the room generation,
+time slot and service-card digest, so restarts and uncertain writes cannot multiply messages. A
+failure to verify or maintain this presence marks the whole pilot health check degraded; it never
+broadens outreach, accepted input, signing authority or egress destinations.
