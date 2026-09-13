@@ -97,7 +97,7 @@
           <dl class="hero-stats" aria-label="Launch reference results">
             <div><dt>Matrix</dt><dd>4 / 4</dd><span>cross-runtime cells pass</span></div>
             <div><dt>Soak</dt><dd>20 / 20</dd><span>isolated reads pass</span></div>
-            <div><dt>Public writes</dt><dd>0</dd><span>recorded in staging</span></div>
+            <div><dt>Public proof</dt><dd>1 / 1</dd><span>external synthetic request passes</span></div>
           </dl>
         </div>
 
@@ -117,18 +117,19 @@
         </figure>
       </section>
 
-      <section class="status-strip" aria-label="Recorded staging status">
-        <p><span class="status-label">Recorded snapshot</span> Last operator check: 3 Sep 2026</p>
+      <section class="status-strip" aria-label="Recorded public pilot status">
+        <p><span class="status-label">Recorded snapshot</span> Last operator check: 13 Sep 2026</p>
         <ul>
           <li><span aria-hidden="true"></span>Safety boundary verified</li>
-          <li><span aria-hidden="true"></span>Public writes: 0</li>
-          <li><span aria-hidden="true"></span>Public intake disabled</li>
-          <li class="warning"><span aria-hidden="true"></span>Upstream v0.11.3 observed</li>
+          <li><span aria-hidden="true"></span>Bounded public pilot active</li>
+          <li><span aria-hidden="true"></span>External proof: pass</li>
+          <li><span aria-hidden="true"></span>Signed report verified</li>
+          <li class="warning"><span aria-hidden="true"></span>Upstream v0.13.0 observed</li>
           <li class="warning"><span aria-hidden="true"></span>Compatibility: release drift</li>
         </ul>
         <p class="status-note">
           Not live telemetry ·
-          <a href="https://github.com/RosettaTcore/technocore-rosetta/blob/main/docs/STAGING_SECURITY_REVIEW.md" rel="noopener noreferrer">review record ↗</a>
+          <a href="https://github.com/RosettaTcore/technocore-rosetta/blob/main/docs/PUBLIC_PILOT_REVIEW.md" rel="noopener noreferrer">review record ↗</a>
         </p>
       </section>
 
@@ -326,13 +327,13 @@
             <p class="eyebrow">Current boundaries</p>
             <h2 id="boundaries-title">Useful now. Deliberately constrained.</h2>
           </div>
-          <p>The launch surface is static and read-only. Each later authority boundary remains a separate operator gate.</p>
+          <p>This observatory stays static and read-only. The linked public pilot is separately gated and deliberately narrow.</p>
         </div>
         <div class="boundary-grid">
           <article><span>Available</span><h3>Reproducible evidence</h3><p>Reference bundle, exact digests, minimal reproductions, offline verification.</p></article>
           <article><span>Available</span><h3>Read-only observation</h3><p>Fixed-origin metadata observation with zero recorded public writes.</p></article>
-          <article class="boundary-pending"><span>Disabled</span><h3>Public request intake</h3><p>No public mailbox, free-form task, repository, URL, or code intake is active.</p></article>
-          <article class="boundary-pending"><span>Not present</span><h3>Production identity</h3><p>The repository and this reference evidence contain no production DID seed.</p></article>
+          <article><span>Active</span><h3>Bounded public intake</h3><p>One signed schema and fixed scenario only. Free-form tasks, repositories, URLs and code remain rejected.</p></article>
+          <article><span>Active</span><h3>Production identity</h3><p>The public DID signs service records; its seed is absent from this repository and public surface.</p></article>
         </div>
       </section>
 

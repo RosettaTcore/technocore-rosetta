@@ -115,13 +115,14 @@
 
 ## Public-pilot gate
 
-The system is not ready for a production DID, public write or public report until every applicable item passes, a fresh novelty re-check is recorded and a human approves the exact external scopes.
+The initial public-pilot gate passed on 13 September 2026. The exact approvals and externally
+verified result are recorded in `PUBLIC_PILOT_REVIEW.md`; the 14-day pilot remains in progress.
 
-- [ ] Exact activation preview (authority, DID, rooms, payloads, signatures, nonces and limits) is
+- [x] Exact activation preview (authority, DID, rooms, payloads, signatures, nonces and limits) is
   reviewed and its digest is approved immediately before the first write.
-- [ ] Pilot worker has no ingress, direct egress, Docker socket or signer seed; only its constrained
+- [x] Pilot worker has no ingress, direct egress, Docker socket or signer seed; only its constrained
   egress sidecar can reach the fixed Technocore authority.
-- [ ] Synthetic end-to-end pilot test publishes a verifiable bundle and two signed reply messages.
-- [ ] Prepared outbound bytes survive restart, 429 and uncertain-write reconciliation without a new
+- [x] Synthetic end-to-end pilot test publishes a verifiable bundle and two signed reply messages.
+- [x] Prepared outbound bytes survive restart, 429 and uncertain-write reconciliation without a new
   nonce or duplicate result.
-- [ ] Production health, encrypted backup and certificate-renewal alerts are green before intake.
+- [x] Production health, encrypted backup and certificate-renewal alerts are green before intake.

@@ -1,16 +1,18 @@
 # Local MVP status
 
-Date: 9 September 2026
+Date: 13 September 2026
 
 ## Outcome
 
 Phases 0–3 plus the controlled evolution proposal lane are implemented. The authoritative local
 acceptance path runs the official Technocore `v0.13.0` image through four real isolated runtime
 paths while preserving the original v0.7.0 fixture and v0.10.0 evidence for historical replay. The
-active no-ingress pilot is complete but has not completed its exact three-step activation. The room
-claim from the first attempt was reconciled; the owner allow-list and announcement remain pending a
-fresh preview and approval. Source control uses a dedicated public GitHub repository and identity,
-separate from the operator's other projects.
+active no-ingress pilot completed its exact three-step activation under an operator-approved
+preview digest. Its production DID owns the derived service room, is its sole allowed writer and
+published the signed service announcement. A separately approved deterministic synthetic peer then
+completed the public `python-http` to `official-mcp` workflow with a signed acknowledgement, signed
+passing result and independently verified content-addressed report. Source control uses a dedicated
+public GitHub repository and identity, separate from the operator's other projects.
 The no-ingress read-only observer is running on its dedicated staging host. The 1 September check
 verified its zero-write safety boundary while upstream availability was degraded; safety and
 compatibility are now independent verdicts, so external release churn does not reset the safety
@@ -57,12 +59,12 @@ window.
 
 ## Verified results
 
-- Pytest: 385/385 pass;
-- combined line/branch Python coverage: 95%, enforced floor 90%; observer coverage: 99%;
+- Pytest: 389/389 pass;
+- combined line/branch Python coverage: 93%, enforced floor 90%;
 - Ruff lint/security: pass;
-- Mypy strict: pass for 36 source modules;
+- Mypy strict: pass for 37 source modules;
 - TypeScript strict check: pass;
-- secret scan: pass over 304 files;
+- secret scan: pass over 307 files;
 - fresh install from the development hash lock: pass; `pip check`: pass;
 - recorded runtime dependency OSV batch query: no known vulnerabilities;
 - official upstream matrix: 4/4 cells pass;
@@ -126,17 +128,23 @@ window.
   `33446317758`; the live verifier reproduced
   `sha256:0b3435df9b0f6eb8b1ac2eaab22120a0b14730764fceaa9d1a701860f43c1b9f` and accepted the
   domain-separated Ed25519 attestation.
+- signed production release `837f041ddc0c0a6be860245690778a173d4de113` deployed as immutable
+  pilot image `sha256:17a8bf354344ed57a06dd759dc851402715dd3d18031a4ef1a8d0ab622dcaee5`;
+  pilot, signer and health timer active with `pilot_health=pass`;
+- exact public activation preview
+  `sha256:f955881d76d61a49ec45289d437572139e3d23e91db3d801563e924fafa554f2`
+  approved and reconciled the service-room owner, owner-only allow-list and signed announcement;
+- external synthetic public probe request `a39124c306ac49289937cbedb2022e95` received one signed
+  accepted acknowledgement and one signed passing result; report checksums, root and Ed25519
+  attestation verified as
+  `sha256:cdc65e155102b4a85be064e72c4ac793f1b3899d909aa87cc8fd66e909b5b7e1`.
 
 ## Remaining production-only work
 
-- production key-generation/recovery ceremony and secret-store provisioning;
 - operator approval-key ceremony and addition of its public DID to protected evolution policy;
 - recurring transfer of fresh encrypted application backups to the approved off-device destination;
-- production signer boundary deployment and networkless synthetic host acceptance before real-key
-  provisioning;
-- DID-derived service room, public request mailbox and approved discovery-room configuration;
-- bounded public intake and exact first signed payload approvals;
-- production deployment of the reviewed, signed release after all applicable gates pass.
+- daily health review and weekly human review through the bounded 14-day public pilot;
+- evidence of organic report use or a real compatibility regression, without broadening intake.
 
-The repository and static observatory are public. This publication does not authorize a production
-identity, public service intake, Technocore writes or any broader external action.
+The repository, static observatory and bounded public pilot are live. This status does not authorize
+broader public actions, capability changes, new destinations, higher quotas or additional keys.
