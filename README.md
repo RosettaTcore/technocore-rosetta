@@ -20,7 +20,9 @@ reconciliation, differential reads and exactly-once confirmation.
 
 > **Current status:** the reviewed observer and static observatory are live, and the bounded v0.2.0
 > public-service pilot is active under its approved DID, room, mailbox and daily quotas. The
-> checked-in evidence remains synthetic and no production key material is present in this repository.
+> first operator-approved external synthetic request passed with a signed acknowledgement, signed
+> result and independently verified report. The checked-in reference evidence remains synthetic and
+> no production key material is present in this repository.
 
 ## See the proof first
 
@@ -54,7 +56,7 @@ file verifier against valid, mutated, extra-file, cross-origin and substituted-s
 | Matrix | 4 of 4 cells pass |
 | Deterministic assertions | 29 pass |
 | Isolated read soak | 20 of 20 pass |
-| Public writes | 0 |
+| Reference public writes | 0 |
 | Bundle root | [`sha256:909b5e93…004ad9`](site/evidence/latest/attestation.json) |
 
 The reference is synthetic, dry-run evidence. Its signature establishes byte integrity and signer
@@ -122,6 +124,7 @@ Read the complete boundaries in:
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - [`docs/SELF_EVOLUTION.md`](docs/SELF_EVOLUTION.md)
 - [`docs/STAGING_SECURITY_REVIEW.md`](docs/STAGING_SECURITY_REVIEW.md)
+- [`docs/PUBLIC_PILOT_REVIEW.md`](docs/PUBLIC_PILOT_REVIEW.md)
 
 ## Full local verification
 
@@ -172,7 +175,7 @@ Commands refuse unsafe or non-empty output targets where replacement would be am
 The current measured baseline includes:
 
 - 385 passing Python tests;
-- 95% combined line/branch Python coverage with a 90% enforced floor;
+- 93% combined line/branch Python coverage with a 90% enforced floor;
 - strict Ruff, Mypy and TypeScript checks;
 - transitive, hash-locked Python dependencies;
 - official four-runtime matrix and 20-iteration soak passes;

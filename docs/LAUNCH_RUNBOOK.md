@@ -2,13 +2,13 @@
 
 ## Current state
 
-Rosetta is live as a static observatory and as a read-only observer on the dedicated Hetzner
-server. The 1 September 2026 check found zero public writes, zero service restarts, an SSH-only
-public listener and bounded disk, while all three watched upstream endpoints returned 503. The
-later approved no-domain static origin adds only IPv4 nginx listeners on TCP 80 and 443; it exposes
-no dynamic Rosetta application. That is a green safety boundary with an `unavailable`
-compatibility warning, not a safety failure.
-Scheduler, runners, signer, publisher and public request intake remain absent.
+Rosetta is live as a static observatory, a read-only observer and a bounded no-ingress public pilot
+on the dedicated Hetzner server. On 13 September 2026 the operator-approved production DID claimed
+its derived service room, became its sole allowed writer and published the signed service
+announcement. A separately approved deterministic synthetic peer completed one public
+`python-http` to `official-mcp` request with a signed accepted acknowledgement, signed passing
+result and independently verified content-addressed report. `PUBLIC_PILOT_REVIEW.md` records the
+exact release, activation and probe digests.
 
 The transitional safety review passed on 3 September 2026 after 73 hours and 34 minutes. It combined
 the truthful legacy interval with v2 safety checkpoints as required below: zero public writes, no
@@ -25,6 +25,13 @@ active and enabled with `safety_status: safe`, `public_writes: 0` and upstream v
 their most recent services succeeded, the external dead-man check is connected and the first
 off-device ciphertext passed a full restore drill. Release activation completed through the narrow
 deployment account and retained automatic rollback plus the prior immutable release.
+
+The 13 September signed upgrade activated commit
+`837f041ddc0c0a6be860245690778a173d4de113` and immutable pilot image
+`sha256:17a8bf354344ed57a06dd759dc851402715dd3d18031a4ef1a8d0ab622dcaee5`.
+The observer remains independently `safe` with its own `public_writes: 0` boundary; the approved
+pilot writes are tracked separately. The bounded 14-day pilot is in progress and is not implied by
+the successful one-request proof.
 
 ## Launch gates
 
@@ -185,9 +192,7 @@ seed to service.
 
 ## Inputs still requiring the operator
 
-- production key ceremony, two independent identity-backup destinations and recovery custodians;
-- deployment and explicit activation of the reviewed production signer boundary;
-- DID-derived service room, public request mailbox and allowed discovery rooms;
 - recurring transfer of fresh application ciphertexts to the approved off-device destination;
-- exact first public payload and authorization for Technocore writes;
-- bounded 14-day pilot approval and its daily/weekly operator review cadence.
+- daily health review and weekly human review through the bounded 14-day pilot;
+- separate approval for every capability, destination, schema, quota, budget, key, listener or
+  authority expansion.
