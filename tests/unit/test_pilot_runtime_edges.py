@@ -419,6 +419,12 @@ class _PollingGateway:
     async def handle_discovery(self, record: ProtocolRecord, _now: datetime) -> object | None:
         return object() if record.text == "offer" else None
 
+    async def restore_announcement(self, _generation: int) -> ProtocolRecord:
+        return ProtocolRecord(1, "d-rosetta-test", "did", 0, "announcement", "")
+
+    async def announce_presence(self, _generation: int, _slot: int) -> ProtocolRecord:
+        return ProtocolRecord(2, "d-rosetta-test", "did", 0, "presence", "")
+
     async def accept_request(
         self, record: ProtocolRecord, _now: datetime
     ) -> tuple[ServiceRequest | None, Acknowledgement | None, str]:
@@ -577,6 +583,90 @@ def test_generation_change_resets_cursor_before_processing_recreated_room(
     assert runtime.store.room_checkpoint("lobby") == (0, 2)
     runtime.close()
     signer.close()
+
+
+def test_service_presence_recovers_reaped_room_then_anchors_and_refreshes(
+    tmp_path: Path,
+) -> None:
+    async def exercise() -> None:
+        signer = AsyncSigner(tmp_path / "signer.sqlite3", "synthetic-presence-recovery")
+        target = PilotFixtureTarget()
+        runtime = PilotRuntime(
+            _config(tmp_path, signer.did, enabled=True),
+            signer=signer,
+            target=target,
+            clock=lambda: NOW,
+        )
+        _, digest = await runtime.prepare(NOW)
+        await runtime.activate(digest, NOW)
+        service_room, _ = service_names(signer.did)
+        assert len(target.read_room(service_room)) == 1
+
+        target._rooms[service_room] = []
+        target.room_generation = lambda _room: 2  # type: ignore[attr-defined]
+        await runtime.poll_once(NOW + timedelta(hours=1))
+        recovered = target.read_room(service_room)
+        assert len(recovered) == 1
+        assert json.loads(recovered[0].text)["schema"] == "rosetta.service-announcement.v1"
+        presence = runtime.store.service_presence(service_room)
+        assert presence is not None and presence[1:] == ("recovery", 2)
+
+        await runtime.poll_once(NOW + timedelta(hours=7))
+        anchored = target.read_room(service_room)
+        assert len(anchored) == 2
+        assert json.loads(anchored[-1].text) == {
+            "did": signer.did,
+            "schema": "rosetta.service-presence.v1",
+            "service_card_sha256": json.loads(
+                (runtime.service_documents / "service-card.attestation.json").read_bytes()
+            )["service_card_sha256"],
+            "status": "available",
+        }
+        assert runtime.store.service_presence(service_room)[1:] == ("anchor", 2)  # type: ignore[index]
+
+        await runtime.poll_once(NOW + timedelta(days=5, hours=6, minutes=59))
+        assert len(target.read_room(service_room)) == 2
+        await runtime.poll_once(NOW + timedelta(days=5, hours=7))
+        assert len(target.read_room(service_room)) == 3
+        assert runtime.store.service_presence(service_room)[1:] == ("liveness", 2)  # type: ignore[index]
+        runtime.close()
+        signer.close()
+
+    asyncio.run(exercise())
+
+
+def test_service_presence_migration_adds_one_bounded_anchor(tmp_path: Path) -> None:
+    async def exercise() -> None:
+        signer = AsyncSigner(tmp_path / "signer.sqlite3", "synthetic-presence-migration")
+        target = PilotFixtureTarget()
+        runtime = PilotRuntime(
+            _config(tmp_path, signer.did, enabled=True),
+            signer=signer,
+            target=target,
+            clock=lambda: NOW,
+        )
+        _, digest = await runtime.prepare(NOW)
+        await runtime.activate(digest, NOW)
+        service_room, _ = service_names(signer.did)
+        runtime.store.connection.execute("DELETE FROM service_presence")
+        target.room_generation = lambda _room: 4  # type: ignore[attr-defined]
+
+        await runtime.poll_once(NOW + timedelta(minutes=1))
+        assert len(target.read_room(service_room)) == 2
+        assert runtime.store.service_presence(service_room)[1:] == ("anchor", 4)  # type: ignore[index]
+        await runtime.poll_once(NOW + timedelta(minutes=2))
+        assert len(target.read_room(service_room)) == 2
+
+        target.room_generation = lambda _room: 5  # type: ignore[attr-defined]
+        await runtime.poll_once(NOW + timedelta(minutes=3))
+        assert len(target.read_room(service_room)) == 3
+        assert runtime.store.service_presence(service_room)[1:] == ("anchor", 5)  # type: ignore[index]
+        await runtime.poll_once(NOW + timedelta(minutes=4))
+        assert len(target.read_room(service_room)) == 3
+        runtime.close()
+        signer.close()
+
+    asyncio.run(exercise())
 
 
 class _CommandRuntime:

@@ -18,9 +18,8 @@ Rosetta complements protocol vectors and conformance suites. Its focus is the st
 around a real mailbox roundtrip: restart and cursor recovery, HTTP 429 handling, uncertain-write
 reconciliation, differential reads and exactly-once confirmation.
 
-> **Current status:** v0.1.0 is live as a reviewed read-only observer and public static observatory.
-> The v0.2.0 release candidate contains the complete bounded public-service pilot, but it remains inactive until
-> its exact signed room claim and launch announcement are generated, reviewed and approved. The
+> **Current status:** the reviewed observer and static observatory are live, and the bounded v0.2.0
+> public-service pilot is active under its approved DID, room, mailbox and daily quotas. The
 > checked-in evidence remains synthetic and no production key material is present in this repository.
 
 ## See the proof first

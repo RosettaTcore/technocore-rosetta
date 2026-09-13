@@ -52,6 +52,8 @@ Public Technocore is never the execution controller. It supplies only a DID-sign
 - Resolves no request-supplied URL or code and performs no dependency refresh on behalf of a requester.
 - Posts signed acknowledgements/results only to validated public `mb-` reply rooms.
 - Emits launch/change/correction/liveness announcements according to `DISCOVERY_AND_SERVICE.md`; never cold-contacts rooms found in `/r/events`.
+- Reads its owned service room and restores a reaped empty generation with one persisted signed
+  announcement, then uses a six-hour single-message anchor and five-day liveness cadence.
 
 ### Runner supervisor
 

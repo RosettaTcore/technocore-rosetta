@@ -16,7 +16,7 @@ import os
 import signal
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import FrameType
 from typing import Any
@@ -47,6 +47,8 @@ from rosetta.technocore_client import TechnocoreHttpClient, TechnocoreRefusal
 from rosetta_signer.canonical import canonical_json
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PRESENCE_ANCHOR_AFTER = timedelta(hours=6)
+PRESENCE_LIVENESS_AFTER = timedelta(days=5)
 
 
 def _now() -> datetime:
@@ -257,6 +259,11 @@ class PilotRuntime:
                 "accept_only": "rosetta.request.v1",
                 "max_requests_per_did_per_day": card.limits.per_did_per_day,
                 "max_global_requests_per_day": card.limits.global_per_day,
+                "maintain_service_room": card.service_room,
+                "restore_empty_service_room": True,
+                "single_message_anchor_after_seconds": int(PRESENCE_ANCHOR_AFTER.total_seconds()),
+                "liveness_after_seconds": int(PRESENCE_LIVENESS_AFTER.total_seconds()),
+                "max_presence_writes_per_poll": 1,
                 "cold_outreach": False,
                 "natural_language_replies": False,
                 "llm_verdicts": False,
@@ -383,6 +390,11 @@ class PilotRuntime:
             "accept_only": "rosetta.request.v1",
             "max_requests_per_did_per_day": card.limits.per_did_per_day,
             "max_global_requests_per_day": card.limits.global_per_day,
+            "maintain_service_room": card.service_room,
+            "restore_empty_service_room": True,
+            "single_message_anchor_after_seconds": int(PRESENCE_ANCHOR_AFTER.total_seconds()),
+            "liveness_after_seconds": int(PRESENCE_LIVENESS_AFTER.total_seconds()),
+            "max_presence_writes_per_poll": 1,
             "cold_outreach": False,
             "natural_language_replies": False,
             "llm_verdicts": False,
@@ -439,6 +451,9 @@ class PilotRuntime:
         self._apply_note("room-allow", card.service_room, allow_body, if_absent=False)
         gateway = self._gateway(card)
         announcement_record = await gateway.announce()
+        generation_reader = getattr(self.target, "room_generation", None)
+        generation = generation_reader(card.service_room) if callable(generation_reader) else None
+        self.store.record_service_presence(card.service_room, current, "announcement", generation)
         activated = {
             "schema": "rosetta.pilot-activation.v1",
             "preview_sha256": preview_digest,
@@ -600,12 +615,71 @@ class PilotRuntime:
                 raise RuntimeError("pending job has no job id")
             await self._execute(gateway, requester, request, ack.job_id, now)
 
+    async def _maintain_service_presence(
+        self,
+        gateway: DiscoveryGateway,
+        card: ServiceCard,
+        now: datetime,
+    ) -> None:
+        """Keep the service discoverable under bounded upstream room retention."""
+        records = self.target.read_room(card.service_room, since=0, limit=100)
+        generation_reader = getattr(self.target, "room_generation", None)
+        observed_generation = (
+            generation_reader(card.service_room) if callable(generation_reader) else None
+        )
+        generation = observed_generation if observed_generation is not None else 0
+        own_records = [record for record in records if record.did == card.did and record.signed]
+        presence = self.store.service_presence(card.service_room)
+
+        if not own_records:
+            await gateway.restore_announcement(generation)
+            self.store.record_service_presence(
+                card.service_room, now, "recovery", observed_generation
+            )
+            return
+
+        if presence is None:
+            slot = int(now.timestamp()) // int(PRESENCE_ANCHOR_AFTER.total_seconds())
+            await gateway.announce_presence(generation, slot)
+            self.store.record_service_presence(
+                card.service_room, now, "anchor", observed_generation
+            )
+            return
+
+        last_sent_at, last_kind, stored_generation = presence
+        if stored_generation is None and observed_generation is not None:
+            self.store.record_service_presence(
+                card.service_room, last_sent_at, last_kind, observed_generation
+            )
+            stored_generation = observed_generation
+        elif (
+            stored_generation is not None
+            and observed_generation is not None
+            and stored_generation != observed_generation
+        ):
+            slot = int(now.timestamp()) // int(PRESENCE_ANCHOR_AFTER.total_seconds())
+            await gateway.announce_presence(generation, slot)
+            self.store.record_service_presence(
+                card.service_room, now, "anchor", observed_generation
+            )
+            return
+
+        elapsed = now.astimezone(timezone.utc) - last_sent_at.astimezone(timezone.utc)
+        threshold = PRESENCE_ANCHOR_AFTER if len(own_records) == 1 else PRESENCE_LIVENESS_AFTER
+        if elapsed < threshold:
+            return
+        slot = int(now.timestamp()) // int(threshold.total_seconds())
+        kind = "anchor" if len(own_records) == 1 else "liveness"
+        await gateway.announce_presence(generation, slot)
+        self.store.record_service_presence(card.service_room, now, kind, observed_generation)
+
     async def poll_once(self, now: datetime | None = None) -> dict[str, int]:
         if not self.config.service.enabled or not self.activation_path.is_file():
             raise RuntimeError("pilot_not_activated")
         current = now or self.clock()
         card, _ = self._load_card(current)
         gateway = self._gateway(card)
+        await self._maintain_service_presence(gateway, card, current)
         await self._recover(gateway, current)
         counts = {"discovery": 0, "requests": 0, "rejected": 0}
         for room in self.config.technocore.discovery_rooms:

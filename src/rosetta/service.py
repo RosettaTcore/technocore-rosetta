@@ -179,22 +179,58 @@ class DiscoveryGateway:
     def _require_operational(self) -> None:
         self.gate.require("service")
 
-    async def announce(self) -> ProtocolRecord:
-        self._require_operational()
-        self.target.create_room(self.card.service_room)
-        self.target.create_room(self.card.request_mailbox)
-        announcement = {
+    def _announcement(self) -> dict[str, object]:
+        return {
             "schema": "rosetta.service-announcement.v1",
             "did": self.card.did,
             "request_mailbox": self.card.request_mailbox,
             "service_card_url": self.base_url + "/service-card.json",
             "service_card_sha256": self.card_attestation["service_card_sha256"],
         }
+
+    async def announce(self) -> ProtocolRecord:
+        self._require_operational()
+        self.target.create_room(self.card.service_room)
+        self.target.create_room(self.card.request_mailbox)
         return await self.messenger.send(
             "announcement:" + str(self.card_attestation["service_card_sha256"]),
             "rosetta-discovery",
             self.card.service_room,
-            announcement,
+            self._announcement(),
+        )
+
+    async def restore_announcement(self, generation: int) -> ProtocolRecord:
+        """Restore the signed service announcement after upstream room reaping."""
+        self._require_operational()
+        if generation < 0:
+            raise ValueError("room generation cannot be negative")
+        return await self.messenger.send(
+            "announcement-recovery:"
+            + str(generation)
+            + ":"
+            + str(self.card_attestation["service_card_sha256"]),
+            "rosetta-discovery",
+            self.card.service_room,
+            self._announcement(),
+        )
+
+    async def announce_presence(self, generation: int, slot: int) -> ProtocolRecord:
+        """Emit one bounded, deterministic liveness record for the service room."""
+        self._require_operational()
+        if generation < 0 or slot < 0:
+            raise ValueError("invalid service presence coordinates")
+        presence = {
+            "schema": "rosetta.service-presence.v1",
+            "did": self.card.did,
+            "service_card_sha256": self.card_attestation["service_card_sha256"],
+            "status": self.card.status,
+        }
+        return await self.messenger.send(
+            f"service-presence:{generation}:{slot}:"
+            + str(self.card_attestation["service_card_sha256"]),
+            "rosetta-presence",
+            self.card.service_room,
+            presence,
         )
 
     async def handle_discovery(
