@@ -160,6 +160,7 @@ def test_production_signer_uses_encrypted_credential_and_no_network() -> None:
     assert "ProtectKernelTunables=yes" in unit
     assert not any(line.startswith("StateDirectory=") for line in unit.splitlines())
     assert "ReadWritePaths=/run/rosetta-signer /var/lib/rosetta-signer" in unit
+    assert "RuntimeDirectoryMode=0751" in unit
     assert "Environment=" not in unit
     assert "synthetic" not in unit.lower()
 
@@ -178,7 +179,9 @@ def test_production_signer_container_and_credential_install_fail_closed() -> Non
     assert "--seed-file /run/rosetta-signer/rosetta.seed" in runner
     assert "docker.sock" not in runner
     assert "signer_uid=65531" in runner
+    assert '-m 0751 "$runtime_directory"' in runner
     assert 'install -o "$signer_uid" -g "$signer_gid" -m 0400' in runner
+    assert 'chmod 0660 "$socket_file"' in runner
     assert "sha256:[0-9a-f]{64}" in runner
     assert "trap 'exit 0' TERM" in runner
     assert "trap 'exit 143' TERM" not in runner
@@ -203,6 +206,25 @@ def test_production_signer_container_and_credential_install_fail_closed() -> Non
     assert "/usr/bin/systemctl start rosetta-signer.production.service" in sudoers
     assert "/usr/bin/systemctl enable" not in sudoers
     assert "NOPASSWD: ALL" not in sudoers
+
+
+def test_pilot_healthcheck_is_unprivileged_and_has_no_signing_or_docker_access() -> None:
+    unit = (ROOT / "deploy/rosetta-pilot-healthcheck.service").read_text()
+    checker = (ROOT / "deploy/check-rosetta-pilot.sh").read_text()
+
+    assert "User=rosetta-runtime" in unit
+    assert "Group=rosetta-runtime" in unit
+    assert "SupplementaryGroups=" not in unit
+    assert "CapabilityBoundingSet=" in unit
+    assert "RestrictAddressFamilies=AF_UNIX" in unit
+    assert "InaccessiblePaths=/etc/rosetta /opt/rosetta -/run/docker.sock" in unit
+    assert "ReadOnlyPaths=/run/rosetta-signer /var/lib/rosetta/pilot" in unit
+    assert "rosetta-signer.production.service" in unit
+    assert "test -S /run/rosetta-signer/signer.sock" in checker
+    assert "systemctl is-active --quiet rosetta-signer.production.service" in checker
+    assert "systemctl is-active --quiet rosetta-pilot.service" in checker
+    assert "docker compose" not in checker
+    assert "docker.sock" not in checker
 
 
 def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:

@@ -34,7 +34,7 @@ if docker container inspect "$container_name" >/dev/null 2>&1; then
   exit 1
 fi
 
-install -d -o "$signer_uid" -g "$signer_gid" -m 0750 "$runtime_directory"
+install -d -o "$signer_uid" -g "$signer_gid" -m 0751 "$runtime_directory"
 install -d -o "$signer_uid" -g "$signer_gid" -m 0700 "$state_directory"
 install -o "$signer_uid" -g "$signer_gid" -m 0400 "$credential" "$seed_file"
 test "$(stat -c '%u:%g:%a:%s' "$seed_file")" = "$signer_uid:$signer_gid:400:32"

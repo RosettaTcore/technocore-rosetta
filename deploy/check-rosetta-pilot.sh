@@ -9,8 +9,6 @@ test -s "$activation"
 test -S /run/rosetta-signer/signer.sock
 systemctl is-active --quiet rosetta-signer.production.service
 systemctl is-active --quiet rosetta-pilot.service
-docker compose --env-file /etc/rosetta/pilot.env \
-  -f /opt/rosetta/current/deploy/compose.pilot.yaml ps --status running --quiet pilot | grep -q .
 
 python3 - "$health" "$activation" <<'PY'
 import datetime
