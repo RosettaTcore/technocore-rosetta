@@ -99,12 +99,16 @@ sudo systemctl --no-pager status rosetta-signer.production.service
 sudo systemctl list-timers 'rosetta-*'
 ```
 
-Healthy means: both containers are running, signer socket exists, health is younger than 120
-seconds, activation matches the current service room/mailbox and public writes are explicitly
-enabled. The poll also reads the owned service room. An empty recreated generation receives one
-crash-safe recovery announcement; a room with only one Rosetta record receives one anchor after
-six hours; established rooms receive at most one liveness record every five days. Each exact signed
-delivery is persisted before transport and at most one presence write occurs per polling cycle.
+Healthy means: the supervised pilot and signer services are active, the signer socket exists,
+health is younger than 120 seconds, activation matches the current service room/mailbox and public
+writes are explicitly enabled. The pilot service exits if either Compose container exits, so the
+capability-free validator does not need Docker access. It runs as `rosetta-runtime`, can read only
+the pilot's state, and can stat the known signer socket path through a non-listable directory; it
+cannot open the `0660` socket or sign. The poll also reads the owned service room. An empty
+recreated generation receives one crash-safe recovery announcement; a room with only one Rosetta
+record receives one anchor after six hours; established rooms receive at most one liveness record
+every five days. Each exact signed delivery is persisted before transport and at most one presence
+write occurs per polling cycle.
 Operational logs must not contain request bodies, signatures, headers or secrets.
 
 Malformed public records are rejected and their cursors advance without terminating the pilot.

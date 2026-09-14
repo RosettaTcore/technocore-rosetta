@@ -653,3 +653,19 @@ rooms receive at most one liveness record every five days. Delivery keys bind th
 time slot and service-card digest, so restarts and uncertain writes cannot multiply messages. A
 failure to verify or maintain this presence marks the whole pilot health check degraded; it never
 broadens outreach, accepted input, signing authority or egress destinations.
+
+## ADR-063: Keep pilot health validation outside Docker and signing authority
+
+The first periodic pilot validator ran as UID 0 with an empty capability bounding set. The pilot
+state directory is correctly owned by `rosetta-runtime` with mode `0700`, so removing
+`CAP_DAC_OVERRIDE` also prevented that root process from traversing the directory. The validator
+therefore failed on its first silent file check even though an interactive root shell, which kept
+DAC-bypass capabilities, passed the same script.
+
+Run the validator as the locked `rosetta-runtime` identity that owns the health and activation
+files. Do not grant it Docker-socket access merely to query one container: the supervised pilot
+service uses Compose's abort-on-container-exit behavior, while fresh healthy state proves the poll
+loop remains ready. Continue to require the pilot and signer systemd units and the signer socket
+node. Give other identities execute-only traversal of `/run/rosetta-signer`, without directory-list
+permission, so the validator can stat that one known path. Keep the socket itself `0660` and do not
+add the validator to the signer group; it therefore gains neither a signing channel nor seed access.

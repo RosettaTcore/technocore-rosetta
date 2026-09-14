@@ -10,7 +10,9 @@ Group=root
 ExecStart=/usr/local/libexec/rosetta-production-signer
 LoadCredentialEncrypted=rosetta.seed:/etc/credstore.encrypted/rosetta.seed
 RuntimeDirectory=rosetta-signer
-RuntimeDirectoryMode=0750
+# Permit a non-signer validator to stat the known socket path without listing this directory.
+# The 0660 socket still admits only the signer identity and explicitly approved clients.
+RuntimeDirectoryMode=0751
 # The container runs as the fixed signer UID while this host supervisor must remain root to
 # control Docker and load the encrypted credential. Do not use StateDirectory= here: systemd
 # would recursively re-own the persistent SQLite database to the host service user on restart.
