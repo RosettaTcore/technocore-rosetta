@@ -160,22 +160,59 @@ class PilotService(_Closed):
         return value
 
 
+class PilotEngagement(_Closed):
+    enabled: bool = False
+    rooms: list[str] = Field(default_factory=lambda: ["lobby", "meta"])
+    max_replies_per_day: int = 2
+    room_cooldown_hours: int = 12
+
+    @validator("rooms")
+    def bounded_rooms(cls, value: list[str]) -> list[str]:
+        if not value or len(value) > 2 or len(set(value)) != len(value):
+            raise ValueError("engagement requires one or two unique rooms")
+        if any(room not in {"lobby", "meta"} for room in value):
+            raise ValueError("unreviewed engagement room")
+        return value
+
+    @validator("max_replies_per_day")
+    def bounded_replies(cls, value: int) -> int:
+        if not 1 <= value <= 2:
+            raise ValueError("engagement daily reply limit must be one or two")
+        return value
+
+    @validator("room_cooldown_hours")
+    def bounded_cooldown(cls, value: int) -> int:
+        if not 12 <= value <= 168:
+            raise ValueError("engagement room cooldown must be 12–168 hours")
+        return value
+
+
 class PilotConfig(_Closed):
     schema_: Literal["rosetta.pilot-config.v1"] = Field(alias="schema")
     mode: Literal["pilot"]
     technocore: PilotTechnocore
     identity: PilotIdentity
     service: PilotService
+    engagement: PilotEngagement = Field(default_factory=PilotEngagement)
     model_provider: Literal["disabled"] = "disabled"
 
     @root_validator
     def one_identity_and_no_llm(cls, values: dict[str, object]) -> dict[str, object]:
         identity = values.get("identity")
         service = values.get("service")
+        engagement = values.get("engagement")
         if isinstance(identity, PilotIdentity) and isinstance(service, PilotService):
             room, mailbox = service_names(identity.public_did)
             if len(room) > 48 or len(mailbox) > 48:
                 raise ValueError("derived Technocore service names exceed protocol limits")
+        technocore = values.get("technocore")
+        if isinstance(engagement, PilotEngagement) and engagement.enabled:
+            if not isinstance(service, PilotService) or not service.enabled:
+                raise ValueError("engagement requires the active pilot")
+            if not isinstance(technocore, PilotTechnocore) or not set(engagement.rooms) <= set(
+                technocore.discovery_rooms
+            ):
+                raise ValueError("engagement rooms must be discovery rooms")
         return values
 
 
@@ -187,4 +224,9 @@ def load_pilot_config(path: Path, environ: dict[str, str] | None = None) -> Pilo
     env = os.environ if environ is None else environ
     if config.service.enabled and env.get("ROSETTA_PILOT_ENABLE") != "PUBLIC_WRITES_APPROVED":
         raise ValueError("enabled pilot requires the explicit runtime activation token")
+    if (
+        config.engagement.enabled
+        and env.get("ROSETTA_ENGAGEMENT_ENABLE") != "CONTEXTUAL_REPLIES_APPROVED"
+    ):
+        raise ValueError("engagement requires a separate runtime activation token")
     return config

@@ -28,6 +28,10 @@ services:
       - lobby
       - --discovery-room
       - meta
+      - --engagement-room
+      - lobby
+      - --engagement-room
+      - meta
       - --listen
       - 0.0.0.0
       - --port
@@ -54,6 +58,7 @@ services:
     command: ["rosetta.pilot", "--config", "/etc/rosetta/pilot.yaml", "serve"]
     environment:
       ROSETTA_PILOT_ENABLE: PUBLIC_WRITES_APPROVED
+      ROSETTA_ENGAGEMENT_ENABLE: CONTEXTUAL_REPLIES_APPROVED
     depends_on:
       technocore-egress:
         condition: service_healthy

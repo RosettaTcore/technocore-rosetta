@@ -63,7 +63,9 @@ Discovery and autonomous service offering are part of the MVP contract. The full
 - A request can select only an existing scenario, adapter profile and `current` target profile.
 - Rosetta returns signed acknowledgement and result messages to a validated public signed mailbox.
 - No requester can submit code, prompts, URLs, commits, images or private room capabilities.
-- Rosetta never cold-contacts newly discovered rooms; it announces only launch, changed capabilities/results/corrections and bounded liveness.
+- Rosetta never cold-contacts newly discovered rooms. A separately approved, deterministic lane
+  can give at most one fixed, context-linked reply to a fresh signed interoperability question in
+  the reviewed `lobby`/`meta` rooms, under strict author/room/global quotas.
 
 ## MVP scenario
 
@@ -120,7 +122,7 @@ Do not publish idle check-ins, repeated green summaries or raw untrusted message
 - monthly total cost under 40 EUR;
 - no more than one Technocore announcement per novel result;
 - at least one external DID discovers the service and completes request -> result during pilot;
-- zero unsolicited outreach messages;
+- zero cold-contact or repeated promotional messages;
 - zero runner executions caused by invalid or over-quota discovery requests.
 
 ## Target repository structure

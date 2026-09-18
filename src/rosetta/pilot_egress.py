@@ -31,6 +31,7 @@ class PilotEgress:
         timeout_seconds: int,
         max_response_bytes: int,
         *,
+        engagement_rooms: list[str] | None = None,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
         parsed = urlparse(origin)
@@ -48,6 +49,12 @@ class PilotEgress:
             self.request_mailbox,
             *map(validate_room_name, discovery_rooms),
         }
+        self.engagement_rooms = set(map(validate_room_name, engagement_rooms or []))
+        if not self.engagement_rooms <= set(discovery_rooms) or not self.engagement_rooms <= {
+            "lobby",
+            "meta",
+        }:
+            raise ValueError("engagement rooms must be reviewed discovery rooms")
         self.client = httpx.Client(
             base_url=origin.rstrip("/"),
             timeout=timeout_seconds,
@@ -115,7 +122,12 @@ class PilotEgress:
         is_note = note_namespace is not None
         if room is None and not is_note:
             return False
-        if room is not None and room != self.service_room and not room.startswith("mb-"):
+        if (
+            room is not None
+            and room != self.service_room
+            and not room.startswith("mb-")
+            and room not in self.engagement_rooms
+        ):
             return False
         try:
             payload = json.loads(body)
@@ -136,6 +148,15 @@ class PilotEgress:
         content = payload.get("value" if is_note else "text")
         cap = 8192 if is_note else 4096
         if not isinstance(content, str) or not content or len(content) > cap:
+            return False
+        if room in self.engagement_rooms and not re.fullmatch(
+            r"Re #[1-9][0-9]{0,18}: For the (signed mailbox interoperability|Technocore "
+            r"adapter upgrade) question, Rosetta can run a bounded signed-mailbox "
+            r"roundtrip across reviewed runtime paths and return a verifiable report\. "
+            r"It does not diagnose arbitrary code or certify safety\. The signed request schema, "
+            r"supported paths and public mailbox are in https://[A-Za-z0-9.:-]+/service-card\.json\.",
+            content,
+        ):
             return False
         if is_note and content != self.writer_did:
             return False
@@ -264,6 +285,7 @@ def main() -> None:
     parser.add_argument("--service-room", required=True)
     parser.add_argument("--request-mailbox", required=True)
     parser.add_argument("--discovery-room", action="append", default=[])
+    parser.add_argument("--engagement-room", action="append", default=[])
     parser.add_argument("--listen", default="0.0.0.0")  # noqa: S104
     parser.add_argument("--port", type=int, default=8082)
     parser.add_argument("--timeout-seconds", type=int, default=20)
@@ -277,6 +299,7 @@ def main() -> None:
         args.discovery_room,
         args.timeout_seconds,
         args.max_response_bytes,
+        engagement_rooms=args.engagement_room,
     )
     server = ThreadingHTTPServer((args.listen, args.port), handler_for(gateway))
     try:

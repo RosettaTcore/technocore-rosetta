@@ -130,3 +130,14 @@ Exit gate: continue, pivot, merge into an equivalent project, freeze or retire u
 - [ ] Prepare upstream issues/PRs from minimized regressions.
 - [ ] Keep every external issue/PR and social post behind human approval.
 - [ ] Add no reputation score, wallet, payment or airdrop eligibility claim.
+
+## Contextual Technocore participation (separate release gate)
+
+- [x] Implement deterministic relevance classification for fresh signed questions in reviewed
+  rooms; public content never becomes a prompt or outbound quote.
+- [x] Add fixed contextual reply templates, source references, durable delivery and bounded
+  global/author/room quotas.
+- [x] Add separate configuration token, exact digest preview/activation and egress text allowlist.
+- [x] Add synthetic integration, abuse-boundary and restart/quota tests.
+- [ ] Review exact policy preview and approve the new common-room write authority.
+- [ ] Deploy through the signed release gate, activate separately and observe reply quality.

@@ -114,6 +114,19 @@ class StateStore:
                 ),
                 room_generation INTEGER CHECK(room_generation >= 0)
             );
+            CREATE TABLE IF NOT EXISTS engagement_cursors (
+                room TEXT PRIMARY KEY,
+                sequence INTEGER NOT NULL CHECK(sequence >= 0),
+                generation INTEGER NOT NULL CHECK(generation >= 0)
+            );
+            CREATE TABLE IF NOT EXISTS engagement_replies (
+                room TEXT NOT NULL,
+                generation INTEGER NOT NULL,
+                source_sequence INTEGER NOT NULL,
+                author_did TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY(room, generation, source_sequence)
+            );
             """
         )
         cursor_columns = {
@@ -142,15 +155,14 @@ class StateStore:
         self.connection.execute("BEGIN IMMEDIATE")
         try:
             existing = self.connection.execute(
-                "SELECT content_hash FROM discovery_offers "
-                "WHERE requester_did=? AND request_id=?",
+                "SELECT content_hash FROM discovery_offers WHERE requester_did=? AND request_id=?",
                 (requester, request_id),
             ).fetchone()
             if existing:
                 self.connection.execute("ROLLBACK")
                 return "duplicate" if existing[0] == content_hash else "conflict"
             count = self.connection.execute(
-                "SELECT COUNT(*) FROM discovery_offers " "WHERE requester_did=? AND created_day=?",
+                "SELECT COUNT(*) FROM discovery_offers WHERE requester_did=? AND created_day=?",
                 (requester, day),
             ).fetchone()
             if int(count[0]) >= per_did_limit:
@@ -269,8 +281,7 @@ class StateStore:
         if status not in {"accepted", "running", "complete", "failed"}:
             raise ValueError("invalid service job state")
         cursor = self.connection.execute(
-            "UPDATE service_jobs SET status=?, updated_at=? "
-            "WHERE requester_did=? AND request_id=?",
+            "UPDATE service_jobs SET status=?, updated_at=? WHERE requester_did=? AND request_id=?",
             (status, now.astimezone(timezone.utc).isoformat(), requester, request_id),
         )
         if cursor.rowcount != 1:
@@ -314,6 +325,72 @@ class StateStore:
             "ON CONFLICT(room) DO UPDATE SET sequence=MAX(sequence, excluded.sequence)",
             (room, sequence),
         )
+
+    def engagement_checkpoint(self, room: str) -> tuple[int, int] | None:
+        row = self.connection.execute(
+            "SELECT sequence, generation FROM engagement_cursors WHERE room=?", (room,)
+        ).fetchone()
+        return None if row is None else (int(row[0]), int(row[1]))
+
+    def set_engagement_checkpoint(self, room: str, sequence: int, generation: int) -> None:
+        if sequence < 0 or generation < 0:
+            raise ValueError("invalid engagement checkpoint")
+        self.connection.execute(
+            "INSERT INTO engagement_cursors VALUES (?, ?, ?) "
+            "ON CONFLICT(room) DO UPDATE SET sequence=excluded.sequence, "
+            "generation=excluded.generation",
+            (room, sequence, generation),
+        )
+
+    def reserve_engagement_reply(
+        self,
+        room: str,
+        generation: int,
+        sequence: int,
+        author_did: str,
+        now: datetime,
+        max_per_day: int,
+        room_cooldown_hours: int,
+    ) -> str:
+        """Reserve one reply transactionally; an existing reservation is retriable."""
+        from datetime import timedelta
+
+        timestamp = now.astimezone(timezone.utc)
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            existing = self.connection.execute(
+                "SELECT author_did FROM engagement_replies "
+                "WHERE room=? AND generation=? AND source_sequence=?",
+                (room, generation, sequence),
+            ).fetchone()
+            if existing is not None:
+                self.connection.execute("ROLLBACK")
+                return "existing" if existing[0] == author_did else "conflict"
+            day_start = timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_count = self.connection.execute(
+                "SELECT COUNT(*) FROM engagement_replies WHERE created_at>=?",
+                (day_start.isoformat(),),
+            ).fetchone()
+            last_author = self.connection.execute(
+                "SELECT 1 FROM engagement_replies WHERE author_did=? AND created_at>=? LIMIT 1",
+                (author_did, (timestamp - timedelta(days=7)).isoformat()),
+            ).fetchone()
+            last_room = self.connection.execute(
+                "SELECT 1 FROM engagement_replies WHERE room=? AND created_at>=? LIMIT 1",
+                (room, (timestamp - timedelta(hours=room_cooldown_hours)).isoformat()),
+            ).fetchone()
+            if int(day_count[0]) >= max_per_day or last_author or last_room:
+                self.connection.execute("ROLLBACK")
+                return "quota"
+            self.connection.execute(
+                "INSERT INTO engagement_replies VALUES (?, ?, ?, ?, ?)",
+                (room, generation, sequence, author_did, timestamp.isoformat()),
+            )
+            self.connection.execute("COMMIT")
+            return "reserved"
+        except Exception:
+            self.connection.execute("ROLLBACK")
+            raise
 
     def service_presence(self, service_room: str) -> tuple[datetime, str, int | None] | None:
         row = self.connection.execute(

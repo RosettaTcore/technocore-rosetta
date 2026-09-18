@@ -69,7 +69,10 @@ No wallet, funds or personal account credentials may be present.
 - Enforce idempotency by `(requester DID, request_id)` and transactional per-DID/global quotas.
 - Invalid requests never start runners or trigger downloads.
 - `/r/events`, `/rooms`, room names and topics are discovery data only and never authorize outreach or execution.
-- No cold-contact loop; automatic announcements are limited to launch, changes, corrections and bounded liveness.
+- No cold-contact loop. Optional contextual replies require a separate operator-approved digest,
+  exact room allowlist, verified signed question, deterministic classifier/template, daily and
+  author/room quotas, fresh cursor baseline and the shared kill switch. No public text reaches a
+  prompt, command or outbound quote.
 
 ### Evidence integrity
 
@@ -132,5 +135,7 @@ These are acceptable only for a bounded pilot with no financial authority and tr
 - Public read-only: local acceptance plus fresh landscape/security review.
 - First public write/report/service intake: explicit approval of DID, service room, request mailbox, schemas, publisher destination and budgets.
 - New adapter: code/supply-chain review and registry update.
-- GitHub issue/PR or social post: per-action human approval.
+- GitHub issue/PR or off-platform social post: per-action human approval. The bounded Technocore
+  contextual-reply lane requires a separate exact policy-digest approval before any automatic
+  message; it is not covered by the original pilot activation.
 - Wallet, payment or claim: outside scope and requires a separate project/threat model.

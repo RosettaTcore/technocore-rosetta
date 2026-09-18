@@ -33,6 +33,7 @@ from rosetta.contracts import (
     SignRequest,
 )
 from rosetta.delivery import ReliableMessenger
+from rosetta.engagement import POLICY_VERSION, classify, policy_digest, reply_text
 from rosetta.evidence import build_bundle, verify_bundle
 from rosetta.local_protocol import LocalTechnocore, ProtocolRecord, UncertainWrite
 from rosetta.operations import OperationalGate
@@ -122,6 +123,114 @@ class PilotRuntime:
     @property
     def activation_path(self) -> Path:
         return self.state_dir / "activation.json"
+
+    @property
+    def engagement_preview_path(self) -> Path:
+        return self.state_dir / "engagement-preview.json"
+
+    @property
+    def engagement_activation_path(self) -> Path:
+        return self.state_dir / "engagement-activation.json"
+
+    def _engagement_preview(self) -> dict[str, object]:
+        settings = self.config.engagement
+        return {
+            "schema": "rosetta.engagement-preview.v1",
+            "did": self.config.identity.public_did,
+            "authority": self.config.technocore.authority_origin,
+            "policy_version": POLICY_VERSION,
+            "policy_sha256": policy_digest(
+                settings.rooms,
+                settings.max_replies_per_day,
+                settings.room_cooldown_hours,
+                self.config.service.public_base_url,
+            ),
+            "rooms": settings.rooms,
+            "max_replies_per_day": settings.max_replies_per_day,
+            "max_replies_per_did_per_7_days": 1,
+            "room_cooldown_hours": settings.room_cooldown_hours,
+            "only_signed_questions": True,
+            "only_new_messages_after_activation": True,
+            "sample_reply_mailbox": reply_text(
+                self._sample_opportunity("mailbox_interop"),
+                self.config.service.public_base_url,
+            ),
+            "sample_reply_upgrade": reply_text(
+                self._sample_opportunity("upgrade_compat"),
+                self.config.service.public_base_url,
+            ),
+        }
+
+    @staticmethod
+    def _sample_opportunity(kind: str) -> Any:
+        from rosetta.engagement import Opportunity
+
+        return Opportunity(kind, "lobby", 0, 123, "did:key:example")
+
+    def prepare_engagement(self) -> tuple[dict[str, object], str]:
+        if not self.config.engagement.enabled or not self.activation_path.is_file():
+            raise RuntimeError("engagement_requires_active_pilot")
+        self._load_card(self.clock())
+        preview = self._engagement_preview()
+        digest = _digest(preview)
+        _atomic_json(self.engagement_preview_path, preview)
+        return preview, digest
+
+    def activate_engagement(self, approved_digest: str) -> dict[str, object]:
+        if not self.config.engagement.enabled or not self.activation_path.is_file():
+            raise RuntimeError("engagement_requires_active_pilot")
+        stored = json.loads(self.engagement_preview_path.read_bytes())
+        expected = self._engagement_preview()
+        digest = _digest(expected)
+        if stored != expected or approved_digest != digest:
+            raise RuntimeError("engagement_approval_digest_mismatch")
+        if self.engagement_activation_path.is_file():
+            previous = json.loads(self.engagement_activation_path.read_bytes())
+            if (
+                isinstance(previous, dict)
+                and set(previous) == {"schema", "preview_sha256", "activated_at"}
+                and previous.get("schema") == "rosetta.engagement-activation.v1"
+                and previous.get("preview_sha256") == digest
+                and isinstance(previous.get("activated_at"), str)
+            ):
+                return {
+                    "schema": previous["schema"],
+                    "preview_sha256": digest,
+                    "activated_at": previous["activated_at"],
+                }
+        self._load_card(self.clock())
+        for room in self.config.engagement.rooms:
+            self.target.read_room(room, since=0, limit=100)
+            generation_reader = getattr(self.target, "room_generation", None)
+            last_reader = getattr(self.target, "room_last_sequence", None)
+            generation = generation_reader(room) if callable(generation_reader) else 0
+            if not callable(last_reader):
+                raise RuntimeError("engagement requires a room high-water mark")
+            last = last_reader(room)
+            if generation is None:
+                generation = 0
+            if last is None:
+                raise RuntimeError("missing engagement room high-water mark")
+            self.store.set_engagement_checkpoint(room, last, generation)
+        activated = {
+            "schema": "rosetta.engagement-activation.v1",
+            "preview_sha256": digest,
+            "activated_at": self.clock().astimezone(timezone.utc).isoformat(),
+        }
+        _atomic_json(self.engagement_activation_path, activated)
+        return activated
+
+    def _require_engagement_approval(self) -> None:
+        if not self.config.engagement.enabled:
+            return
+        try:
+            activation = json.loads(self.engagement_activation_path.read_bytes())
+            if activation.get("schema") != "rosetta.engagement-activation.v1" or activation.get(
+                "preview_sha256"
+            ) != _digest(self._engagement_preview()):
+                raise ValueError("engagement policy changed")
+        except (FileNotFoundError, ValueError, TypeError, AttributeError) as exc:
+            raise RuntimeError("engagement_not_approved") from exc
 
     def close(self) -> None:
         self.target.close()
@@ -269,6 +378,15 @@ class PilotRuntime:
                 "llm_verdicts": False,
             },
         }
+        if self.config.engagement.enabled:
+            automatic = preview["automatic_behavior_after_activation"]
+            if not isinstance(automatic, dict):
+                raise RuntimeError("invalid automatic behavior preview")
+            automatic["optional_contextual_replies"] = {
+                "requires_separate_approval": True,
+                "policy_sha256": self._engagement_preview()["policy_sha256"],
+                "rooms": self.config.engagement.rooms,
+            }
         preview_digest = _digest(preview)
         _atomic_json(self.preview_path, preview)
         (self.state_dir / "activation-preview.sha256").write_text(
@@ -399,6 +517,12 @@ class PilotRuntime:
             "natural_language_replies": False,
             "llm_verdicts": False,
         }
+        if self.config.engagement.enabled:
+            expected_automatic["optional_contextual_replies"] = {
+                "requires_separate_approval": True,
+                "policy_sha256": self._engagement_preview()["policy_sha256"],
+                "rooms": self.config.engagement.rooms,
+            }
         if (
             set(preview) != expected_top_level
             or preview["authority"] != self.config.technocore.authority_origin
@@ -676,6 +800,11 @@ class PilotRuntime:
     async def poll_once(self, now: datetime | None = None) -> dict[str, int]:
         if not self.config.service.enabled or not self.activation_path.is_file():
             raise RuntimeError("pilot_not_activated")
+        engagement_active = (
+            self.config.engagement.enabled and self.engagement_activation_path.is_file()
+        )
+        if engagement_active:
+            self._require_engagement_approval()
         current = now or self.clock()
         card, _ = self._load_card(current)
         gateway = self._gateway(card)
@@ -701,8 +830,58 @@ class PilotRuntime:
             elif status not in {"unsigned", "invalid"}:
                 counts["rejected"] += 1
             self.store.advance_room_cursor(room, record.sequence)
+        if engagement_active:
+            counts["engagement"] = await self._poll_engagement(current)
         self._write_health("healthy", current, counts)
         return counts
+
+    async def _poll_engagement(self, now: datetime) -> int:
+        self.gate.require("public_writer")
+        sent = 0
+        messenger = ReliableMessenger(self.target, self.signer, self.store, self.gate)
+        for room in self.config.engagement.rooms:
+            checkpoint = self.store.engagement_checkpoint(room)
+            if checkpoint is None:
+                raise RuntimeError("engagement_cursor_not_initialized")
+            cursor, stored_generation = checkpoint
+            records = self.target.read_room(room, since=cursor, limit=100)
+            generation_reader = getattr(self.target, "room_generation", None)
+            last_reader = getattr(self.target, "room_last_sequence", None)
+            generation = generation_reader(room) if callable(generation_reader) else 0
+            if not callable(last_reader):
+                raise RuntimeError("engagement requires a room high-water mark")
+            last = last_reader(room)
+            if generation is None:
+                generation = 0
+            if last is None:
+                raise RuntimeError("missing engagement room high-water mark")
+            if generation != stored_generation or last - cursor > 100:
+                # A recreated room or a large backlog is not a fresh conversation.
+                self.store.set_engagement_checkpoint(room, last, generation)
+                continue
+            for record in records:
+                opportunity = classify(record, self.config.identity.public_did, generation)
+                if opportunity is not None:
+                    decision = self.store.reserve_engagement_reply(
+                        room,
+                        generation,
+                        record.sequence,
+                        record.did,
+                        now,
+                        self.config.engagement.max_replies_per_day,
+                        self.config.engagement.room_cooldown_hours,
+                    )
+                    if decision in {"reserved", "existing"}:
+                        response = reply_text(opportunity, self.config.service.public_base_url)
+                        await messenger.send_text(
+                            opportunity.delivery_key,
+                            "rosetta-engagement",
+                            room,
+                            response,
+                        )
+                        sent += int(decision == "reserved")
+                self.store.set_engagement_checkpoint(room, record.sequence, generation)
+        return sent
 
     def _write_health(
         self,
@@ -797,6 +976,11 @@ async def _run(args: argparse.Namespace) -> object:
             return {"preview_sha256": digest, "preview": preview}
         if args.command == "activate":
             return await runtime.activate(args.approved_digest)
+        if args.command == "prepare-engagement":
+            preview, digest = runtime.prepare_engagement()
+            return {"preview_sha256": digest, "preview": preview}
+        if args.command == "activate-engagement":
+            return runtime.activate_engagement(args.approved_digest)
         if args.command == "once":
             return await runtime.poll_once()
         if args.command == "serve":
@@ -816,6 +1000,9 @@ def main() -> None:
     commands.add_parser("prepare")
     activate = commands.add_parser("activate")
     activate.add_argument("--approved-digest", required=True)
+    commands.add_parser("prepare-engagement")
+    activate_engagement = commands.add_parser("activate-engagement")
+    activate_engagement.add_argument("--approved-digest", required=True)
     commands.add_parser("once")
     commands.add_parser("serve")
     args = parser.parse_args()

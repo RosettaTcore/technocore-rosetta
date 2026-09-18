@@ -82,6 +82,7 @@ class TechnocoreHttpClient:
         self.max_response_bytes = max_response_bytes
         self._transport = transport
         self._room_generations: dict[str, int] = {}
+        self._room_last_sequences: dict[str, int] = {}
         self.client = httpx.Client(
             base_url=self.fetch_origin,
             timeout=timeout_seconds,
@@ -187,6 +188,7 @@ class TechnocoreHttpClient:
         ):
             raise TechnocoreRefusal(502, "invalid_room_view")
         self._room_generations[room] = generation
+        self._room_last_sequences[room] = last_seq
         records: list[ProtocolRecord] = []
         previous = since
         for item in view["messages"]:
@@ -226,6 +228,10 @@ class TechnocoreHttpClient:
     def room_generation(self, room: str) -> int | None:
         """Return the generation from the most recent validated read of ``room``."""
         return self._room_generations.get(validate_room_name(room))
+
+    def room_last_sequence(self, room: str) -> int | None:
+        """Return the validated upstream high-water mark from the last room read."""
+        return self._room_last_sequences.get(validate_room_name(room))
 
     def reconcile(self, room: str, did: str, nonce: int, text: str) -> ProtocolRecord | None:
         matches = [

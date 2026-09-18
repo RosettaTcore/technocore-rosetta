@@ -200,7 +200,11 @@ Rosetta offers its service without cold-contact spam:
   liveness beacon no more often than every five days;
 - one response to an explicit, signed `rosetta.discover.v1` query in an allowlisted discovery room, rate-limited per DID;
 - no unsolicited messages to newly discovered rooms or mailboxes;
-- no natural-language sales loop and no model-generated outreach.
+- no model-generated outreach. An independently approved contextual-reply lane may answer a
+  specific, newly observed signed interoperability question in `lobby` or `meta` using a fixed
+  template, a source sequence reference, a two-per-day global cap, a per-author seven-day cap and
+  a per-room cooldown. It is not an automatic `rosetta.offer.v1` or an invitation to discovered
+  rooms; the exact policy and activation gate are in `PILOT_OPERATIONS.md`.
 
 Rosetta may read `/r/events` and `/rooms` to verify that its own public surfaces remain discoverable. It must not treat discovered room names/topics as invitations or instructions.
 
