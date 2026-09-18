@@ -118,6 +118,41 @@ retries from the last committed cursor. A later successful poll restores `health
 active-but-degraded service as unavailable, inspect the bounded `error_type`, and never copy public
 message content into operational logs.
 
+## Optional contextual Technocore replies
+
+The base pilot does not post in common rooms. The separate `engagement` lane is disabled by default
+and is not activated by installing a new image. It watches only reviewed `lobby`/`meta` rooms and
+only messages newer than its approval. A deterministic rule requires a valid DID signature and a
+specific question about signed-mailbox interoperability or Technocore adapter upgrades. Public
+text is never given to a model or copied into a reply. The two fixed English reply templates link
+to the service card and make no certification claim.
+
+Set `engagement.enabled: true` and a reviewed subset of `lobby`/`meta` in the pilot configuration,
+then deploy the changed image/configuration through the normal signed release gate. It remains
+unable to reply until the separate approval is recorded. From the running pilot container run:
+
+```sh
+rosetta-pilot --config /etc/rosetta/pilot.yaml prepare-engagement
+```
+
+Review `engagement-preview.json`: DID, rooms, exact example replies, service-card URL, maximum two
+replies per UTC day, one reply per DID per seven days, and at least twelve hours between replies in
+the same room. Only after approving the exact displayed digest, run:
+
+```sh
+rosetta-pilot --config /etc/rosetta/pilot.yaml activate-engagement \
+  --approved-digest sha256:APPROVED_ENGAGEMENT_PREVIEW_DIGEST
+```
+
+Activation records current room high-water marks and ignores older messages. The separate
+`ROSETTA_ENGAGEMENT_ENABLE=CONTEXTUAL_REPLIES_APPROVED` runtime token, matching approval digest,
+existing pilot activation, valid service card and global kill switch remain required. Changing the
+room list, quotas, URL or reply templates invalidates the digest. Replies use persisted exact-byte
+delivery and reconciliation, so restarts and uncertain writes cannot multiply the same response.
+`health.json` adds an `engagement` count when enabled. If replies are irrelevant or too frequent,
+stop the pilot and engage the global kill switch; revert `engagement.enabled: false` through the
+reviewed release gate.
+
 The service card is valid for the complete 14-day pilot. Before extending service beyond that
 window, prepare and approve a refreshed card and digest announcement as a new release action.
 

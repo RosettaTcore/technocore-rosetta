@@ -46,6 +46,7 @@ mapfile -t identity < <(
   docker run --rm --network none --read-only --user "$runtime_uid:$runtime_gid" \
     --cap-drop ALL --security-opt no-new-privileges:true \
     -e ROSETTA_PILOT_ENABLE=PUBLIC_WRITES_APPROVED \
+    -e ROSETTA_ENGAGEMENT_ENABLE=CONTEXTUAL_REPLIES_APPROVED \
     --mount type=bind,src=/etc/rosetta/pilot.yaml,dst=/etc/rosetta/pilot.yaml,readonly \
     --entrypoint python "$image" -c \
     'from pathlib import Path; from rosetta.pilot_config import load_pilot_config; from rosetta.service import service_names; c=load_pilot_config(Path("/etc/rosetta/pilot.yaml")); print(c.identity.public_did); print(*service_names(c.identity.public_did), sep="\n")'

@@ -53,8 +53,12 @@ class ReliableMessenger:
         room: str,
         body: dict[str, object],
     ) -> ProtocolRecord:
+        return await self.send_text(delivery_key, actor, room, canonical_json(body).decode())
+
+    async def send_text(
+        self, delivery_key: str, actor: str, room: str, text: str
+    ) -> ProtocolRecord:
         self.gate.require("public_writer")
-        text = canonical_json(body).decode()
         existing = self.store.delivery(delivery_key)
         current: tuple[str, str, str, int, str, str, str, int | None]
         if existing is None:

@@ -113,6 +113,9 @@ class LocalTechnocore:
             raise ValueError("limit outside bounded range")
         return [record for record in self._rooms.get(room, []) if record.sequence > since][:limit]
 
+    def room_last_sequence(self, room: str) -> int:
+        return max((record.sequence for record in self._rooms.get(room, [])), default=0)
+
     def post_signed(
         self,
         actor: str,

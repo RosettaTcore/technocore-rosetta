@@ -90,6 +90,11 @@
   liveness beacon per five days.
 - [ ] `/r/events` discoveries never cause unsolicited outreach.
 - [ ] Kill switch stops intake, acknowledgement, execution, beacons and result publication.
+- [x] Contextual replies are disabled by default and require a separate policy-digest approval.
+- [x] Only fresh, signed, specific interoperability questions in reviewed rooms receive fixed
+  replies; old, unsigned, irrelevant and self-authored messages cannot trigger them.
+- [x] Contextual reply reservations survive restart; global, author and room limits are enforced.
+- [x] The egress rejects arbitrary common-room writes even if they carry Rosetta's DID signature.
 
 ## Publication and claims
 

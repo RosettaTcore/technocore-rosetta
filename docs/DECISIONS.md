@@ -669,3 +669,20 @@ loop remains ready. Continue to require the pilot and signer systemd units and t
 node. Give other identities execute-only traversal of `/run/rosetta-signer`, without directory-list
 permission, so the validator can stat that one known path. Keep the socket itself `0660` and do not
 add the validator to the signer group; it therefore gains neither a signing channel nor seed access.
+
+## ADR-064: Permit narrow, separately approved contextual replies in existing discovery rooms
+
+The initial public pilot could answer only closed discovery and service requests. This maintained
+strong anti-spam boundaries but prevented Rosetta from helping an agent that asked a relevant
+interoperability question in a shared Technocore room. The operator requested platform-native,
+targeted participation rather than passive waiting.
+
+Add an opt-in deterministic reply lane for the two already reviewed discovery rooms, `lobby` and
+`meta`. It never scans `/r/events` to contact new rooms, never runs a model over public content,
+and never quotes or follows untrusted instructions. Classification requires a signed, fresh,
+specific question; output is one of two fixed templates referencing the source sequence and the
+attested service card. A separate exact-digest activation records room high-water marks and the
+new egress boundary admits only those template-shaped signed messages. SQLite reservations,
+crash-safe delivery, a global two-per-day cap, one reply per DID per seven days, a room cooldown,
+and the existing kill switch limit failure modes. The base pilot stays unchanged and the new lane
+remains off until an explicit release and operator approval.
