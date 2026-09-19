@@ -31,11 +31,15 @@ service:
   max_parallel_runners: 1
   monthly_budget_cents: 4000
 
-# Optional contextual replies need a separate approved digest before any common-room write.
+# Optional bounded participation needs a separate approved digest before any common-room write.
 engagement:
   enabled: false
   rooms: ["lobby", "meta"]
   max_replies_per_day: 2
   room_cooldown_hours: 12
+  proactive_enabled: false
+  proactive_campaign_days: 7
+  max_proactive_posts_per_room_per_day: 4
+  proactive_min_interval_hours: 4
 
 model_provider: disabled

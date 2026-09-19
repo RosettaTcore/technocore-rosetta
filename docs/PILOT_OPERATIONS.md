@@ -118,26 +118,36 @@ retries from the last committed cursor. A later successful poll restores `health
 active-but-degraded service as unavailable, inspect the bounded `error_type`, and never copy public
 message content into operational logs.
 
-## Optional contextual Technocore replies
+## Optional bounded Technocore participation
 
 The base pilot does not post in common rooms. The separate `engagement` lane is disabled by default
-and is not activated by installing a new image. It watches only reviewed `lobby`/`meta` rooms and
-only messages newer than its approval. A deterministic rule requires a valid DID signature and a
-specific question about signed-mailbox interoperability or Technocore adapter upgrades. Public
-text is never given to a model or copied into a reply. The two fixed English reply templates link
-to the service card and make no certification claim.
+and is not activated by installing a new image. Its contextual mode watches only reviewed
+`lobby`/`meta` rooms and only messages newer than its approval. A deterministic rule requires a
+valid DID signature and a specific question about signed-mailbox interoperability or Technocore
+adapter upgrades. Public text is never given to a model or copied into a reply. The two fixed
+English reply templates link to the service card and make no certification claim.
 
-Set `engagement.enabled: true` and a reviewed subset of `lobby`/`meta` in the pilot configuration,
-then deploy the changed image/configuration through the normal signed release gate. It remains
-unable to reply until the separate approval is recorded. From the running pilot container run:
+The optional proactive mode is a single seven-day acquisition experiment in the same explicit
+room allowlist. It rotates four fixed reviewed templates on six-hour campaign slots, permits at most
+four posts per room per UTC day, requires at least four hours between Rosetta posts in a room and
+skips a room after a recent contextual reply. Delivery reservations and exact bytes survive
+restart. The campaign cannot discover or select other rooms and stops automatically seven days
+after engagement activation.
+
+Set `engagement.enabled: true` and a reviewed subset of `lobby`/`meta` in the pilot configuration.
+To include the time-boxed experiment, also set `engagement.proactive_enabled: true`; its duration,
+daily cap and minimum interval are closed to the reviewed values `7`, `4` and `4`. Deploy the
+changed image/configuration through the normal signed release gate. It remains unable to write
+until the separate approval is recorded. From the running pilot container run:
 
 ```sh
 rosetta-pilot --config /etc/rosetta/pilot.yaml prepare-engagement
 ```
 
-Review `engagement-preview.json`: DID, rooms, exact example replies, service-card URL, maximum two
-replies per UTC day, one reply per DID per seven days, and at least twelve hours between replies in
-the same room. Only after approving the exact displayed digest, run:
+Review `engagement-preview.json`: DID, rooms, exact example replies and proactive posts,
+service-card URL, contextual quotas, proactive four-per-room daily cap, four-hour minimum interval,
+seven-day duration, skip-after-reply rule and automatic stop. Only after approving the exact
+displayed digest, run:
 
 ```sh
 rosetta-pilot --config /etc/rosetta/pilot.yaml activate-engagement \
@@ -146,12 +156,14 @@ rosetta-pilot --config /etc/rosetta/pilot.yaml activate-engagement \
 
 Activation records current room high-water marks and ignores older messages. The separate
 `ROSETTA_ENGAGEMENT_ENABLE=CONTEXTUAL_REPLIES_APPROVED` runtime token, matching approval digest,
-existing pilot activation, valid service card and global kill switch remain required. Changing the
-room list, quotas, URL or reply templates invalidates the digest. Replies use persisted exact-byte
-delivery and reconciliation, so restarts and uncertain writes cannot multiply the same response.
-`health.json` adds an `engagement` count when enabled. If replies are irrelevant or too frequent,
-stop the pilot and engage the global kill switch; revert `engagement.enabled: false` through the
-reviewed release gate.
+existing pilot activation, valid service card and global kill switch remain required. Proactive
+mode additionally requires `ROSETTA_PROACTIVE_ENABLE=SEVEN_DAY_CAMPAIGN_APPROVED`. Changing the
+room list, quotas, URL, templates or campaign settings invalidates the digest. Writes use persisted
+exact-byte delivery and reconciliation, so restarts and uncertain writes cannot multiply the same
+response. `health.json` adds `engagement` and, when enabled, `proactive` counts. If participation is
+irrelevant or too frequent, stop the pilot and engage the global kill switch; revert both
+`engagement.proactive_enabled` and `engagement.enabled` to `false` through the reviewed release
+gate.
 
 The service card is valid for the complete 14-day pilot. Before extending service beyond that
 window, prepare and approve a refreshed card and digest announcement as a new release action.

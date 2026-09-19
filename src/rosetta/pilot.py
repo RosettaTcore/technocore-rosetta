@@ -33,7 +33,15 @@ from rosetta.contracts import (
     SignRequest,
 )
 from rosetta.delivery import ReliableMessenger
-from rosetta.engagement import POLICY_VERSION, classify, policy_digest, reply_text
+from rosetta.engagement import (
+    POLICY_VERSION,
+    PROACTIVE_TEMPLATES,
+    classify,
+    policy_digest,
+    proactive_delivery_key,
+    proactive_text,
+    reply_text,
+)
 from rosetta.evidence import build_bundle, verify_bundle
 from rosetta.local_protocol import LocalTechnocore, ProtocolRecord, UncertainWrite
 from rosetta.operations import OperationalGate
@@ -134,23 +142,40 @@ class PilotRuntime:
 
     def _engagement_preview(self) -> dict[str, object]:
         settings = self.config.engagement
+        policy_sha256 = policy_digest(
+            settings.rooms,
+            settings.max_replies_per_day,
+            settings.room_cooldown_hours,
+            self.config.service.public_base_url,
+            proactive_enabled=settings.proactive_enabled,
+            campaign_days=settings.proactive_campaign_days,
+            proactive_per_room_per_day=settings.max_proactive_posts_per_room_per_day,
+            proactive_min_interval_hours=settings.proactive_min_interval_hours,
+        )
         return {
             "schema": "rosetta.engagement-preview.v1",
             "did": self.config.identity.public_did,
             "authority": self.config.technocore.authority_origin,
             "policy_version": POLICY_VERSION,
-            "policy_sha256": policy_digest(
-                settings.rooms,
-                settings.max_replies_per_day,
-                settings.room_cooldown_hours,
-                self.config.service.public_base_url,
-            ),
+            "policy_sha256": policy_sha256,
             "rooms": settings.rooms,
             "max_replies_per_day": settings.max_replies_per_day,
             "max_replies_per_did_per_7_days": 1,
             "room_cooldown_hours": settings.room_cooldown_hours,
             "only_signed_questions": True,
             "only_new_messages_after_activation": True,
+            "proactive_campaign": {
+                "enabled": settings.proactive_enabled,
+                "duration_days": settings.proactive_campaign_days,
+                "max_posts_per_room_per_day": settings.max_proactive_posts_per_room_per_day,
+                "min_interval_hours": settings.proactive_min_interval_hours,
+                "skip_after_recent_rosetta_reply": True,
+                "automatic_stop": True,
+                "sample_posts": [
+                    proactive_text(index, self.config.service.public_base_url)
+                    for index in range(len(PROACTIVE_TEMPLATES))
+                ],
+            },
             "sample_reply_mailbox": reply_text(
                 self._sample_opportunity("mailbox_interop"),
                 self.config.service.public_base_url,
@@ -220,17 +245,31 @@ class PilotRuntime:
         _atomic_json(self.engagement_activation_path, activated)
         return activated
 
-    def _require_engagement_approval(self) -> None:
+    def _engagement_activation(self) -> dict[str, object]:
         if not self.config.engagement.enabled:
-            return
+            raise RuntimeError("engagement_not_enabled")
         try:
-            activation = json.loads(self.engagement_activation_path.read_bytes())
+            raw: object = json.loads(self.engagement_activation_path.read_bytes())
+            if not isinstance(raw, dict) or set(raw) != {
+                "schema",
+                "preview_sha256",
+                "activated_at",
+            }:
+                raise ValueError("invalid engagement activation")
+            activation: dict[str, object] = {str(key): value for key, value in raw.items()}
             if activation.get("schema") != "rosetta.engagement-activation.v1" or activation.get(
                 "preview_sha256"
             ) != _digest(self._engagement_preview()):
                 raise ValueError("engagement policy changed")
-        except (FileNotFoundError, ValueError, TypeError, AttributeError) as exc:
+            activated_at = datetime.fromisoformat(str(activation["activated_at"]))
+            if activated_at.tzinfo is None:
+                raise ValueError("engagement activation timestamp is naive")
+            return activation
+        except (FileNotFoundError, KeyError, ValueError, TypeError, AttributeError) as exc:
             raise RuntimeError("engagement_not_approved") from exc
+
+    def _require_engagement_approval(self) -> None:
+        self._engagement_activation()
 
     def close(self) -> None:
         self.target.close()
@@ -803,8 +842,7 @@ class PilotRuntime:
         engagement_active = (
             self.config.engagement.enabled and self.engagement_activation_path.is_file()
         )
-        if engagement_active:
-            self._require_engagement_approval()
+        engagement_activation = self._engagement_activation() if engagement_active else None
         current = now or self.clock()
         card, _ = self._load_card(current)
         gateway = self._gateway(card)
@@ -832,6 +870,10 @@ class PilotRuntime:
             self.store.advance_room_cursor(room, record.sequence)
         if engagement_active:
             counts["engagement"] = await self._poll_engagement(current)
+            if self.config.engagement.proactive_enabled:
+                if engagement_activation is None:
+                    raise RuntimeError("engagement_not_approved")
+                counts["proactive"] = await self._poll_proactive(current, engagement_activation)
         self._write_health("healthy", current, counts)
         return counts
 
@@ -881,6 +923,43 @@ class PilotRuntime:
                         )
                         sent += int(decision == "reserved")
                 self.store.set_engagement_checkpoint(room, record.sequence, generation)
+        return sent
+
+    async def _poll_proactive(self, now: datetime, activation: dict[str, object]) -> int:
+        self.gate.require("public_writer")
+        activated_at = datetime.fromisoformat(str(activation["activated_at"]))
+        if activated_at.tzinfo is None:
+            raise RuntimeError("engagement activation timestamp is naive")
+        current = now.astimezone(timezone.utc)
+        activated = activated_at.astimezone(timezone.utc)
+        elapsed_seconds = (current - activated).total_seconds()
+        if elapsed_seconds < 0:
+            return 0
+        slot = int(elapsed_seconds // (6 * 60 * 60))
+        slot_id = str(slot)
+        policy_sha256 = str(self._engagement_preview()["policy_sha256"])
+        messenger = ReliableMessenger(self.target, self.signer, self.store, self.gate)
+        sent = 0
+        for room_index, room in enumerate(self.config.engagement.rooms):
+            delivery_key = proactive_delivery_key(room, policy_sha256, slot_id)
+            decision = self.store.reserve_proactive_post(
+                delivery_key,
+                room,
+                current,
+                activated_at,
+                self.config.engagement.proactive_campaign_days,
+                self.config.engagement.max_proactive_posts_per_room_per_day,
+                self.config.engagement.proactive_min_interval_hours,
+            )
+            if decision in {"reserved", "existing"}:
+                message = proactive_text(slot + room_index, self.config.service.public_base_url)
+                await messenger.send_text(
+                    delivery_key,
+                    "rosetta-engagement",
+                    room,
+                    message,
+                )
+                sent += int(decision == "reserved")
         return sent
 
     def _write_health(

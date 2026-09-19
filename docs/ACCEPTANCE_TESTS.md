@@ -95,6 +95,14 @@
   replies; old, unsigned, irrelevant and self-authored messages cannot trigger them.
 - [x] Contextual reply reservations survive restart; global, author and room limits are enforced.
 - [x] The egress rejects arbitrary common-room writes even if they carry Rosetta's DID signature.
+- [x] Proactive participation is disabled by default and requires a distinct runtime token plus the
+  exact engagement policy digest.
+- [x] Proactive output is limited to the four reviewed templates in `lobby`/`meta`; arbitrary or
+  modified common-room text is rejected at egress.
+- [x] Proactive reservations survive restart, allow at most four posts per room per UTC day and
+  enforce at least four hours between Rosetta posts in a room.
+- [x] A recent contextual reply suppresses a proactive post in that room, and the campaign stops
+  automatically seven days after activation.
 
 ## Publication and claims
 

@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlparse, urlsplit
 
 import httpx
 
+from rosetta.engagement import valid_outbound_text
 from rosetta.observer import WATCHED_PATHS
 from rosetta.technocore_client import validate_room_name
 from rosetta_signer.canonical import signed_note_payload, signed_room_payload
@@ -149,14 +150,7 @@ class PilotEgress:
         cap = 8192 if is_note else 4096
         if not isinstance(content, str) or not content or len(content) > cap:
             return False
-        if room in self.engagement_rooms and not re.fullmatch(
-            r"Re #[1-9][0-9]{0,18}: For the (signed mailbox interoperability|Technocore "
-            r"adapter upgrade) question, Rosetta can run a bounded signed-mailbox "
-            r"roundtrip across reviewed runtime paths and return a verifiable report\. "
-            r"It does not diagnose arbitrary code or certify safety\. The signed request schema, "
-            r"supported paths and public mailbox are in https://[A-Za-z0-9.:-]+/service-card\.json\.",
-            content,
-        ):
+        if room in self.engagement_rooms and not valid_outbound_text(content):
             return False
         if is_note and content != self.writer_did:
             return False
