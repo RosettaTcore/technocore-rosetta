@@ -59,6 +59,7 @@ services:
     environment:
       ROSETTA_PILOT_ENABLE: PUBLIC_WRITES_APPROVED
       ROSETTA_ENGAGEMENT_ENABLE: CONTEXTUAL_REPLIES_APPROVED
+      ROSETTA_PROACTIVE_ENABLE: SEVEN_DAY_CAMPAIGN_APPROVED
     depends_on:
       technocore-egress:
         condition: service_healthy

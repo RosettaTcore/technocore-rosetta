@@ -165,6 +165,10 @@ class PilotEngagement(_Closed):
     rooms: list[str] = Field(default_factory=lambda: ["lobby", "meta"])
     max_replies_per_day: int = 2
     room_cooldown_hours: int = 12
+    proactive_enabled: bool = False
+    proactive_campaign_days: Literal[7] = 7
+    max_proactive_posts_per_room_per_day: Literal[4] = 4
+    proactive_min_interval_hours: Literal[4] = 4
 
     @validator("rooms")
     def bounded_rooms(cls, value: list[str]) -> list[str]:
@@ -206,6 +210,12 @@ class PilotConfig(_Closed):
             if len(room) > 48 or len(mailbox) > 48:
                 raise ValueError("derived Technocore service names exceed protocol limits")
         technocore = values.get("technocore")
+        if (
+            isinstance(engagement, PilotEngagement)
+            and engagement.proactive_enabled
+            and not engagement.enabled
+        ):
+            raise ValueError("proactive campaign requires engagement")
         if isinstance(engagement, PilotEngagement) and engagement.enabled:
             if not isinstance(service, PilotService) or not service.enabled:
                 raise ValueError("engagement requires the active pilot")
@@ -229,4 +239,9 @@ def load_pilot_config(path: Path, environ: dict[str, str] | None = None) -> Pilo
         and env.get("ROSETTA_ENGAGEMENT_ENABLE") != "CONTEXTUAL_REPLIES_APPROVED"
     ):
         raise ValueError("engagement requires a separate runtime activation token")
+    if (
+        config.engagement.proactive_enabled
+        and env.get("ROSETTA_PROACTIVE_ENABLE") != "SEVEN_DAY_CAMPAIGN_APPROVED"
+    ):
+        raise ValueError("proactive campaign requires a separate runtime activation token")
     return config

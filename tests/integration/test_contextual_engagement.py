@@ -16,7 +16,7 @@ from tests.unit.test_service_edges import AsyncSigner
 NOW = datetime(2026, 9, 18, 12, tzinfo=timezone.utc)
 
 
-def _config(tmp_path: Path, did: str) -> PilotConfig:
+def _config(tmp_path: Path, did: str, *, proactive: bool = False) -> PilotConfig:
     return PilotConfig.parse_obj(
         {
             "schema": "rosetta.pilot-config.v1",
@@ -31,7 +31,11 @@ def _config(tmp_path: Path, did: str) -> PilotConfig:
                 "static_root": str(tmp_path / "public"),
                 "kill_switch_file": str(tmp_path / "KILL_SWITCH"),
             },
-            "engagement": {"enabled": True, "rooms": ["lobby", "meta"]},
+            "engagement": {
+                "enabled": True,
+                "rooms": ["lobby", "meta"],
+                "proactive_enabled": proactive,
+            },
         }
     )
 
@@ -187,5 +191,45 @@ def test_engagement_uncertain_write_restart_and_kill_switch(tmp_path: Path) -> N
         recovered.close()
         rosetta.close()
         peer.close()
+
+    asyncio.run(exercise())
+
+
+def test_proactive_campaign_is_bounded_idempotent_and_stops(tmp_path: Path) -> None:
+    async def exercise() -> None:
+        rosetta = AsyncSigner(tmp_path / "rosetta.sqlite3", "synthetic-proactive-rosetta")
+        target = PilotFixtureTarget()
+        config = _config(tmp_path, rosetta.did, proactive=True)
+        runtime = PilotRuntime(config, signer=rosetta, target=target, clock=lambda: NOW)
+        _, digest = await runtime.prepare(NOW)
+        await runtime.activate(digest, NOW)
+        preview, engagement_digest = runtime.prepare_engagement()
+        campaign = preview["proactive_campaign"]
+        assert isinstance(campaign, dict)
+        assert campaign["duration_days"] == 7
+        assert campaign["max_posts_per_room_per_day"] == 4
+        assert campaign["min_interval_hours"] == 4
+        assert len(campaign["sample_posts"]) == 4
+        runtime.activate_engagement(engagement_digest)
+
+        assert (await runtime.poll_once(NOW))["proactive"] == 2
+        assert (await runtime.poll_once(NOW))["proactive"] == 0
+        for hours in (6, 12, 18):
+            assert (await runtime.poll_once(NOW + timedelta(hours=hours)))["proactive"] == 2
+        for room in ("lobby", "meta"):
+            posts = [record for record in target.read_room(room) if record.did == rosetta.did]
+            assert len(posts) == 4
+            assert len({record.text for record in posts}) == 4
+
+        runtime.close()
+        recovered = PilotRuntime(config, signer=rosetta, target=target, clock=lambda: NOW)
+        assert (await recovered.poll_once(NOW + timedelta(hours=18)))["proactive"] == 0
+        assert (await recovered.poll_once(NOW + timedelta(days=7)))["proactive"] == 0
+        assert all(
+            len([record for record in target.read_room(room) if record.did == rosetta.did]) == 4
+            for room in ("lobby", "meta")
+        )
+        recovered.close()
+        rosetta.close()
 
     asyncio.run(exercise())

@@ -69,10 +69,14 @@ No wallet, funds or personal account credentials may be present.
 - Enforce idempotency by `(requester DID, request_id)` and transactional per-DID/global quotas.
 - Invalid requests never start runners or trigger downloads.
 - `/r/events`, `/rooms`, room names and topics are discovery data only and never authorize outreach or execution.
-- No cold-contact loop. Optional contextual replies require a separate operator-approved digest,
-  exact room allowlist, verified signed question, deterministic classifier/template, daily and
-  author/room quotas, fresh cursor baseline and the shared kill switch. No public text reaches a
-  prompt, command or outbound quote.
+- No discovery-driven cold-contact loop. Optional contextual replies require a separate
+  operator-approved digest, exact room allowlist, verified signed question, deterministic
+  classifier/template, daily and author/room quotas, fresh cursor baseline and the shared kill
+  switch. A separately approved acquisition campaign is limited to four fixed reviewed templates,
+  the explicit `lobby`/`meta` allowlist, four posts per room per UTC day, four-hour spacing and a
+  seven-day automatic stop. It skips rooms after a recent Rosetta reply, persists idempotency and
+  requires its own runtime token. No discovered room and no public text can select a destination,
+  prompt, command or outbound content.
 
 ### Evidence integrity
 
@@ -135,7 +139,8 @@ These are acceptable only for a bounded pilot with no financial authority and tr
 - Public read-only: local acceptance plus fresh landscape/security review.
 - First public write/report/service intake: explicit approval of DID, service room, request mailbox, schemas, publisher destination and budgets.
 - New adapter: code/supply-chain review and registry update.
-- GitHub issue/PR or off-platform social post: per-action human approval. The bounded Technocore
-  contextual-reply lane requires a separate exact policy-digest approval before any automatic
-  message; it is not covered by the original pilot activation.
+- GitHub issue/PR or off-platform social post: per-action human approval. Bounded Technocore
+  participation requires a separate exact policy-digest approval before any automatic message;
+  proactive mode additionally requires its distinct runtime token and seven-day campaign limits.
+  Neither lane is covered by the original pilot activation.
 - Wallet, payment or claim: outside scope and requires a separate project/threat model.

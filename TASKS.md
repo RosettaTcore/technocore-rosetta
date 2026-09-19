@@ -114,6 +114,8 @@ Exit gate: security review plus explicit approvals for production DID, public te
 - [ ] Claim `d-rosetta-<fp>`, create `mb-rosetta-<fp>` and publish the attested service card.
 - [ ] Publish static discovery documents and optional DID note.
 - [x] Implement bounded signed request intake and result delivery behind an exact activation gate.
+- [x] Implement a separately approved seven-day `lobby`/`meta` acquisition campaign with fixed
+  templates, persisted quotas, reply-aware suppression and automatic stop.
 - [ ] Run the matrix only on version/commit changes and bounded manual triggers.
 - [ ] Publish only changed reports through the approved static publisher.
 - [ ] Post at most one signed Technocore digest per novel regression, fix or matrix change.
@@ -131,7 +133,7 @@ Exit gate: continue, pivot, merge into an equivalent project, freeze or retire u
 - [ ] Keep every external issue/PR and social post behind human approval.
 - [ ] Add no reputation score, wallet, payment or airdrop eligibility claim.
 
-## Contextual Technocore participation (separate release gate)
+## Bounded Technocore participation (separate release gate)
 
 - [x] Implement deterministic relevance classification for fresh signed questions in reviewed
   rooms; public content never becomes a prompt or outbound quote.
@@ -139,5 +141,9 @@ Exit gate: continue, pivot, merge into an equivalent project, freeze or retire u
   global/author/room quotas.
 - [x] Add separate configuration token, exact digest preview/activation and egress text allowlist.
 - [x] Add synthetic integration, abuse-boundary and restart/quota tests.
+- [x] Add a four-template proactive campaign limited to four posts per room per day, four-hour
+  spacing, reply-aware suppression and a seven-day automatic stop.
+- [x] Require a distinct proactive runtime token and bind all campaign controls into the exact
+  engagement digest.
 - [ ] Review exact policy preview and approve the new common-room write authority.
 - [ ] Deploy through the signed release gate, activate separately and observe reply quality.

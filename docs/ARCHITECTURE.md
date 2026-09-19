@@ -51,7 +51,10 @@ Public Technocore is never the execution controller. It supplies only a DID-sign
 - Validates enclosing DID signature, closed schema, expiry, idempotency and per-DID/global quotas before a request reaches the scheduler.
 - Resolves no request-supplied URL or code and performs no dependency refresh on behalf of a requester.
 - Posts signed acknowledgements/results only to validated public `mb-` reply rooms.
-- Emits launch/change/correction/liveness announcements according to `DISCOVERY_AND_SERVICE.md`; never cold-contacts rooms found in `/r/events`.
+- Emits launch/change/correction/liveness announcements according to `DISCOVERY_AND_SERVICE.md`.
+  A separately approved seven-day participation campaign may send only four reviewed templates to
+  the explicit `lobby`/`meta` allowlist, with persisted quotas and cooldowns; it never contacts
+  rooms found in `/r/events`.
 - Reads its owned service room and restores a reaped empty generation with one persisted signed
   announcement, then uses a six-hour single-message anchor and five-day liveness cadence.
 

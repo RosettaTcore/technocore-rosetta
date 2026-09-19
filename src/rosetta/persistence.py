@@ -127,6 +127,11 @@ class StateStore:
                 created_at TEXT NOT NULL,
                 PRIMARY KEY(room, generation, source_sequence)
             );
+            CREATE TABLE IF NOT EXISTS engagement_proactive_posts (
+                delivery_key TEXT PRIMARY KEY,
+                room TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
             """
         )
         cursor_columns = {
@@ -385,6 +390,60 @@ class StateStore:
             self.connection.execute(
                 "INSERT INTO engagement_replies VALUES (?, ?, ?, ?, ?)",
                 (room, generation, sequence, author_did, timestamp.isoformat()),
+            )
+            self.connection.execute("COMMIT")
+            return "reserved"
+        except Exception:
+            self.connection.execute("ROLLBACK")
+            raise
+
+    def reserve_proactive_post(
+        self,
+        delivery_key: str,
+        room: str,
+        now: datetime,
+        campaign_activated_at: datetime,
+        campaign_days: int,
+        max_per_room_per_day: int,
+        min_interval_hours: int,
+    ) -> str:
+        """Reserve one campaign slot transactionally and enforce its room limits."""
+        from datetime import timedelta
+
+        timestamp = now.astimezone(timezone.utc)
+        activated = campaign_activated_at.astimezone(timezone.utc)
+        if timestamp < activated or timestamp >= activated + timedelta(days=campaign_days):
+            return "inactive"
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            existing = self.connection.execute(
+                "SELECT 1 FROM engagement_proactive_posts WHERE delivery_key=?", (delivery_key,)
+            ).fetchone()
+            if existing is not None:
+                self.connection.execute("ROLLBACK")
+                return "existing"
+            day_start = timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day_start + timedelta(days=1)
+            count = self.connection.execute(
+                "SELECT COUNT(*) FROM engagement_proactive_posts "
+                "WHERE room=? AND created_at>=? AND created_at<?",
+                (room, day_start.isoformat(), day_end.isoformat()),
+            ).fetchone()
+            recent_since = (timestamp - timedelta(hours=min_interval_hours)).isoformat()
+            recent_reply = self.connection.execute(
+                "SELECT 1 FROM engagement_replies WHERE room=? AND created_at>? LIMIT 1",
+                (room, recent_since),
+            ).fetchone()
+            recent_proactive = self.connection.execute(
+                "SELECT 1 FROM engagement_proactive_posts WHERE room=? AND created_at>? LIMIT 1",
+                (room, recent_since),
+            ).fetchone()
+            if int(count[0]) >= max_per_room_per_day or recent_reply or recent_proactive:
+                self.connection.execute("ROLLBACK")
+                return "quota"
+            self.connection.execute(
+                "INSERT INTO engagement_proactive_posts VALUES (?, ?, ?)",
+                (delivery_key, room, timestamp.isoformat()),
             )
             self.connection.execute("COMMIT")
             return "reserved"

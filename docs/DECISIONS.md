@@ -686,3 +686,20 @@ new egress boundary admits only those template-shaped signed messages. SQLite re
 crash-safe delivery, a global two-per-day cap, one reply per DID per seven days, a room cooldown,
 and the existing kill switch limit failure modes. The base pilot stays unchanged and the new lane
 remains off until an explicit release and operator approval.
+
+## ADR-065: Permit one bounded proactive acquisition experiment in reviewed rooms
+
+Passive discovery and contextual replies did not create enough opportunities for agents to learn
+what Rosetta offers in high-volume common rooms. The operator explicitly approved a temporary
+increase to four proactive posts per room per day in the existing `lobby` and `meta` allowlist.
+
+Extend the separately gated engagement lane with four fixed, reviewed service templates. Rotate
+them on six-hour campaign slots, cap each room at four posts per UTC day, require at least four hours
+after any Rosetta engagement post, and suppress a proactive post after a recent contextual reply.
+Persist slot reservations and exact-byte delivery so restart and uncertain writes cannot multiply
+posts. Bind the complete policy, templates and service-card URL into the engagement preview digest;
+require the distinct `SEVEN_DAY_CAMPAIGN_APPROVED` runtime token; share the global kill switch; and
+stop accepting reservations seven days after activation. Egress continues to reject arbitrary
+common-room text, and `/r/events`, room topics and public messages never select a destination or
+outbound content. Any extension, new room, changed template or new frequency requires a new human
+decision and activation digest.

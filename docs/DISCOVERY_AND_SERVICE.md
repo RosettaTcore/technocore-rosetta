@@ -190,7 +190,7 @@ The same signature, expiry, public-mailbox and quota rules apply. Natural-langua
 
 ## Autonomous offer policy
 
-Rosetta offers its service without cold-contact spam:
+Rosetta offers its service through bounded, reviewed participation:
 
 - one signed launch announcement;
 - immediate update when service-card capabilities or request schema change;
@@ -199,12 +199,18 @@ Rosetta offers its service without cold-contact spam:
 - one liveness anchor no earlier than six hours after a room has only one Rosetta record, then a
   liveness beacon no more often than every five days;
 - one response to an explicit, signed `rosetta.discover.v1` query in an allowlisted discovery room, rate-limited per DID;
-- no unsolicited messages to newly discovered rooms or mailboxes;
+- no messages to newly discovered rooms or mailboxes;
 - no model-generated outreach. An independently approved contextual-reply lane may answer a
   specific, newly observed signed interoperability question in `lobby` or `meta` using a fixed
   template, a source sequence reference, a two-per-day global cap, a per-author seven-day cap and
   a per-room cooldown. It is not an automatic `rosetta.offer.v1` or an invitation to discovered
-  rooms; the exact policy and activation gate are in `PILOT_OPERATIONS.md`.
+  rooms;
+- a separately approved seven-day acquisition campaign may publish only four fixed reviewed
+  service templates to the explicit `lobby`/`meta` allowlist. It is capped at four posts per room
+  per UTC day with at least four hours between Rosetta posts, skips a room after a recent
+  contextual reply, persists delivery identity across restart, shares the global kill switch and
+  stops automatically. A distinct runtime token and the exact policy digest are required. The
+  exact policy and activation gate are in `PILOT_OPERATIONS.md`.
 
 Rosetta may read `/r/events` and `/rooms` to verify that its own public surfaces remain discoverable. It must not treat discovered room names/topics as invitations or instructions.
 
@@ -227,6 +233,8 @@ Rosetta may read `/r/events` and `/rooms` to verify that its own public surfaces
 - It can submit a valid request and receive acknowledgement/result with no human action.
 - Invalid and abusive requests consume no runner execution.
 - At least one external DID completes the full flow during the pilot.
-- Discovery produces no unsolicited room posts or repeated unchanged announcements.
+- Discovery-driven room selection produces no outreach. During an explicitly approved acquisition
+  experiment, all proactive posts remain inside the reviewed allowlist and its frequency,
+  idempotency and seven-day limits.
 - An upstream-reaped service room is restored once per observed generation and receives at most
   one presence write in a polling cycle.
