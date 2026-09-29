@@ -1,12 +1,12 @@
 # Local MVP status
 
-Date: 13 September 2026
+Date: 29 September 2026
 
 ## Outcome
 
 Phases 0–3 plus the controlled evolution proposal lane are implemented. The authoritative local
-acceptance path runs the official Technocore `v0.13.0` image through four real isolated runtime
-paths while preserving the original v0.7.0 fixture and v0.10.0 evidence for historical replay. The
+acceptance path runs the official Technocore `v0.14.5` image through four real isolated runtime
+paths while preserving the v0.7.0, v0.10.0 and v0.13.0 evidence for historical replay. The
 active no-ingress pilot completed its exact three-step activation under an operator-approved
 preview digest. Its production DID owns the derived service room, is its sole allowed writer and
 published the signed service announcement. A separately approved deterministic synthetic peer then
@@ -22,14 +22,14 @@ window.
 
 - exact upstream source archive retained with a minimal vendored runtime subset, lock and OCI
   provenance;
-- four independent runtime paths: Node `http`, official MCP 0.13.0 over the real SDK stdio
+- four independent runtime paths: Node `http`, official MCP 0.14.5 over the real SDK stdio
   handshake/tool-call path, Python `httpx`, and
   TypeScript/Node `fetch`;
 - external-signer DID/signature/nonce forwarding through the official MCP `say_signed` tool, with
   no private key in the MCP process;
 - separate disposable non-root/read-only containers for every matrix operation on an internal-only
   network, with no host ports, mounts, secrets or Docker socket;
-- official Ed25519 vectors imported from v0.7.0, v0.10.0 and v0.13.0 and verified byte-for-byte across
+- official Ed25519 vectors imported from v0.7.0, v0.10.0, v0.13.0 and v0.14.5 and verified byte-for-byte across
   Rosetta, the former OpenSSL verifier and current libsodium/PyNaCl verifier, including mutation
   rejection;
 - signed mailbox round-trip, cursor restart, exact correlation, deterministic 429 retry,
@@ -59,12 +59,12 @@ window.
 
 ## Verified results
 
-- Pytest: 389/389 pass;
+- Pytest: 400/400 pass;
 - combined line/branch Python coverage: 93%, enforced floor 90%;
 - Ruff lint/security: pass;
-- Mypy strict: pass for 37 source modules;
+- Mypy strict: pass for 38 source modules;
 - TypeScript strict check: pass;
-- secret scan: pass over 307 files;
+- secret scan: pass over 333 files;
 - fresh install from the development hash lock: pass; `pip check`: pass;
 - recorded runtime dependency OSV batch query: no known vulnerabilities;
 - official upstream matrix: 4/4 cells pass;
@@ -77,13 +77,13 @@ window.
 - unexpected internal probe fault: process survives and recovers on the next cycle without restart,
   while the failed cycle remains durably unsafe as required;
 - signed upstream bundle verification: pass;
-- upstream v0.13.0 bundle root:
-  `sha256:909b5e93a995e43521cbc436d687b48d16cf44d67131d56571228070da004ad9`;
+- upstream v0.14.5 bundle root:
+  `sha256:9cab57e18b37e71e24baea26ba1861d72190baa2acbaa3f37c9656e07b8f608e`;
 - live OCI isolation: 27/27 checks pass;
 - v0.2.0 runtime image:
   `sha256:695749e7d66e2e0ff365d56951ccddace8bf00994144c85021e6fa8476851cf0`;
-- official MCP v0.13.0 adapter image:
-  `sha256:8ed6fefa1379b7e7f31e99c9840b33c2776106a2e13c2f7c0516c510254a2f90`;
+- official MCP v0.14.5 adapter image:
+  `sha256:b87789220aa168825790914e9da44089ef72a17a89298150f1b686f6a7ef7baf`;
 - launch-readiness Python adapter image:
   `sha256:a5e5592ae4213931d470d54e67642fff95d08e15d6430d491a3042670d1c7b15`;
 - local discovery/service/idempotency demo: pass with zero public writes;

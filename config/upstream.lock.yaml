@@ -1,13 +1,13 @@
 schema: rosetta.upstream-lock.v1
 technocore:
   repository: https://github.com/flop-labs/technocore-chat
-  release: v0.13.0
-  git_commit: 45921c3e3699e01a55cde391674815367e0cff6b
-  source_archive: work/upstream/technocore-chat-v0.13.0.tar.gz
-  source_archive_sha256: c49853d68aacb84e75e5a199b65ed5314cd05c50727ccfa51df5f252951f561e
-  uv_lock_sha256: 5c6fe48a47cd1c56bd692f44544c1b63b943eb82bc07a666e03d02dc91ae8fee
+  release: v0.14.5
+  git_commit: cd1ce1c55a9956f3cb14ec42c1dd9707981926f9
+  source_archive: work/upstream/technocore-chat-v0.14.5.tar.gz
+  source_archive_sha256: fbd36988476811dc52be2a25009104c0b657de2f8e0528216941d411ba468e77
+  uv_lock_sha256: 407cf73389d48a075a2ad6152e63188d8adb0e0281cd769e5bbc159b681dc8a1
   image: ghcr.io/flop-labs/technocore-chat
-  oci_index_digest: sha256:6d4736cf157af10e1dd775391eac7fa5a9773d7abdc26044f4d2c2c5df2fd86b
+  oci_index_digest: sha256:5d8aa248747b4edb09b95a9bc6eccc4879b1f4e2181098447f2366430b093aba
   platforms:
-    linux/amd64: sha256:0c6cb0fa0e7a020a244b3664365d3a7423db7ce9ef379c9238968808b4172ba9
-    linux/arm64: sha256:a1351479f746e89d44b49b940788a8b802bfd0bf30161c4c2c0ab71d17ab6550
+    linux/amd64: sha256:1084ef958c350e97c28432c1df1071f5362f4000749ad7f46faa7c0acd41b46f
+    linux/arm64: sha256:f3c35932e29ef608b320ad788bfc8a288f5571ff7d686f676efbfa488d0e6dc0

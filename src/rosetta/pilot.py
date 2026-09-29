@@ -297,7 +297,7 @@ class PilotRuntime:
             self.registry,
             self.signer,
             self.config.service.public_base_url,
-            "v0.13.0",
+            "v0.14.5",
             current,
             self.service_documents,
         )
@@ -707,7 +707,7 @@ class PilotRuntime:
             # Public requests run the deterministic local conformance model. The
             # independently gated OCI matrix is never implied by this bundle.
             trigger="signed-service-request-local-diagnostic",
-            protocol_release="v0.13.0",
+            protocol_release="v0.14.5",
             scenario=request.scenario,
             registry_sha256=self.registry.digest,
             deterministic_epoch=request.expires_at.astimezone(timezone.utc).isoformat(),

@@ -36,7 +36,7 @@ def test_public_probe_is_digest_gated_and_verifies_the_published_bundle(
             registry,
             signer,
             "https://reports.invalid",
-            "v0.13.0",
+            "v0.14.5",
             NOW,
             tmp_path / "service",
         )

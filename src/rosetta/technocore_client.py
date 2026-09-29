@@ -59,7 +59,7 @@ def _origin(value: str, *, https_required: bool) -> str:
 
 
 class TechnocoreHttpClient:
-    release = "v0.13.0"
+    release = "v0.14.5"
     image_digest = "sha256:" + "0" * 64
 
     def __init__(
@@ -74,8 +74,8 @@ class TechnocoreHttpClient:
     ) -> None:
         self.fetch_origin = _origin(fetch_origin, https_required=False)
         self.authority_origin = _origin(authority_origin, https_required=True)
-        if pinned_release != "v0.13.0":
-            raise ValueError("production pilot requires reviewed Technocore v0.13.0")
+        if pinned_release != "v0.14.5":
+            raise ValueError("production pilot requires reviewed Technocore v0.14.5")
         if not 1_024 <= max_response_bytes <= 4_194_304:
             raise ValueError("invalid response byte limit")
         self.release = pinned_release

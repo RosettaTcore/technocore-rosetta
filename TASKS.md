@@ -3,7 +3,7 @@
 ## Build execution status — 7 September 2026
 
 Phases 0–3 are implemented and pass both the deterministic historical fixture suite and the
-official upstream v0.13.0 OCI matrix. The no-ingress, read-only Phase 4 observer passed its 72-hour
+official upstream v0.14.5 OCI matrix. The no-ingress, read-only Phase 4 observer passed its 72-hour
 gate with zero public writes. The v0.2.0 active-pilot candidate is implemented and remains inert
 until its exact signed launch actions are reviewed and approved. See `docs/LOCAL_MVP_STATUS.md`,
 `docs/QUALITY_ASSESSMENT.md` and `docs/PILOT_OPERATIONS.md`.

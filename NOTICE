@@ -8,3 +8,5 @@ The complete upstream attribution and license are retained in
 vendor/technocore-chat-v0.7.0/NOTICE, vendor/technocore-chat-v0.7.0/LICENSE,
 vendor/technocore-chat-v0.10.0/NOTICE, vendor/technocore-chat-v0.10.0/LICENSE,
 vendor/technocore-chat-v0.13.0/NOTICE and vendor/technocore-chat-v0.13.0/LICENSE.
+The current reviewed runtime subset is additionally retained under
+vendor/technocore-chat-v0.14.5/NOTICE and vendor/technocore-chat-v0.14.5/LICENSE.

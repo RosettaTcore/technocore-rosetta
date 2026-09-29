@@ -161,4 +161,4 @@ jobs:
               --cap-drop ALL --security-opt no-new-privileges \
               rosetta/official-mcp-adapter:ci \
               /opt/rosetta/adapters/official_mcp/main.py | \
-            python3 -c 'import json,sys; value=json.load(sys.stdin); assert value["ok"] is True; assert value["upstream_version"] == "0.13.0"'
+            python3 -c 'import json,sys; value=json.load(sys.stdin); assert value["ok"] is True; assert value["upstream_version"] == "0.14.5"'

@@ -120,6 +120,8 @@
   lockfile, amd64 and arm64 provenance.
 - [x] Pinned official Technocore v0.13.0 runs from an immutable OCI index digest through all four
   isolated paths, including the real MCP SDK stdio transport.
+- [x] Pinned official Technocore v0.14.5 preserves the signed contracts and runs through the same
+  four isolated paths with exact source, lockfile, OCI and adapter-image provenance.
 - [x] Full four-cell demo runs without public network access.
 - [ ] No test contacts public Technocore unless explicitly marked and approved.
 - [ ] Backup/restore rehearsal succeeds with synthetic data.

@@ -13,11 +13,11 @@ remain unproven.
 
 | Dimension | Score | Evidence and caveat |
 |---|---:|---|
-| Protocol correctness | 9.6/10 | Official v0.13.0 target plus retained v0.7.0/v0.10.0 history, exact source/OCI provenance, generation-safe cursors, locally verified signed records and four real paths. |
+| Protocol correctness | 9.6/10 | Official v0.14.5 target plus retained v0.7.0/v0.10.0/v0.13.0 history, exact source/OCI provenance, generation-safe cursors, locally verified signed records and four real paths. |
 | Security boundaries | 9.3/10 | Non-root/read-only containers, internal-only network, no secrets/mounts/socket, networkless signer, strict seed-file loader, closed registry and shared kill switch. Evolution cannot rewrite its authority and needs a trusted external signature. The production seed remains confined to the encrypted signer credential boundary. |
 | Interoperability signal | 9.0/10 | Four cross-runtime cells, differential reads and real MCP now pass on a second protocol baseline. One primary scenario still limits breadth. |
 | Reliability | 8.6/10 | Restart, cursor, 429, uncertain writes, idempotency, crash-persistent controls, atomic evolution preflight/recovery, simultaneous four-runtime reads and a 20-iteration soak pass. This is not a long-duration load test. |
-| Reproducibility/auditability | 9.7/10 | Exact v0.13.0 tag/commit, archive and upstream lock, universal transitive hash locks, cross-platform OCI identities, separate real MCP SDK image, canonical artifacts, signed roots and evolution lineage. |
+| Reproducibility/auditability | 9.7/10 | Exact v0.14.5 tag/commit, archive and upstream lock, universal transitive hash locks, cross-platform OCI identities, separate real MCP SDK image, canonical artifacts, signed roots and evolution lineage. |
 | Test quality | 9.7/10 | 389 tests, adversarial/property coverage, immutable-upstream checks, signature/backend parity, CI and authority constraints, 93% combined line/branch coverage with a 90% ratchet and 27 OCI checks. No full mutation-testing engine or high-volume stress campaign yet. |
 | Operations | 9.5/10 | Atomic quotas/budgets, persistent quarantine, bounded concurrency, separate safety/compatibility verdicts, active encrypted backups and health timer, external dead-man alert, successful off-device restore, safe defaults and cryptographically gated reversible promotion. Fresh off-device replication is not yet automated. |
 | Production readiness | 9.4/10 | The static product, read-only observer and bounded no-ingress pilot are live. Exact activation approval, public discovery, signed acknowledgement/result delivery and independent report verification passed. The 14-day pilot and organic use remain outstanding. |

@@ -20,7 +20,7 @@ uses reviewed immutable defaults and permits overrides only with another reviewe
 `image@sha256:...` reference.
 
 Local Phase 3 validation used pinned Python 3.12.5 and Node 20.9.0 base digests, separate worker and
-adapter images, the official Technocore v0.13.0 OCI image, and an internal Docker network with no
+adapter images, the official Technocore v0.14.5 OCI image, and an internal Docker network with no
 host port. The v0.7.0 fixture and v0.10.0 evidence remain only for deterministic historical replay.
 All containers were removed after evidence capture; the images remain local for reproducibility.
 

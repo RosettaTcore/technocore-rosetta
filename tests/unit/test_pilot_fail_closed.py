@@ -107,7 +107,7 @@ def _client(
     return TechnocoreHttpClient(
         fetch_origin,
         "https://technocore.chat",
-        "v0.13.0",
+        "v0.14.5",
         max_response_bytes=maximum,
         transport=httpx.MockTransport(handler),
     )

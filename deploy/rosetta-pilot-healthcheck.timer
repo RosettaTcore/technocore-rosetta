@@ -3,6 +3,7 @@ Description=Periodically validate the Technocore Rosetta service pilot
 
 [Timer]
 OnBootSec=3min
+OnActiveSec=5min
 OnUnitActiveSec=5min
 RandomizedDelaySec=30s
 Persistent=true
