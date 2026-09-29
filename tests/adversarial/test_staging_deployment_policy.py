@@ -323,3 +323,9 @@ def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
     assert "for module in rosetta.egress rosetta.observer" in image_steps
     assert "--network none --read-only --user 65532:65532" in image_steps
     assert "rosetta/observer:ci /opt/rosetta/tools/staging_status.py --help" in image_steps
+
+
+def test_ci_exercises_the_reviewed_official_mcp_release() -> None:
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    assert 'value["upstream_version"] == "0.14.5"' in workflow
+    assert 'value["upstream_version"] == "0.13.0"' not in workflow
