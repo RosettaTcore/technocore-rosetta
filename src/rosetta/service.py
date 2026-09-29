@@ -50,7 +50,7 @@ async def build_service_card(
     registry: AdapterRegistry,
     signer: Signer,
     base_url: str,
-    protocol_baseline: Literal["v0.7.0", "v0.10.0", "v0.13.0"],
+    protocol_baseline: Literal["v0.7.0", "v0.10.0", "v0.14.5"],
     now: datetime,
     output_dir: Path,
 ) -> tuple[ServiceCard, dict[str, Any]]:

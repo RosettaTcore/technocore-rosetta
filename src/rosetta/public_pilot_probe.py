@@ -110,7 +110,7 @@ class PublicPilotProbe:
         card = ServiceCard.parse_obj(card_raw)
         if not verify_service_card(card, attestation, now):
             raise RuntimeError("public_probe_invalid_service_card")
-        if card.status != "available" or card.protocol_baseline != "v0.13.0":
+        if card.status != "available" or card.protocol_baseline != "v0.14.5":
             raise RuntimeError("public_probe_service_unavailable")
         if str(card.request_schema_url) != origin + "/schemas/rosetta-request-v1.json":
             raise RuntimeError("public_probe_request_schema_origin_mismatch")
@@ -287,7 +287,7 @@ class PublicPilotProbe:
         target = TechnocoreHttpClient(
             TECHNOCORE_ORIGIN,
             TECHNOCORE_ORIGIN,
-            "v0.13.0",
+            "v0.14.5",
             transport=self.transport,
         )
         try:
@@ -357,7 +357,7 @@ class PublicPilotProbe:
         target = TechnocoreHttpClient(
             TECHNOCORE_ORIGIN,
             TECHNOCORE_ORIGIN,
-            "v0.13.0",
+            "v0.14.5",
             transport=self.transport,
         )
         try:

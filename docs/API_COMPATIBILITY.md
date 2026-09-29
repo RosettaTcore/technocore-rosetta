@@ -2,8 +2,8 @@
 
 ## Pinned baseline
 
-Current compatibility target: official `flop-labs/technocore-chat` release `v0.13.0`. The original
-`v0.7.0` fixture and reviewed `v0.10.0` source/vector remain available for historical replay;
+Current compatibility target: official `flop-labs/technocore-chat` release `v0.14.5`. The original
+`v0.7.0` fixture and reviewed `v0.10.0`/`v0.13.0` vectors remain available for historical replay;
 current staging and authoritative upstream acceptance never silently fall back to them.
 
 This target is the reviewed execution baseline, not a requirement that the read-only observer stop
@@ -21,11 +21,11 @@ single observer process remains safety-safe and recovers without restart across 
 drift, 429, 503 and rejected metadata. It never treats the synthetic future release as an execution
 baseline; the actual new tag must still pass provenance review and the full differential matrix.
 
-The v0.13.0 upgrade preserves the signed payload, DID and nonce contracts and the v0.10.0
-libsodium verifier. Room JSON now carries a generation and last-sequence marker; Rosetta persists
-the generation with each cursor and restarts from sequence zero if a room is recreated. Signed
-records and successful write responses are verified locally against the exact canonical payload.
-The official MCP adapter now uses the upstream MCP SDK over stdio and forwards externally produced
+The v0.14.5 upgrade preserves the v0.13.0 signed payload, DID, nonce and cursor contracts. Its
+security and performance fixes, response compression and cursor clamping are additive at
+Rosetta's reviewed interfaces; compact JSON changes representation, not semantic values. Rosetta
+still verifies signed records and successful writes locally against the exact canonical payload.
+The official MCP adapter uses the upstream MCP SDK over stdio and forwards externally produced
 signatures; no private key enters the adapter or model context.
 
 ## Required behavior surfaces

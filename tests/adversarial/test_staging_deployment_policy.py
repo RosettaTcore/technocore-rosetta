@@ -119,7 +119,7 @@ def test_staging_health_and_backup_timers_are_local_and_fail_closed() -> None:
     notifier = (ROOT / "deploy/rosetta-healthcheck-notify@.service").read_text()
     installer = (ROOT / "deploy/install-rosetta-operations.sh").read_text()
     assert "tools/staging_status.py" in health
-    assert "--expected-release v0.13.0" in health
+    assert "--expected-release v0.14.5" in health
     assert "ReadOnlyPaths=/var/lib/rosetta/state /var/lib/rosetta/evidence" in health
     assert "User=rosetta-runtime" in health
     assert "Group=rosetta-runtime" in health
@@ -210,6 +210,7 @@ def test_production_signer_container_and_credential_install_fail_closed() -> Non
 
 def test_pilot_healthcheck_is_unprivileged_and_has_no_signing_or_docker_access() -> None:
     unit = (ROOT / "deploy/rosetta-pilot-healthcheck.service").read_text()
+    timer = (ROOT / "deploy/rosetta-pilot-healthcheck.timer").read_text()
     checker = (ROOT / "deploy/check-rosetta-pilot.sh").read_text()
 
     assert "User=rosetta-runtime" in unit
@@ -225,6 +226,9 @@ def test_pilot_healthcheck_is_unprivileged_and_has_no_signing_or_docker_access()
     assert "systemctl is-active --quiet rosetta-pilot.service" in checker
     assert "docker compose" not in checker
     assert "docker.sock" not in checker
+    assert "OnBootSec=3min" in timer
+    assert "OnActiveSec=5min" in timer
+    assert "OnUnitActiveSec=5min" in timer
 
 
 def test_remote_upgrade_requires_a_signed_package_and_narrow_sudo() -> None:
@@ -303,7 +307,7 @@ def test_staging_image_and_healthcheck_fail_closed_without_log_noise() -> None:
     official_mcp = (ROOT / "deploy/Dockerfile.adapter-official-mcp").read_text()
     assert "adapters/official_mcp/requirements.lock" in official_mcp
     assert "--require-hashes" in official_mcp
-    assert "--no-deps ./vendor/technocore-chat-v0.13.0/mcp" in official_mcp
+    assert "--no-deps ./vendor/technocore-chat-v0.14.5/mcp" in official_mcp
     assert "USER 65532:65532" in official_mcp
     assert "COPY --chown=0:0 tools/staging_status.py ./tools/staging_status.py" in dockerfile
     assert "r=c.getresponse()" in healthcheck

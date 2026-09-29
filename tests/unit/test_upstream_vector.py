@@ -45,6 +45,7 @@ def _verify_vector(release: str) -> dict[str, str]:
 def test_official_vectors_verify_across_backend_and_mcp_changes() -> None:
     old = _verify_vector("v0.7.0")
     middle = _verify_vector("v0.10.0")
-    current = _verify_vector("v0.13.0")
+    prior = _verify_vector("v0.13.0")
+    current = _verify_vector("v0.14.5")
     for field in ("did", "message_utf8", "signature_base64url_unpadded"):
-        assert old[field] == middle[field] == current[field]
+        assert old[field] == middle[field] == prior[field] == current[field]

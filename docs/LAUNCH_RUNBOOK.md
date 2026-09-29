@@ -37,7 +37,7 @@ the successful one-request proof.
 
 | Gate | Required evidence | Authority |
 |---|---|---|
-| A — local acceptance | full quality gate, official v0.13.0 matrix, soak, isolation and signed evidence pass | repository review |
+| A — local acceptance | full quality gate, official v0.14.5 matrix, soak, isolation and signed evidence pass | repository review |
 | B — read-only staging | continuous safety-safe operation; zero writes; no unexplained restart; only approved SSH and IPv4 static-origin listeners; bounded disk; compatibility warnings recorded | operator review |
 | C — identity readiness | production key ceremony, two recoverable encrypted backups, signer credential, DID/public fingerprint recorded, recovery drill | explicit operator approval |
 | D — publication readiness | approved static origin, immutable report path, service card, request/reply rooms, limits, alert destination and off-device backup | explicit operator approval |
@@ -78,7 +78,7 @@ sudo setpriv --reuid=65532 --regid=65532 --clear-groups \
   python3 /opt/rosetta/current/tools/staging_status.py \
   --state-dir /var/lib/rosetta/state \
   --evidence-dir /var/lib/rosetta/evidence \
-  --expected-release v0.13.0 \
+  --expected-release v0.14.5 \
   --max-age-seconds 660 \
   --min-observations 800 \
   --max-evidence-bytes 104857600

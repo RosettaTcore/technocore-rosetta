@@ -25,7 +25,7 @@ cp adapters/official_mcp/requirements.lock "$tmp_dir/official-mcp-requirements.l
   --custom-compile-command tools/lock_requirements.sh \
   --output-file "$tmp_dir/requirements-dev.lock"
 
-"$UV" --quiet pip compile vendor/technocore-chat-v0.13.0/mcp/pyproject.toml \
+"$UV" --quiet pip compile vendor/technocore-chat-v0.14.5/mcp/pyproject.toml \
   --universal \
   --python-version 3.12 \
   --generate-hashes \

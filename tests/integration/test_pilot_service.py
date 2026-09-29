@@ -20,7 +20,7 @@ NOW = datetime(2026, 9, 7, 12, 0, tzinfo=timezone.utc)
 
 
 class PilotFixtureTarget(LocalTechnocore):
-    release = "v0.13.0"
+    release = "v0.14.5"
 
     def __init__(self) -> None:
         super().__init__()

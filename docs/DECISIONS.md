@@ -703,3 +703,19 @@ stop accepting reservations seven days after activation. Egress continues to rej
 common-room text, and `/r/events`, room topics and public messages never select a destination or
 outbound content. Any extension, new room, changed template or new frequency requires a new human
 decision and activation digest.
+
+## ADR-066: Promote v0.14.5 and make the pilot health timer self-starting
+
+Promote Technocore v0.14.5 only after binding the official tag to its exact source commit,
+source-archive checksum, multi-platform OCI identities, complete dependency lock and separately
+built official-MCP adapter image. Retain the v0.13.0 vector as historical evidence and add the
+v0.14.5 vector as the current oracle. The signed payload, DID, nonce, room-generation and cursor
+contracts remain unchanged at Rosetta's reviewed boundary; v0.14.5 contributes upstream security,
+performance, compression and cursor-clamping fixes without expanding Rosetta's authority.
+
+The pilot health timer previously relied only on `OnUnitActiveSec`. Reinstalling and enabling that
+timer could leave it with no first activation and therefore no future schedule. Keep the existing
+boot and last-run cadence, and add `OnActiveSec=5min` so every newly enabled timer obtains a first
+schedule. This repairs supervision only: it does not activate public writes, extend a participation
+campaign, change destinations or approve a new service announcement. Those actions still require
+their own exact preview digest and operator approval.

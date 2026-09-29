@@ -9,7 +9,7 @@ import yaml
 from rosetta.registry import AdapterRegistry
 
 ROOT = Path(__file__).resolve().parents[2]
-VENDOR = ROOT / "vendor/technocore-chat-v0.13.0"
+VENDOR = ROOT / "vendor/technocore-chat-v0.14.5"
 
 
 def _sha256(path: Path) -> str:
@@ -23,20 +23,20 @@ def _tree_sha256(path: Path) -> str:
     return hashlib.sha256("".join(lines).encode()).hexdigest()
 
 
-def test_v013_archive_is_exact_safe_and_matches_vendored_source() -> None:
+def test_v0145_archive_is_exact_safe_and_matches_vendored_source() -> None:
     lock = yaml.safe_load((ROOT / "config/upstream.lock.yaml").read_text())["technocore"]
     archive = (ROOT / lock["source_archive"]).resolve()
     assert ROOT in archive.parents
     assert _sha256(archive) == lock["source_archive_sha256"]
-    assert lock["release"] == "v0.13.0"
-    assert lock["git_commit"] == "45921c3e3699e01a55cde391674815367e0cff6b"
+    assert lock["release"] == "v0.14.5"
+    assert lock["git_commit"] == "cd1ce1c55a9956f3cb14ec42c1dd9707981926f9"
 
     archived: dict[str, bytes] = {}
     with tarfile.open(archive, "r:gz") as source:
         for member in source.getmembers():
             path = PurePosixPath(member.name)
             assert not path.is_absolute() and ".." not in path.parts
-            assert path.parts[0] == "technocore-chat-0.13.0"
+            assert path.parts[0] == "technocore-chat-0.14.5"
             assert not member.issym() and not member.islnk()
             if member.isfile():
                 stream = source.extractfile(member)
@@ -55,7 +55,7 @@ def test_v013_archive_is_exact_safe_and_matches_vendored_source() -> None:
     assert hashlib.sha256(archived["uv.lock"]).hexdigest() == lock["uv_lock_sha256"]
 
 
-def test_v013_adapter_registry_binds_source_wrapper_and_lock() -> None:
+def test_v0145_adapter_registry_binds_source_wrapper_and_lock() -> None:
     upstream = yaml.safe_load((ROOT / "config/upstream.lock.yaml").read_text())["technocore"]
     official = AdapterRegistry.load(ROOT / "config/adapters.lock.yaml").require("official-mcp")
     assert official.source_revision == upstream["git_commit"]
@@ -63,11 +63,15 @@ def test_v013_adapter_registry_binds_source_wrapper_and_lock() -> None:
         ROOT / "adapters/official_mcp/requirements.lock"
     )
     assert official.wrapper_revision_sha256 == _tree_sha256(ROOT / "adapters/official_mcp")
-    assert official.transport == "official-mcp-sdk-stdio-0.13.0"
-    assert "/v0.13.0/" in official.source_repository
+    assert official.transport == "official-mcp-sdk-stdio-0.14.5"
+    assert "/v0.14.5/" in official.source_repository
+    adapter = (ROOT / "adapters/official_mcp/main.py").read_text(encoding="utf-8")
+    assert 'VERSION = "0.14.5"' in adapter
+    assert "technocore-chat-v0.14.5" in adapter
+    assert "technocore-chat-v0.13.0" not in adapter
 
 
-def test_v013_oci_lock_is_immutable_and_cross_platform() -> None:
+def test_v0145_oci_lock_is_immutable_and_cross_platform() -> None:
     lock = yaml.safe_load((ROOT / "config/upstream.lock.yaml").read_text())["technocore"]
     digests = [lock["oci_index_digest"], *lock["platforms"].values()]
     assert set(lock["platforms"]) == {"linux/amd64", "linux/arm64"}

@@ -51,7 +51,7 @@ file verifier against valid, mutated, extra-file, cross-origin and substituted-s
 
 | Reviewed reference | Result |
 |---|---|
-| Protocol target | Technocore v0.13.0 |
+| Protocol target | Technocore v0.14.5 |
 | Runtime paths | raw Node.js HTTP, official MCP, Python `httpx`, TypeScript `fetch` |
 | Matrix | 4 of 4 cells pass |
 | Deterministic assertions | 29 pass |

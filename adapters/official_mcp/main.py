@@ -1,4 +1,4 @@
-"""Rosetta adapter over the exact official Technocore v0.13 MCP stdio server.
+"""Rosetta adapter over the exact official Technocore v0.14.5 MCP stdio server.
 
 The adapter is an MCP client, not a second implementation of the protocol. It starts the
 vendored official server over stdio, performs the MCP initialization handshake and invokes
@@ -21,7 +21,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 ADAPTER_ID = "official-mcp"
-VERSION = "0.13.0"
+VERSION = "0.14.5"
 ORIGIN = os.environ.get("ROSETTA_TARGET_ORIGIN", "http://technocore-upstream:8080").rstrip("/")
 _parsed = urlparse(ORIGIN)
 if _parsed.scheme not in {"http", "https"} or _parsed.hostname not in {
@@ -33,9 +33,9 @@ if _parsed.scheme not in {"http", "https"} or _parsed.hostname not in {
     raise RuntimeError("target origin is not an approved local Technocore endpoint")
 
 root = Path(__file__).resolve().parents[2]
-vendored = root / "vendor" / "technocore-chat-v0.13.0" / "mcp" / "src"
+vendored = root / "vendor" / "technocore-chat-v0.14.5" / "mcp" / "src"
 if not vendored.exists():
-    vendored = Path("/opt/rosetta/vendor/technocore-chat-v0.13.0/mcp/src")
+    vendored = Path("/opt/rosetta/vendor/technocore-chat-v0.14.5/mcp/src")
 
 
 def _server_parameters() -> StdioServerParameters:
@@ -102,7 +102,7 @@ async def _invoke(message: dict[str, Any]) -> dict[str, Any]:
             **base,
             "ok": True,
             "runtime": f"python-{sys.version_info.major}.{sys.version_info.minor}",
-            "transport": "official-mcp-sdk-stdio-0.13.0",
+            "transport": "official-mcp-sdk-stdio-0.14.5",
             "upstream_version": VERSION,
             "tools": tools,
             "operations": ["health", "read_room", "wait_room", "post_signed"],

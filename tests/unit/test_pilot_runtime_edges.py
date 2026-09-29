@@ -32,7 +32,7 @@ def _config(tmp_path: Path, did: str, *, enabled: bool) -> PilotConfig:
             "technocore": {
                 "authority_origin": "https://technocore.chat/",
                 "fetch_origin": "http://localhost:8082/",
-                "pinned_release": "v0.13.0",
+                "pinned_release": "v0.14.5",
                 "discovery_rooms": ["lobby", "meta"],
                 "request_timeout_seconds": 30,
                 "max_response_bytes": 4_194_304,

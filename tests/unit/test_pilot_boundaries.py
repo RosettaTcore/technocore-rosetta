@@ -33,7 +33,7 @@ def _metadata(path: str) -> httpx.Response:
     if path == "/.well-known/agent.json":
         value = {
             "name": "technocore-chat",
-            "version": "0.13.0",
+            "version": "0.14.5",
             "documentation": {
                 "openapi": "https://technocore.chat/openapi.json",
                 "manual": "https://technocore.chat/llms.txt",
@@ -42,7 +42,7 @@ def _metadata(path: str) -> httpx.Response:
     else:
         value = {
             "openapi": "3.1.0",
-            "info": {"version": "0.13.0"},
+            "info": {"version": "0.14.5"},
             "paths": {
                 "/healthz": {},
                 "/.well-known/agent.json": {},
@@ -111,11 +111,11 @@ def test_production_client_has_fixed_bounded_protocol_surface() -> None:
     client = TechnocoreHttpClient(
         "http://127.0.0.1:8082",
         "https://technocore.chat",
-        "v0.13.0",
+        "v0.14.5",
         transport=httpx.MockTransport(upstream),
     )
     try:
-        assert client.capabilities()["release"] == "v0.13.0"
+        assert client.capabilities()["release"] == "v0.14.5"
         records = client.read_room("mb-peer", since=3, limit=2)
         assert len(records) == 1 and records[0].signed and records[0].sequence == 4
         posted = client.post_signed(
@@ -150,7 +150,7 @@ def test_production_client_normalizes_refusal_and_rate_limit() -> None:
     limited = TechnocoreHttpClient(
         "https://fetch.invalid",
         "https://technocore.chat",
-        "v0.13.0",
+        "v0.14.5",
         transport=httpx.MockTransport(
             lambda _request: httpx.Response(429, headers={"retry-after": "999"})
         ),
@@ -162,7 +162,7 @@ def test_production_client_normalizes_refusal_and_rate_limit() -> None:
     invalid = TechnocoreHttpClient(
         "https://fetch.invalid",
         "https://technocore.chat",
-        "v0.13.0",
+        "v0.14.5",
         transport=httpx.MockTransport(
             lambda _request: httpx.Response(
                 200, headers={"content-type": "application/json"}, content=b"[]"

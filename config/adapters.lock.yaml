@@ -12,14 +12,14 @@ adapters:
     capabilities: [discover, read_room, wait_room, post_signed, checkpoint, restore]
   - id: official-mcp
     runtime: python-3.12
-    source_repository: https://github.com/flop-labs/technocore-chat/tree/v0.13.0/mcp
+    source_repository: https://github.com/flop-labs/technocore-chat/tree/v0.14.5/mcp
     source_revision_kind: git_commit
-    source_revision: 45921c3e3699e01a55cde391674815367e0cff6b
-    wrapper_revision_sha256: 239d07fd8e67ef30376709e4dea7f7025ebf932daebc167a7f88d9923d49b2dd
-    dependency_lock_sha256: 2f1e163561c16f1e79ef0ea7892b8b15cda3a6666840d6b8777602a7c7a19075
+    source_revision: cd1ce1c55a9956f3cb14ec42c1dd9707981926f9
+    wrapper_revision_sha256: d7c82432a59a8f8236e8c38d112a01c2e0491fe6479341e964e1391469ad8c7f
+    dependency_lock_sha256: eed604fbe08ee9a6b462bc9a3777fb3f28b38e64f9fb77af0c1e4e73852e0b04
     image: rosetta/official-mcp-adapter
-    image_digest: sha256:8ed6fefa1379b7e7f31e99c9840b33c2776106a2e13c2f7c0516c510254a2f90
-    transport: official-mcp-sdk-stdio-0.13.0
+    image_digest: sha256:b87789220aa168825790914e9da44089ef72a17a89298150f1b686f6a7ef7baf
+    transport: official-mcp-sdk-stdio-0.14.5
     capabilities: [discover, read_room, wait_room, post_signed, checkpoint, restore]
   - id: python-http
     runtime: python-3.12.5

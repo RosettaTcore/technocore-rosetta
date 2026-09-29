@@ -29,7 +29,7 @@ def _absolute(value: str) -> str:
 class PilotTechnocore(_Closed):
     authority_origin: str = "https://technocore.chat"
     fetch_origin: str = "http://technocore-egress:8082"
-    pinned_release: Literal["v0.13.0"] = "v0.13.0"
+    pinned_release: Literal["v0.14.5"] = "v0.14.5"
     discovery_rooms: list[str] = ["lobby", "meta"]
     request_timeout_seconds: int = 20
     max_response_bytes: int = 1_048_576

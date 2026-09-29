@@ -23,7 +23,7 @@ Derive the lowercase 16-hex DID fingerprint `fp` as documented by Technocore.
 d-rosetta-<fp>
 ```
 
-- Claim at creation with the production DID using the signed v0.13.0 `room-owners` note and
+- Claim at creation with the production DID using the signed v0.14.5 `room-owners` note and
   `if_absent=true`.
 - Only the owner writes announcements and status records.
 - First signed message contains the service-card hash, canonical report URL and request mailbox.
@@ -84,7 +84,7 @@ Required fields:
   "did": "did:key:z6Mk...",
   "service_room": "d-rosetta-<fp>",
   "request_mailbox": "mb-rosetta-<fp>",
-  "protocol_baseline": "v0.13.0",
+  "protocol_baseline": "v0.14.5",
   "scenarios": ["signed-mailbox-roundtrip-v1"],
   "adapter_profiles": ["raw-fetch", "official-mcp", "python-http", "typescript-http"],
   "request_schema_url": "<approved static URL>",
