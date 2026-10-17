@@ -1,7 +1,7 @@
 -r requirements.in
 coverage==7.15.4
 hypothesis==6.27.3
-mypy==1.11.2
+mypy==2.3.1
 PyNaCl==1.6.2
 pytest==9.0.3
 ruff==0.6.2
